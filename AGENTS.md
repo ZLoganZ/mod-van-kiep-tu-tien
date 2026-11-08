@@ -105,3 +105,16 @@ Game luôn phục vụ gói mod mẫu chính thức tại đường dẫn cố �
 2. Nâng phiên bản mod tương ứng theo SemVer.
 3. Đóng gói kiểm tra mod.
 4. **Dọn dẹp:** Xóa bỏ toàn bộ các script tạm (`*.js`, `*.txt`) và bộ mốc `old_*` sinh ra trong đợt điều tra. Chỉ giữ lại bộ source chuẩn hiện hành (`latest_game_bundle.js`, `latest_template_extracted`, `latest_template.zip`, `latest_content.json`) để làm mốc so sánh cho lần cập nhật kế tiếp.
+
+---
+
+## 5. QUY TẮC ĐỒNG BỘ GIT & GITHUB (TỰ ĐỘNG COMMIT & PUSH)
+
+* **Bắt buộc commit & push ngay sau khi sửa file**: Mỗi khi hoàn tất tạo mới, chỉnh sửa hoặc xóa bất kỳ file nào trong workspace (code logic, tài liệu, cấu hình `mod.yaml`, dữ liệu content, v.v.), Agent **BẮT BUỘC** phải tự động commit và push toàn bộ thay đổi lên GitHub ngay lập tức:
+  ```bash
+  git add .
+  git commit -m "<mô tả ngắn gọn nội dung thay đổi>"
+  git push
+  ```
+* **Không trì hoãn**: Tuyệt đối không để dồn thay đổi qua nhiều lượt làm việc hoặc kết thúc yêu cầu mà chưa đồng bộ lên remote GitHub.
+
