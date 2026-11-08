@@ -1,7 +1,7 @@
 /**
  * Mod Sư Đồ Truyền Thừa (su_do) - Vạn Kiếp Tu Tiên
  * Tác giả: Antigravity & Tu Tiên Giả
- * Phiên bản: 1.0.10
+ * Phiên bản: 1.0.11
  * Tương thích: apiVersion 1 (Giao diện Tiên Hiệp Cổ Phong Tinh Mỹ, Ẩn Scrollbar 100%)
  */
 
@@ -42,6 +42,25 @@
     return 12;             // Hóa Thần trở lên: 12
   }
 
+  const HE_MAP = {
+    kim: 'Kim',
+    moc: 'Mộc',
+    thuy: 'Thủy',
+    hoa: 'Hỏa',
+    tho: 'Thổ',
+    loi: 'Lôi',
+    phong: 'Phong',
+    bang: 'Băng',
+    quang: 'Quang',
+    am: 'Ám',
+  };
+
+  function dinhDangHe(heList) {
+    if (!Array.isArray(heList) || heList.length === 0) return 'Vô thuộc tính';
+    const tenHe = heList.map((h) => HE_MAP[h] ?? h).join(' · ');
+    return `Hệ ${tenHe}`;
+  }
+
   (window.tuTienMods ??= []).push({
   id: 'su_do',
 
@@ -51,9 +70,17 @@
     // ==========================================
     // 1. CÁC HÀM TIỆN ÍCH SINH ĐỆ TỬ NGẪU NHIÊN
     // ==========================================
-    const HO = ['Lâm', 'Diệp', 'Tiêu', 'Sở', 'Lý', 'Trần', 'Vương', 'Bạch', 'Hàn', 'Thạch', 'Khương', 'Tạ', 'Cố', 'Vũ', 'Lục', 'Ninh', 'Thẩm', 'Tống', 'Tần'];
-    const TEN_NAM = ['Phong', 'Phàm', 'Thần', 'Vũ', 'Hạo', 'Vân', 'Kiếm', 'Viêm', 'Lăng', 'Dực', 'Huyền', 'Minh', 'Kỳ', 'Dật', 'Tiêu', 'Xuyên', 'Thiên', 'Hạc'];
-    const TEN_NU = ['Tuyết', 'Nguyệt', 'Nhiên', 'Dao', 'Thanh', 'Sương', 'Linh', 'Uyển', 'Hinh', 'Mộng', 'Thiền', 'Vy', 'Yên', 'Cầm', 'Ngọc', 'Hàm', 'Chỉ', 'Vi'];
+    // Danh sách họ danh gia vọng tộc (24 họ)
+    const HO_DANH_SACH = ['Lâm', 'Diệp', 'Tiêu', 'Sở', 'Hàn', 'Bạch', 'Cố', 'Vương', 'Lý', 'Trần', 'Thạch', 'Khương', 'Tạ', 'Vũ', 'Lục', 'Ninh', 'Thẩm', 'Tống', 'Tần', 'Mạc', 'Liễu', 'Âu Dương', 'Độc Cô', 'Tư Mã'];
+
+    // Tên nam: Khí khái, hùng tráng, kiên định (100% không trùng tên nữ)
+    const DEM_NAM = ['Trường', 'Bá', 'Vô', 'Nhất', 'Thiên', 'Hạo', 'Huyền', 'Minh', 'Kính', 'Trọng', 'Đức', 'Chấn', 'Cửu', 'Cảnh', 'Chí', 'Đại', 'Vĩnh', 'Định', 'Khắc', 'Nguyên'];
+    const CHINH_NAM = ['Phong', 'Phàm', 'Kiếm', 'Viêm', 'Dực', 'Hạo', 'Kỳ', 'Xuyên', 'Liệt', 'Long', 'Lôi', 'Sơn', 'Khang', 'Bằng', 'Bách', 'Thương', 'Trảm', 'Đoan', 'Hải', 'Hùng', 'Vực', 'Hạc', 'Tiêu', 'Đỉnh'];
+
+    // Tên nữ: Dịu dàng, thanh nhã, tiên khí phiêu dật (100% không trùng tên nam)
+    const DEM_NU = ['Mộng', 'Tuyết', 'Nguyệt', 'Thanh', 'Tố', 'Băng', 'Uyển', 'Tử', 'Tiểu', 'Thục', 'Nhược', 'Lạc', 'Thược', 'Bích', 'Vân', 'Thần', 'Gia', 'Bảo', 'Thu', 'Hạ'];
+    const CHINH_NU = ['Dao', 'Sương', 'Nhi', 'Hinh', 'Thiền', 'Vy', 'Yên', 'Cầm', 'Chỉ', 'Thoa', 'Mi', 'Thảo', 'Thư', 'Huyên', 'Liên', 'Trúc', 'Quỳnh', 'Liễu', 'Khuê', 'Dung', 'Tú', 'Cơ', 'Nhu', 'Khê'];
+
     const HE_DANH_SACH = ['kim', 'moc', 'thuy', 'hoa', 'tho'];
     const TU_CHAT_LIST = [
       { id: 'pho_thong', ten: 'Phổ Thông', heSo: 1.0 },
@@ -81,10 +108,25 @@
     function taoDeTuNgauNhien(seed, canhGioiNguoiChoi = 1) {
       const rng = taoRng(seed);
       const gioiTinh = rng() > 0.5 ? 'nam' : 'nu';
-      const ho = HO[Math.floor(rng() * HO.length)];
-      const ten = gioiTinh === 'nam'
-        ? TEN_NAM[Math.floor(rng() * TEN_NAM.length)]
-        : TEN_NU[Math.floor(rng() * TEN_NU.length)];
+      const ho = HO_DANH_SACH[Math.floor(rng() * HO_DANH_SACH.length)];
+      let ten = '';
+      if (gioiTinh === 'nam') {
+        const chinh = CHINH_NAM[Math.floor(rng() * CHINH_NAM.length)];
+        if (rng() < 0.75) {
+          const dem = DEM_NAM[Math.floor(rng() * DEM_NAM.length)];
+          ten = `${ho} ${dem} ${chinh}`;
+        } else {
+          ten = `${ho} ${chinh}`;
+        }
+      } else {
+        const chinh = CHINH_NU[Math.floor(rng() * CHINH_NU.length)];
+        if (rng() < 0.75) {
+          const dem = DEM_NU[Math.floor(rng() * DEM_NU.length)];
+          ten = `${ho} ${dem} ${chinh}`;
+        } else {
+          ten = `${ho} ${chinh}`;
+        }
+      }
 
       // Linh căn & Ngũ hành độc lập
       const heChon = HE_DANH_SACH[Math.floor(rng() * HE_DANH_SACH.length)];
@@ -108,7 +150,7 @@
 
       return {
         id: `dt_${Date.now()}_${Math.floor(rng() * 100000)}_${Math.floor((Number(seed) || 0) % 1000)}`,
-        ten: `${ho} ${ten}`,
+        ten,
         gioiTinh,
         tuoi,
         he,
@@ -202,7 +244,7 @@
       data.danhSachDeTu.push(ungVien);
       data.ungVien.splice(idx, 1);
       const danhXung = ungVien.gioiTinh === 'nu' ? 'Đại Sư Tỷ' : 'Đại Sư Huynh';
-      ghiNhatKy(data, `Thu nhận đồ đệ ${ungVien.ten} (${ungVien.he.join('/')}) nhập môn${ungVien.vaiVe === 'dai_su_huynh' ? `, tôn làm ${danhXung}` : ''}.`, ctx.run.nam ?? 1);
+      ghiNhatKy(data, `Thu nhận đồ đệ ${ungVien.ten} (${dinhDangHe(ungVien.he)}) nhập môn${ungVien.vaiVe === 'dai_su_huynh' ? `, tôn làm ${danhXung}` : ''}.`, ctx.run.nam ?? 1);
       h.setData(data);
       return 'khong_tick';
     });
@@ -581,19 +623,6 @@
     // ==========================================
     const TEN_CANH_GIOI = ['Luyện Khí', 'Trúc Cơ', 'Kim Đan', 'Nguyên Anh', 'Hóa Thần', 'Luyện Hư', 'Hợp Thể', 'Đại Thừa', 'Độ Kiếp'];
 
-    const HE_MAP = {
-      kim: 'Kim',
-      moc: 'Mộc',
-      thuy: 'Thủy',
-      hoa: 'Hỏa',
-      tho: 'Thổ',
-      loi: 'Lôi',
-      phong: 'Phong',
-      bang: 'Băng',
-      quang: 'Quang',
-      am: 'Ám',
-    };
-
     const TU_CHAT_MAP = {
       pho_thong: { ten: 'Phổ Thông', color: 'var(--muc-nhat)', bg: 'rgba(0,0,0,0.06)', border: 'var(--vien-hud)' },
       kha: { ten: 'Khá Giỏi', color: '#10b981', bg: 'rgba(16,185,129,0.12)', border: '#10b981' },
@@ -747,17 +776,25 @@
         }
 
         .su-do-avatar {
-          width: 38px;
-          height: 38px;
+          width: 42px;
+          height: 42px;
           border-radius: 50%;
-          border: 1.5px solid var(--vien-muc);
-          box-shadow: 0 0 5px rgba(0,0,0,0.08);
+          border: 1.5px solid var(--vien-hud, #d4c5a9);
+          box-shadow: 0 1px 4px rgba(0,0,0,0.1);
           overflow: hidden;
-          background: #fff;
+          background-color: #fbf8f2;
           display: flex;
           align-items: center;
           justify-content: center;
           flex-shrink: 0;
+        }
+        .su-do-avatar img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          object-position: 50% 15%;
+          transform: scale(1.35);
+          display: block;
         }
 
         .su-do-card-info {
@@ -1093,22 +1130,30 @@
 
                     ungVien.forEach((uv, idx) => {
                       const itemCard = document.createElement('div');
-                      itemCard.style.cssText = 'background: var(--nen-hud); border: 1px solid var(--vien-hud); border-radius: 6px; padding: 6px 8px; display: flex; justify-content: space-between; align-items: center; gap: 6px; min-width: 0;';
+                      itemCard.style.cssText = 'background: var(--nen-hud); border: 1px solid var(--vien-hud); border-radius: 6px; padding: 6px 8px; display: flex; justify-content: space-between; align-items: center; gap: 8px; min-width: 0;';
+
+                      const uvAvatar = document.createElement('div');
+                      uvAvatar.className = 'su-do-avatar';
+                      uvAvatar.style.cssText = 'width: 34px; height: 34px; flex-shrink: 0;';
+                      const uvFaceUrl = tt.assets?.npcFace?.(uv.id, uv.gioiTinh, Math.floor(uv.tuoi)) || (uv.gioiTinh === 'nam' ? '/img/nguoi/nam.tre.1.webp' : '/img/nguoi/nu.tre.1.webp');
+                      uvAvatar.innerHTML = `<img src="${uvFaceUrl}" alt="${uv.ten}" onerror="this.src='/img/nguoi/${uv.gioiTinh}.tre.1.webp'" />`;
+                      itemCard.append(uvAvatar);
 
                       const colLeft = document.createElement('div');
-                      colLeft.style.cssText = 'display: flex; flex-direction: column; gap: 2px; font-size: 11.5px; min-width: 0; flex: 1;';
+                      colLeft.style.cssText = 'display: flex; flex-direction: column; gap: 2px; font-size: 11.5px; min-width: 0; flex: 1; overflow: hidden;';
 
                       const tc = TU_CHAT_MAP[uv.tuChat] ?? { ten: uv.tuChat, color: 'inherit', bg: 'transparent', border: 'transparent' };
                       const heStr = uv.he.map((h) => HE_MAP[h] ?? h).join(' · ');
 
                       colLeft.innerHTML = `
-                        <div style="font-size: 13px; display: flex; align-items: center; gap: 6px; white-space: nowrap;">
+                        <div style="font-size: 13px; line-height: 1.2; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">
                           <b>${uv.ten}</b>
-                          <span class="hud-phu" style="font-size:11px;">(${uv.gioiTinh === 'nam' ? 'Nam' : 'Nữ'} · ${Math.floor(uv.tuoi)}t)</span>
                         </div>
-                        <div style="display:flex; gap:6px; align-items:center; white-space:nowrap; font-size:11px;">
-                          <span>Hệ: <b>${heStr}</b></span>
-                          <span class="su-do-badge" style="color:${tc.color}; background:${tc.bg}; border:1px solid ${tc.border}; font-size:10px;">${tc.ten}</span>
+                        <div style="display: flex; gap: 4px; align-items: center; white-space: nowrap; font-size: 10px; line-height: 1.2;">
+                          <span class="su-do-badge" style="color:${tc.color}; background:${tc.bg}; border:1px solid ${tc.border}; font-size:9.5px; padding:0 4px; flex-shrink: 0;">${tc.ten}</span>
+                          <span class="hud-phu">${uv.gioiTinh === 'nam' ? 'Nam' : 'Nữ'} · ${Math.floor(uv.tuoi)}t</span>
+                          <span class="hud-phu">·</span>
+                          <span class="hud-phu">Hệ <b>${heStr}</b></span>
                         </div>
                       `;
                       itemCard.append(colLeft);
@@ -1126,7 +1171,7 @@
                         },
                       });
                       btnNhan.classList.add('su-do-btn-wrap');
-                      btnNhan.style.cssText += 'padding: 3px 8px; font-weight: bold; font-size: 11.5px; white-space: nowrap;';
+                      btnNhan.style.cssText += 'padding: 3px 6px; font-weight: bold; font-size: 11px; white-space: nowrap; flex-shrink: 0;';
                       itemCard.append(btnNhan);
 
                       uvBox.append(itemCard);
@@ -1381,15 +1426,11 @@
       const top = document.createElement('div');
       top.style.cssText = 'display: flex; gap: 8px; align-items: center; min-width: 0;';
 
-      // Chân dung NPC thủy mặc
-      const faceUrl = tt.assets?.npcFace?.(dt.id, dt.gioiTinh, Math.floor(dt.tuoi), 'su_phu');
+      // Chân dung NPC thiếu niên thủy mặc
+      const faceUrl = tt.assets?.npcFace?.(dt.id, dt.gioiTinh, Math.floor(dt.tuoi)) || (dt.gioiTinh === 'nam' ? '/img/nguoi/nam.tre.1.webp' : '/img/nguoi/nu.tre.1.webp');
       const avatar = document.createElement('div');
       avatar.className = 'su-do-avatar';
-      if (faceUrl) {
-        avatar.innerHTML = `<img src="${faceUrl}" style="width:100%; height:100%; object-fit:cover;" />`;
-      } else {
-        avatar.innerHTML = `<span style="font-size:18px;">🥋</span>`;
-      }
+      avatar.innerHTML = `<img src="${faceUrl}" alt="${dt.ten}" onerror="this.src='/img/nguoi/${dt.gioiTinh}.tre.1.webp'" />`;
       top.append(avatar);
 
       // Thông tin chi tiết
