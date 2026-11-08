@@ -1,13 +1,22 @@
 /**
  * Mod Sư Đồ Truyền Thừa (su_do) - Vạn Kiếp Tu Tiên
  * Tác giả: Antigravity & Tu Tiên Giả
- * Phiên bản: 1.0.9
+ * Phiên bản: 1.0.10
  * Tương thích: apiVersion 1 (Giao diện Tiên Hiệp Cổ Phong Tinh Mỹ, Ẩn Scrollbar 100%)
  */
 
 (() => {
   const CANH_GIOI_TEN = ['Phàm Nhân', 'Luyện Khí', 'Trúc Cơ', 'Kết Đan', 'Nguyên Anh', 'Hóa Thần'];
   const TIEU_CANH_GIOI_TEN = ['Sơ kỳ', 'Trung kỳ', 'Hậu kỳ', 'Đại viên mãn'];
+
+  function dinhDangThoiGianNam(nam) {
+    const n = Number(nam);
+    if (!Number.isFinite(n)) return 'Năm 1 · Tháng 1';
+    const namInt = Math.floor(n);
+    const frac = n - namInt;
+    const thang = Math.min(12, Math.max(1, Math.floor(frac * 12 + 1e-4) + 1));
+    return `Năm ${namInt} · Tháng ${thang}`;
+  }
 
   function dinhDangCanhGioi(cg, tieu = 0) {
     if (typeof window !== 'undefined' && window.tuTien?.core?.index?.tenCanhGioi) {
@@ -42,9 +51,9 @@
     // ==========================================
     // 1. CÁC HÀM TIỆN ÍCH SINH ĐỆ TỬ NGẪU NHIÊN
     // ==========================================
-    const HO = ['Lâm', 'Diệp', 'Tiêu', 'Sở', 'Lý', 'Trần', 'Vương', 'Bạch', 'Hàn', 'Thạch', 'Khương', 'Tạ', 'Cố', 'Vũ'];
-    const TEN_NAM = ['Phong', 'Phàm', 'Thần', 'Vũ', 'Hạo', 'Vân', 'Kiếm', 'Viêm', 'Lăng', 'Dực', 'Huyền', 'Minh', 'Kỳ'];
-    const TEN_NU = ['Tuyết', 'Nguyệt', 'Nhiên', 'Dao', 'Thanh', 'Sương', 'Linh', 'Uyển', 'Hinh', 'Mộng', 'Thiền', 'Vy'];
+    const HO = ['Lâm', 'Diệp', 'Tiêu', 'Sở', 'Lý', 'Trần', 'Vương', 'Bạch', 'Hàn', 'Thạch', 'Khương', 'Tạ', 'Cố', 'Vũ', 'Lục', 'Ninh', 'Thẩm', 'Tống', 'Tần'];
+    const TEN_NAM = ['Phong', 'Phàm', 'Thần', 'Vũ', 'Hạo', 'Vân', 'Kiếm', 'Viêm', 'Lăng', 'Dực', 'Huyền', 'Minh', 'Kỳ', 'Dật', 'Tiêu', 'Xuyên', 'Thiên', 'Hạc'];
+    const TEN_NU = ['Tuyết', 'Nguyệt', 'Nhiên', 'Dao', 'Thanh', 'Sương', 'Linh', 'Uyển', 'Hinh', 'Mộng', 'Thiền', 'Vy', 'Yên', 'Cầm', 'Ngọc', 'Hàm', 'Chỉ', 'Vi'];
     const HE_DANH_SACH = ['kim', 'moc', 'thuy', 'hoa', 'tho'];
     const TU_CHAT_LIST = [
       { id: 'pho_thong', ten: 'Phổ Thông', heSo: 1.0 },
@@ -59,37 +68,49 @@
       { id: 'can_man', ten: 'Cần Mẫn', moTa: 'Lịch luyện chuyên tâm, mang nhiều tài nguyên' },
     ];
 
-    function taoDeTuNgauNhien(seed, canhGioiNguoiChoi = 1) {
-      const rngVal = Math.abs(Math.sin(seed));
-      const gioiTinh = rngVal > 0.5 ? 'nam' : 'nu';
-      const ho = HO[Math.floor(rngVal * 1000) % HO.length];
-      const ten = gioiTinh === 'nam'
-        ? TEN_NAM[Math.floor(rngVal * 777) % TEN_NAM.length]
-        : TEN_NU[Math.floor(rngVal * 777) % TEN_NU.length];
+    function taoRng(seed) {
+      let s = (Math.abs(Number(seed)) * 1000000 + 1) >>> 0;
+      return function next() {
+        s = (s + 0x6d2b79f5) >>> 0;
+        let t = Math.imul(s ^ (s >>> 15), 1 | s);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    }
 
-      // Linh căn & Ngũ hành
-      const heChon = HE_DANH_SACH[Math.floor(rngVal * 333) % HE_DANH_SACH.length];
-      const hePhu = rngVal > 0.7 ? [HE_DANH_SACH[(HE_DANH_SACH.indexOf(heChon) + 2) % 5]] : [];
+    function taoDeTuNgauNhien(seed, canhGioiNguoiChoi = 1) {
+      const rng = taoRng(seed);
+      const gioiTinh = rng() > 0.5 ? 'nam' : 'nu';
+      const ho = HO[Math.floor(rng() * HO.length)];
+      const ten = gioiTinh === 'nam'
+        ? TEN_NAM[Math.floor(rng() * TEN_NAM.length)]
+        : TEN_NU[Math.floor(rng() * TEN_NU.length)];
+
+      // Linh căn & Ngũ hành độc lập
+      const heChon = HE_DANH_SACH[Math.floor(rng() * HE_DANH_SACH.length)];
+      const hePhu = rng() > 0.7 ? [HE_DANH_SACH[(HE_DANH_SACH.indexOf(heChon) + 2) % 5]] : [];
       const he = [heChon, ...hePhu];
 
-      // Tư chất
-      let tuChat = TU_CHAT_LIST[0];
-      if (rngVal > 0.92) tuChat = TU_CHAT_LIST[3];
-      else if (rngVal > 0.75) tuChat = TU_CHAT_LIST[2];
-      else if (rngVal > 0.45) tuChat = TU_CHAT_LIST[1];
+      // Tư chất độc lập hoàn toàn với giới tính (nam & nữ có tỷ lệ như nhau)
+      const rngTuChat = rng();
+      let tuChat = TU_CHAT_LIST[0]; // Phổ thông: ~45%
+      if (rngTuChat > 0.92) tuChat = TU_CHAT_LIST[3]; // Yêu Nghiệt: ~8%
+      else if (rngTuChat > 0.75) tuChat = TU_CHAT_LIST[2]; // Thiên Tài: ~17%
+      else if (rngTuChat > 0.45) tuChat = TU_CHAT_LIST[1]; // Khá Giỏi: ~30%
 
-      // Tính cách
-      const tinhCach = TINH_CACH_LIST[Math.floor(rngVal * 555) % TINH_CACH_LIST.length];
+      // Tính cách độc lập
+      const tinhCach = TINH_CACH_LIST[Math.floor(rng() * TINH_CACH_LIST.length)];
 
-      // Cảnh giới ban đầu: Luyện Khí Sơ kỳ (tieu: 0) hoặc Trung kỳ (tieu: 1)
-      const tieuCanhGioi = rngVal > 0.6 ? 1 : 0;
+      // Cảnh giới ban đầu độc lập: Luyện Khí Sơ kỳ (tieu: 0) hoặc Trung kỳ (tieu: 1)
+      const tieuCanhGioi = rng() > 0.6 ? 1 : 0;
       const canhGioi = 1; // 1: Luyện Khí
+      const tuoi = 14 + Math.floor(rng() * 6); // 14 - 19 tuổi
 
       return {
-        id: `dt_${Date.now()}_${Math.floor(rngVal * 10000)}`,
+        id: `dt_${Date.now()}_${Math.floor(rng() * 100000)}_${Math.floor((Number(seed) || 0) % 1000)}`,
         ten: `${ho} ${ten}`,
         gioiTinh,
-        tuoi: 14 + (Math.floor(rngVal * 88) % 6), // 14 - 19 tuổi
+        tuoi,
         he,
         tuChat: tuChat.id,
         tinhCach: tinhCach.id,
@@ -122,7 +143,7 @@
 
     function ghiNhatKy(data, text, nam = 1) {
       data.nhatKy ??= [];
-      data.nhatKy.unshift({ nam, text, time: Date.now() });
+      data.nhatKy.unshift({ nam: Number(nam) || 1, text, time: Date.now() });
       if (data.nhatKy.length > 50) data.nhatKy.pop();
     }
 
@@ -1083,7 +1104,7 @@
                       colLeft.innerHTML = `
                         <div style="font-size: 13px; display: flex; align-items: center; gap: 6px; white-space: nowrap;">
                           <b>${uv.ten}</b>
-                          <span class="hud-phu" style="font-size:11px;">(${uv.gioiTinh === 'nam' ? 'Nam' : 'Nữ'} · ${uv.tuoi}t)</span>
+                          <span class="hud-phu" style="font-size:11px;">(${uv.gioiTinh === 'nam' ? 'Nam' : 'Nữ'} · ${Math.floor(uv.tuoi)}t)</span>
                         </div>
                         <div style="display:flex; gap:6px; align-items:center; white-space:nowrap; font-size:11px;">
                           <span>Hệ: <b>${heStr}</b></span>
@@ -1145,7 +1166,7 @@
                     nhatKy.forEach((nk) => {
                       const item = document.createElement('div');
                       item.style.cssText = 'font-size: 12px; padding: 6px 8px; border-left: 2px solid var(--chu-do); background: rgba(0,0,0,0.02); border-radius: 0 4px 4px 0;';
-                      item.innerHTML = `<span style="color:var(--chu-do); font-weight:600;">[Năm ${nk.nam}]</span> ${nk.text}`;
+                      item.innerHTML = `<span style="color:var(--chu-do); font-weight:600; white-space:nowrap;">[${dinhDangThoiGianNam(nk.nam)}]</span> ${nk.text}`;
                       logList.append(item);
                     });
                     box.append(logList);
@@ -1177,7 +1198,7 @@
                       const conLai = dt.trangThai?.namConLai ?? 0;
                       info.innerHTML = `
                         <div><b>${dt.ten}</b> · <i style="color:var(--chu-do);">${dt.trangThai?.nhiemVu}</i></div>
-                        <div class="hud-phu" style="font-size: 11px;">${conLai > 0 ? `⏳ Còn <b>${conLai} năm</b> nữa trở về` : '✅ Đã hoàn thành, chờ thu nhận!'}</div>
+                        <div class="hud-phu" style="font-size: 11px;">${conLai > 0 ? `⏳ Còn <b>${Math.ceil(conLai)} năm</b> nữa trở về` : '✅ Đã hoàn thành, chờ thu nhận!'}</div>
                       `;
                       row.append(info);
 
@@ -1361,7 +1382,7 @@
       top.style.cssText = 'display: flex; gap: 8px; align-items: center; min-width: 0;';
 
       // Chân dung NPC thủy mặc
-      const faceUrl = tt.assets?.npcFace?.(dt.id, dt.gioiTinh, dt.tuoi, 'su_phu');
+      const faceUrl = tt.assets?.npcFace?.(dt.id, dt.gioiTinh, Math.floor(dt.tuoi), 'su_phu');
       const avatar = document.createElement('div');
       avatar.className = 'su-do-avatar';
       if (faceUrl) {
@@ -1384,13 +1405,13 @@
           <span class="su-do-card-name">${dt.ten}</span>
           ${dt.vaiVe === 'dai_su_huynh' ? `<span class="su-do-badge" style="color:var(--vang-kim); background:rgba(218,165,32,0.14); border:1px solid var(--vang-kim); font-size:10px; padding:0 5px; white-space:nowrap;">${danhXung}</span>` : ''}
           <span class="su-do-badge" style="color:${tc.color}; background:${tc.bg}; border:1px solid ${tc.border}; font-size:10px; padding:0 5px; white-space:nowrap; margin-left:${dt.vaiVe === 'dai_su_huynh' ? '4px' : 'auto'};">${tc.ten}</span>
-          <span class="su-do-card-meta" style="margin-left:${dt.vaiVe === 'dai_su_huynh' ? 'auto' : '6px'};">${dt.gioiTinh === 'nam' ? 'Nam' : 'Nữ'} · ${dt.tuoi}t</span>
+          <span class="su-do-card-meta" style="margin-left:${dt.vaiVe === 'dai_su_huynh' ? 'auto' : '6px'};">${dt.gioiTinh === 'nam' ? 'Nam' : 'Nữ'} · ${Math.floor(dt.tuoi)}t</span>
         </div>
         <div class="su-do-card-subrow">
           <span>${dinhDangCanhGioi(dt.canhGioi, dt.tieuCanhGioi)}</span>
           <span style="opacity:0.4;">·</span>
           <span>Hệ ${heStr}</span>
-          ${dt.trangThai?.loai === 'lich_luyen' && (dt.trangThai?.namConLai ?? 0) > 0 ? `<span class="su-do-badge" style="color:#10b981; background:rgba(16,185,129,0.12); border:1px solid #10b981; font-size:9.5px; padding:0 4px; margin-left:auto;">Lịch luyện (${dt.trangThai.namConLai}n)</span>` : ''}
+          ${dt.trangThai?.loai === 'lich_luyen' && (dt.trangThai?.namConLai ?? 0) > 0 ? `<span class="su-do-badge" style="color:#10b981; background:rgba(16,185,129,0.12); border:1px solid #10b981; font-size:9.5px; padding:0 4px; margin-left:auto;">Lịch luyện (${Math.ceil(dt.trangThai.namConLai)}n)</span>` : ''}
         </div>
         <div class="su-do-card-stats">Tính cách: <i>${tcStr}</i> · Hiếu cảm: <b>${dt.haoCam}</b> · Đố kỵ: <b style="color:${dt.doKy > 50 ? 'var(--cam-do)' : 'inherit'}">${dt.doKy}</b></div>
       `;
