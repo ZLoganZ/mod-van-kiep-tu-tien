@@ -1,7 +1,7 @@
 /**
  * Mod Sư Đồ Truyền Thừa (su_do) - Vạn Kiếp Tu Tiên
  * Tác giả: Antigravity & Tu Tiên Giả
- * Phiên bản: 1.0.11
+ * Phiên bản: 1.0.12
  * Tương thích: apiVersion 1 (Giao diện Tiên Hiệp Cổ Phong Tinh Mỹ, Ẩn Scrollbar 100%)
  */
 
@@ -870,6 +870,22 @@
           flex-shrink: 0 !important;
         }
 
+        .su-do-btn-mini {
+          padding: 0 !important;
+          margin: 0 !important;
+          flex-shrink: 0 !important;
+          width: auto !important;
+        }
+        .su-do-btn-mini button,
+        .su-do-btn-mini .btn-act {
+          min-width: 0 !important;
+          width: auto !important;
+          padding: 4px 10px !important;
+          font-size: 11px !important;
+          line-height: 1.2 !important;
+          height: auto !important;
+        }
+
         /* Thanh tiến trình tu vi đẹp mắt */
         .su-do-progress-bar {
           height: 6px;
@@ -1146,14 +1162,15 @@
                       const heStr = uv.he.map((h) => HE_MAP[h] ?? h).join(' · ');
 
                       colLeft.innerHTML = `
-                        <div style="font-size: 13px; line-height: 1.2; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">
+                        <div style="font-size: 12.5px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                           <b>${uv.ten}</b>
                         </div>
                         <div style="display: flex; gap: 4px; align-items: center; white-space: nowrap; font-size: 10px; line-height: 1.2;">
                           <span class="su-do-badge" style="color:${tc.color}; background:${tc.bg}; border:1px solid ${tc.border}; font-size:9.5px; padding:0 4px; flex-shrink: 0;">${tc.ten}</span>
                           <span class="hud-phu">${uv.gioiTinh === 'nam' ? 'Nam' : 'Nữ'} · ${Math.floor(uv.tuoi)}t</span>
-                          <span class="hud-phu">·</span>
-                          <span class="hud-phu">Hệ <b>${heStr}</b></span>
+                        </div>
+                        <div style="font-size: 10px; color: var(--muc-nhat); white-space: nowrap; line-height: 1.2; overflow: hidden; text-overflow: ellipsis;">
+                          Linh căn: <b style="color:var(--muc);">${heStr}</b>
                         </div>
                       `;
                       itemCard.append(colLeft);
@@ -1170,8 +1187,7 @@
                           }
                         },
                       });
-                      btnNhan.classList.add('su-do-btn-wrap');
-                      btnNhan.style.cssText += 'padding: 3px 6px; font-weight: bold; font-size: 11px; white-space: nowrap; flex-shrink: 0;';
+                      btnNhan.classList.add('su-do-btn-mini');
                       itemCard.append(btnNhan);
 
                       uvBox.append(itemCard);
@@ -1442,19 +1458,21 @@
       const info = document.createElement('div');
       info.className = 'su-do-card-info';
       info.innerHTML = `
-        <div class="su-do-card-name-row">
-          <span class="su-do-card-name">${dt.ten}</span>
-          ${dt.vaiVe === 'dai_su_huynh' ? `<span class="su-do-badge" style="color:var(--vang-kim); background:rgba(218,165,32,0.14); border:1px solid var(--vang-kim); font-size:10px; padding:0 5px; white-space:nowrap;">${danhXung}</span>` : ''}
-          <span class="su-do-badge" style="color:${tc.color}; background:${tc.bg}; border:1px solid ${tc.border}; font-size:10px; padding:0 5px; white-space:nowrap; margin-left:${dt.vaiVe === 'dai_su_huynh' ? '4px' : 'auto'};">${tc.ten}</span>
-          <span class="su-do-card-meta" style="margin-left:${dt.vaiVe === 'dai_su_huynh' ? 'auto' : '6px'};">${dt.gioiTinh === 'nam' ? 'Nam' : 'Nữ'} · ${Math.floor(dt.tuoi)}t</span>
+        <div class="su-do-card-name-row" style="display: flex; align-items: center; gap: 5px; min-width: 0; line-height: 1.2;">
+          <span class="su-do-card-name" style="font-weight: bold; font-size: 13px; white-space: nowrap;">${dt.ten}</span>
+          ${dt.vaiVe === 'dai_su_huynh' ? `<span class="su-do-badge" style="color:var(--vang-kim); background:rgba(218,165,32,0.14); border:1px solid var(--vang-kim); font-size:9.5px; padding:0 4px; white-space:nowrap;">${danhXung}</span>` : ''}
+          <span class="su-do-badge" style="color:${tc.color}; background:${tc.bg}; border:1px solid ${tc.border}; font-size:9.5px; padding:0 4px; white-space:nowrap; margin-left: auto;">${tc.ten}</span>
         </div>
-        <div class="su-do-card-subrow">
-          <span>${dinhDangCanhGioi(dt.canhGioi, dt.tieuCanhGioi)}</span>
-          <span style="opacity:0.4;">·</span>
-          <span>Hệ ${heStr}</span>
-          ${dt.trangThai?.loai === 'lich_luyen' && (dt.trangThai?.namConLai ?? 0) > 0 ? `<span class="su-do-badge" style="color:#10b981; background:rgba(16,185,129,0.12); border:1px solid #10b981; font-size:9.5px; padding:0 4px; margin-left:auto;">Lịch luyện (${Math.ceil(dt.trangThai.namConLai)}n)</span>` : ''}
+        <div class="su-do-card-subrow" style="display: flex; align-items: center; justify-content: space-between; gap: 4px; font-size: 11px; white-space: nowrap; margin-top: 2px;">
+          <div style="display: flex; align-items: center; gap: 4px; min-width: 0; overflow: hidden; text-overflow: ellipsis;">
+            <span>${dinhDangCanhGioi(dt.canhGioi, dt.tieuCanhGioi)}</span>
+            <span style="opacity:0.4;">·</span>
+            <span>Hệ ${heStr}</span>
+            ${dt.trangThai?.loai === 'lich_luyen' && (dt.trangThai?.namConLai ?? 0) > 0 ? `<span class="su-do-badge" style="color:#10b981; background:rgba(16,185,129,0.12); border:1px solid #10b981; font-size:9.5px; padding:0 4px;">Lịch luyện (${Math.ceil(dt.trangThai.namConLai)}n)</span>` : ''}
+          </div>
+          <span class="hud-phu" style="font-size: 11px; white-space: nowrap; flex-shrink: 0;">${dt.gioiTinh === 'nam' ? 'Nam' : 'Nữ'} · ${Math.floor(dt.tuoi)}t</span>
         </div>
-        <div class="su-do-card-stats">Tính cách: <i>${tcStr}</i> · Hiếu cảm: <b>${dt.haoCam}</b> · Đố kỵ: <b style="color:${dt.doKy > 50 ? 'var(--cam-do)' : 'inherit'}">${dt.doKy}</b></div>
+        <div class="su-do-card-stats" style="font-size: 11px; color: var(--muc-nhat); margin-top: 2px; white-space: nowrap;">Tính cách: <i>${tcStr}</i> · Hiếu cảm: <b>${dt.haoCam}</b> · Đố kỵ: <b style="color:${dt.doKy > 50 ? 'var(--cam-do)' : 'inherit'}">${dt.doKy}</b></div>
       `;
       top.append(info);
       card.append(top);
