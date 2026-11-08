@@ -283,11 +283,12 @@
     const style = document.createElement('style');
     style.id = STYLE_ID;
     style.textContent = `
-      * {
+      .su-do-panel,
+      .su-do-panel * {
         scrollbar-width: none !important;
         -ms-overflow-style: none !important;
       }
-      *::-webkit-scrollbar {
+      .su-do-panel *::-webkit-scrollbar {
         display: none !important;
         width: 0 !important;
         height: 0 !important;
@@ -580,7 +581,56 @@
     // PHA 1: BOOT (Đăng ký Modifier, Hành động, TickHook)
     // ========================================================
     boot(tt, mod) {
-      mod.log('Mod Sư Đồ Truyền Thừa đang khởi động (Pha boot v1.2.0)');
+      mod.log('Mod Sư Đồ Truyền Thừa đang khởi động (Pha boot v1.3.1)');
+
+      // Đăng ký các khuôn NPC môn hạ chính thức vào kho content
+      try {
+        mod.addContent({
+          'npc/de_tu.yaml': [
+            {
+              id: 'npc.su_do_de_tu',
+              loai: 'qua_duong',
+              goi: 'đồ đệ môn hạ',
+              tuoi: [14, 30],
+              canh_gioi: [1, 5],
+              pham_chat: 'kha',
+              dich: 'enemy.de_tu_noi_mon',
+              tinh: 'Đệ tử chân truyền của ngươi, ngày đêm dốc lòng tu hành, gánh vác thanh danh sư môn.',
+              muon: 'Đột phá cảnh giới, vấn đỉnh trường sinh, phụng dưỡng sư tôn.',
+              bi_mat: 'Từng trải qua trắc trở phàm trần trước khi may mắn được Sư tôn thu nhận.',
+              loi_gap: 'Đệ tử kính bái Sư tôn! Cầu Sư tôn chỉ điểm bến mê.',
+            },
+            {
+              id: 'npc.su_do_dai_su_huynh',
+              loai: 'qua_duong',
+              goi: 'đại sư huynh môn hạ',
+              tuoi: [16, 35],
+              canh_gioi: [1, 5],
+              pham_chat: 'thien_tai',
+              dich: 'enemy.de_tu_noi_mon',
+              tinh: 'Thủ tịch đại đệ tử môn hạ, thay Sư tôn đốc thúc chư vị sư đệ sư muội tu hành.',
+              muon: 'Gánh vác sư môn, bảo bọc các sư đệ sư muội.',
+              bi_mat: 'Luôn nơm nớp lo sợ phụ lòng kỳ vọng của Sư tôn.',
+              loi_gap: 'Bẩm Sư tôn, mọi việc trong sư môn đã được đệ tử an bài thỏa đáng.',
+            },
+            {
+              id: 'npc.su_do_dai_su_ty',
+              loai: 'qua_duong',
+              goi: 'đại sư tỷ môn hạ',
+              tuoi: [16, 35],
+              canh_gioi: [1, 5],
+              pham_chat: 'thien_tai',
+              dich: 'enemy.de_tu_noi_mon',
+              tinh: 'Thủ tịch nữ đệ tử môn hạ, tâm tư cẩn mật, chu đáo chăm nom đồng môn.',
+              muon: 'Tu vi viên mãn, che chở sư môn và báo đáp ân sư.',
+              bi_mat: 'Luôn nỗ lực tu hành gấp bội để làm gương cho chư vị đồng môn.',
+              loi_gap: 'Bẩm Sư tôn, đệ tử nguyện vì sư môn cúc cung tận tụy.',
+            },
+          ],
+        });
+      } catch (err) {
+        mod.log(`Bỏ qua addContent: ${err.message}`);
+      }
 
       // Tiện ích sinh đệ tử ngẫu nhiên
       function taoDeTuNgauNhien(seed = 1, canhGioiNguoiChoi = 1) {
@@ -677,47 +727,64 @@
         };
       }
 
-      
-  function dongBoNpcDeTu(ctx, dt, data) {
-    if (!ctx?.run || !dt) return;
-    ctx.run.npc ??= {};
-    const isDead = dt.trangThai?.loai === 'da_khuat' || dt.song === false;
-    const isMaHoa = dt.trangThai?.loai === 'ma_hoa';
-    const isDaiSu = dt.vaiVe === 'dai_su_huynh';
+      function dongBoNpcDeTu(ctx, dt, data) {
+        if (!ctx?.run || !dt) return;
+        ctx.run.npc ??= {};
+        const isDead = dt.trangThai?.loai === 'da_khuat' || dt.song === false;
+        const isMaHoa = dt.trangThai?.loai === 'ma_hoa';
+        const isDaiSu = dt.vaiVe === 'dai_su_huynh';
 
-    let danhPhan = 'quen_biet';
-    if (isMaHoa) {
-      danhPhan = 'phan_boi';
-    } else if (isDaiSu || (Number(dt.haoCam) || 0) >= 60) {
-      danhPhan = 'tri_ky';
-    } else if ((Number(dt.haoCam) || 0) >= 30) {
-      danhPhan = 'bang_huu';
-    }
+        let danhPhan = 'quen_biet';
+        if (isMaHoa) {
+          danhPhan = 'phan_boi';
+        } else if (isDaiSu || (Number(dt.haoCam) || 0) >= 60) {
+          danhPhan = 'tri_ky';
+        } else if ((Number(dt.haoCam) || 0) >= 30) {
+          danhPhan = 'bang_huu';
+        }
 
-    const existing = ctx.run.npc[dt.id] ?? {};
-    ctx.run.npc[dt.id] = {
-      ...existing,
-      ten: dt.ten,
-      goc: 'npc.su_do_de_tu',
-      gioiTinh: dt.gioiTinh ?? 'nam',
-      namSinh: existing.namSinh ?? Math.floor((Number(ctx.run.nam) || 1) - (Number(dt.tuoi) || 16)),
-      canhGioi: Number(dt.canhGioi) || 1,
-      tieuCanhGioi: Number(dt.tieuCanhGioi) || 0,
-      tuVi: Number(dt.tuVi) || 0,
-      phamChat: dt.tuChat === 'yeu_nghiet' ? 3 : dt.tuChat === 'thien_tai' ? 2 : 1,
-      haoCam: Number(dt.haoCam) || 0,
-      danhPhan,
-      namDanhPhan: existing.namDanhPhan ?? Math.floor(Number(ctx.run.nam) || 1),
-      tamTinh: dt.tinhCach === 'hieu_thuan' ? { trong_nghia: 4 } : dt.tinhCach === 'kieu_ngao' ? { trong_danh: 3 } : { trong_nghia: 2 },
-      theLuc: ctx.run.nhanVat?.theLuc ?? (data?.daoTrangTen || 'Thanh Khê Đạo Tràng'),
-      noiGap: existing.noiGap ?? ctx.run.viTri ?? 'thanh_khe',
-      que: existing.que ?? ctx.run.viTri ?? 'thanh_khe',
-      namGap: existing.namGap ?? Math.floor(Number(ctx.run.nam) || 1),
-      namCapNhat: Math.floor(Number(ctx.run.nam) || 1),
-      song: !isDead,
-      namMat: isDead ? Math.floor(Number(ctx.run.nam) || 1) : undefined,
-    };
-  }
+        const goc = isDaiSu
+          ? (dt.gioiTinh === 'nu' ? 'npc.su_do_dai_su_ty' : 'npc.su_do_dai_su_huynh')
+          : 'npc.su_do_de_tu';
+
+        const existing = ctx.run.npc[dt.id] ?? {};
+        const currentYear = Math.floor(Number(ctx.run.nam) || 1);
+        const playerRealm = Number(ctx.run.nhanVat?.canhGioi) || 1;
+        const dtRealm = Number(dt.canhGioi) || 1;
+        // Sư tôn luôn thấu suốt cảnh giới đệ tử chân truyền của mình
+        const perceivedRealm = Math.min(dtRealm, Math.max(playerRealm, dtRealm));
+
+        ctx.run.npc[dt.id] = {
+          ...existing,
+          ten: dt.ten,
+          goc,
+          gioiTinh: dt.gioiTinh ?? 'nam',
+          namSinh: existing.namSinh ?? Math.floor(currentYear - (Number(dt.tuoi) || 16)),
+          canhGioi: dtRealm,
+          tieuCanhGioi: Number(dt.tieuCanhGioi) || 0,
+          tuVi: Number(dt.tuVi) || 0,
+          phamChat: dt.tuChat === 'yeu_nghiet' ? 3 : dt.tuChat === 'thien_tai' ? 2 : 1,
+          haoCam: Number(dt.haoCam) || 0,
+          danhPhan,
+          namDanhPhan: existing.namDanhPhan ?? currentYear,
+          tamTinh: dt.tinhCach === 'hieu_thuan' ? { trong_nghia: 4 } : dt.tinhCach === 'kieu_ngao' ? { trong_danh: 3 } : { trong_nghia: 2 },
+          theLuc: ctx.run.nhanVat?.theLuc ?? (data?.daoTrangTen || 'Thanh Khê Đạo Tràng'),
+          noiGap: existing.noiGap ?? ctx.run.viTri ?? 'thanh_khe',
+          que: existing.que ?? ctx.run.viTri ?? 'thanh_khe',
+          namGap: existing.namGap ?? currentYear,
+          namGapCuoi: currentYear,
+          namCapNhat: currentYear,
+          seen: {
+            year: currentYear,
+            slot: existing.noiGap ?? ctx.run.viTri ?? 'thanh_khe',
+            canhGioi: perceivedRealm,
+            tieuCanhGioi: Number(dt.tieuCanhGioi) || 0,
+            via: 'gap',
+          },
+          song: !isDead,
+          namMat: isDead ? currentYear : undefined,
+        };
+      }
 
   function layTrangThaiMod(h) {
         const data = h.data() ?? {};
@@ -2587,7 +2654,7 @@
           `;
 
           const btnThuNhan = kit.button({
-            text: 'Bái Nhập Sư Môn',
+            text: 'Thu Nhận Đồ Đệ',
             kind: 'chinh',
             onClick: () => {
               const curMaxDt = sucChuaDeTu(tt.state().run?.nhanVat?.canhGioi ?? 0);

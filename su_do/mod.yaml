@@ -1,13 +1,13 @@
 id: su_do
 name: Sư Đồ Truyền Thừa
-version: 1.3.0
+version: 1.3.1
 api_version: 1
 author: Antigravity & Tu Tiên Giả
 description: |
   Hòa nhập tự nhiên vào thế giới tu tiên với hệ thống Sư Đồ & Nhân Mạch chính tông:
   - Tích hợp toàn diện vào Bảng Nhân Vật (Tab Sư Môn) & Khung Nơi Chốn: Quản trị đồ đệ, truyền công, ban thưởng trực tiếp không cần rời mạch game.
-  - Kết nối sâu Nhân Mạch (N): Đồ đệ hiển thị sống động trong mạng lưới quan hệ thế giới (Tri kỷ, Bằng hữu, Kẻ phản bội ma hóa, Đã khuất).
-  - Kiến thiết Động Phủ & Sư Đồ Đồng Lòng: Phân công chức sự đệ tử (Tụ linh, Dược điền, Đan phòng, Hộ trận) trợ chiến giảm sát thương và tương trợ đột phá.
+  - Kết nối sâu Nhân Mạch (N): Đồ đệ hiển thị sống động trong mạng lưới quan hệ thế giới (Tri kỷ, Bằng hữu, Kẻ phản bội ma hóa, Đã khuất) kèm danh xưng chân truyền chính thức.
+  - Đạo Tràng & Sư Đồ Đồng Lòng: Phân công chức sự đệ tử (Tụ linh, Dược viên, Đan phòng, Hộ tông kiếm trận) trợ chiến giảm sát thương và tương trợ đột phá.
   - Xuất Sơn Lịch Luyện & Bí Cảnh: Đệ tử chu du hồng trần, gửi thư báo sự vụ và mang về kỳ trân dị bảo dâng sư tôn.
   - Nội Môn Luận Kiếm & Đạo Tâm: Tỉ thí võ học tranh đoạt vị trí Đại Sư Huynh / Đại Sư Tỷ; xử lý biến cố đố kỵ và nghịch đồ ma hóa.
   - HUD Mini-Dock: Tiện ích nổi theo dõi cấp tốc tình hình sư môn.
