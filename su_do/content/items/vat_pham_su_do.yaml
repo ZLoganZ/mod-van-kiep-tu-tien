@@ -109,3 +109,24 @@
   gia: 150
   mo_ta: >
     Tín vật ma đạo thu hồi khi trừ diệt hoặc cảm hóa đồ đệ ma hóa phản tông, minh chứng cho công tích bảo vệ môn quy.
+
+- id: item.su_do_ho_tong_tran_ban
+  ten: Trận Bàn Hộ Tông
+  loai: phap_khi
+  pham_cap: 3
+  canh_gioi: 2
+  he: [tho, kim]
+  gia: 300
+  mo_ta: >
+    Trận bàn trấn phái phong ấn địa mạch linh khí, dùng để kích hoạt và gia cố Hộ Tông Đại Trận che chở toàn bộ đạo tràng.
+
+- id: item.su_do_chan_truyen_ngoc_gian
+  ten: Chân Truyền Ngọc Giản
+  loai: cong_phap
+  pham_cap: 3
+  canh_gioi: 2
+  he: [vo_sac]
+  gia: 380
+  linh_luc: 2.0
+  mo_ta: >
+    Ngọc giản lưu truyền tâm đắc tu đạo của các đời chưởng môn, giúp đệ tử đốn ngộ thông suốt kinh mạch và tăng mạnh tu vi.

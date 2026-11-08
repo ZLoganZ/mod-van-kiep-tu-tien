@@ -85,6 +85,14 @@
     { cap: 4, ten: 'Thái Thượng Đan Các', phi: null, moTa: 'Đan đạo đỉnh phong, thần đan hộ đạo.', tocDo: 3.5, sanPham: 'item.su_do_ho_mach_dan' },
   ];
 
+  const HO_TONG_CONFIG = [
+    { cap: 0, ten: 'Chưa Khởi Động Trận Pháp', phi: 150, moTa: 'Chưa dựng kết giới hộ tông.', giamSatThuong: 0, phanKich: 0 },
+    { cap: 1, ten: 'Tứ Tượng Hộ Môn Trận', phi: 350, moTa: 'Giảm 5% sát thương nhận vào cho Sư Tôn, phản kích 5% uy lực.', giamSatThuong: 0.05, phanKich: 0.05 },
+    { cap: 2, ten: 'Bát Quái Cửu Cung Trận', phi: 800, moTa: 'Giảm 10% sát thương nhận vào cho Sư Tôn, phản kích 10% uy lực.', giamSatThuong: 0.10, phanKich: 0.10 },
+    { cap: 3, ten: 'Thập Tuyệt Tru Tiên Trận', phi: 1800, moTa: 'Giảm 15% sát thương nhận vào cho Sư Tôn, phản kích 15% uy lực.', giamSatThuong: 0.15, phanKich: 0.15 },
+    { cap: 4, ten: 'Hỗn Độn Hộ Tông Trận', phi: null, moTa: 'Kim thân bất hoại, giảm 22% sát thương nhận vào cho Sư Tôn!', giamSatThuong: 0.22, phanKich: 0.20 },
+  ];
+
   const NHIEM_VU_LICH_LUYEN = {
     hai_duoc: {
       ten: 'Hái Linh Dược',
@@ -232,6 +240,10 @@
             cap: Number(suDo?.daoTrang?.kienThiet?.luyenDanPhong?.cap) || 0,
             danDongId: suDo?.daoTrang?.kienThiet?.luyenDanPhong?.danDongId ?? null,
             tienDo: Number(suDo?.daoTrang?.kienThiet?.luyenDanPhong?.tienDo) || 0,
+          },
+          hoTongDaiTran: {
+            cap: Number(suDo?.daoTrang?.kienThiet?.hoTongDaiTran?.cap) || 0,
+            tranDongId: suDo?.daoTrang?.kienThiet?.hoTongDaiTran?.tranDongId ?? null,
           },
         },
         chienBaoMoiNhat: suDo?.daoTrang?.chienBaoMoiNhat ?? null,
@@ -568,7 +580,7 @@
     // PHA 1: BOOT (Đăng ký Modifier, Hành động, TickHook)
     // ========================================================
     boot(tt, mod) {
-      mod.log('Mod Sư Đồ Truyền Thừa đang khởi động (Pha boot v1.1.0)');
+      mod.log('Mod Sư Đồ Truyền Thừa đang khởi động (Pha boot v1.2.0)');
 
       // Tiện ích sinh đệ tử ngẫu nhiên
       function taoDeTuNgauNhien(seed = 1, canhGioiNguoiChoi = 1) {
@@ -748,15 +760,22 @@
         const data = layTrangThaiMod(h);
         const dt = data.danhSachDeTu.find((d) => d.id === args?.deTuId);
         if (!dt) return 'khong_tick';
-        if (dt.trangThai?.loai === 'lich_luyen') return 'khong_tick';
+        if (dt.trangThai?.loai === 'lich_luyen' || dt.trangThai?.loai === 'ma_hoa') return 'khong_tick';
 
         const huong = args?.huong ?? 'chinh_dao';
         dt.khuynhHuong = huong;
-        dt.haoCam = Math.min(100, (Number(dt.haoCam) || 0) + 12);
+        dt.haoCam = Math.min(100, (Number(dt.haoCam) || 0) + 15);
         dt.doKy = Math.max(0, (Number(dt.doKy) || 0) - 10);
+        const req = Math.max(1, Number(dt.tuViYeuCau) || 1);
+        dt.tuVi = Math.min(req, (Number(dt.tuVi) || 0) + 5);
 
-        const tenHuong = KHUYNH_HUONG_MAP[huong] ?? huong;
-        ghiNhatKy(data, `Sư tôn vấn đạo cùng ${dt.ten}, định hướng theo con đường ${tenHuong}. Hảo cảm tăng tiến.`, ctx.run?.nam ?? 1);
+        const loiGiai = huong === 'chinh_dao'
+          ? 'lấy trừ ma vệ đạo, thủ hộ sinh linh làm gốc'
+          : huong === 'tieu_dao'
+          ? 'thuận theo tự nhiên, tiêu dao tự tại giữa đất trời'
+          : 'nghịch thiên cải mệnh, kẻ mạnh vi tôn';
+
+        ghiNhatKy(data, `Sư tôn đàm đạo cùng ${dt.ten}, chỉ dạy đạo lý "${loiGiai}". Đạo tâm đệ tử đại chấn! Hảo cảm tăng tiến.`, ctx.run?.nam ?? 1);
         h.setData(data);
         return 'khong_tick';
       });
@@ -766,28 +785,29 @@
         const data = layTrangThaiMod(h);
         const dt = data.danhSachDeTu.find((d) => d.id === args?.deTuId);
         if (!dt) return 'khong_tick';
-        if (dt.trangThai?.loai === 'lich_luyen') return 'khong_tick';
+        if (dt.trangThai?.loai === 'lich_luyen' || dt.trangThai?.loai === 'ma_hoa') return 'khong_tick';
 
         const req = Math.max(1, Number(dt.tuViYeuCau) || 1);
         const cur = Math.max(0, Number(dt.tuVi) || 0);
         if (cur >= req) return 'khong_tick';
 
         const nv = ctx.run?.nhanVat;
-        if (!nv || (Number(nv.tuVi) || 0) < 1.0) return 'khong_tick';
+        if (!nv || (Number(nv.tuVi) || 0) < 0.5) return 'khong_tick';
 
-        nv.tuVi = Math.max(0, (Number(nv.tuVi) || 0) - 1.0);
-        const tang = Math.round(req * 0.25);
+        nv.tuVi = Math.max(0, (Number(nv.tuVi) || 0) - 0.5);
+        const tang = Math.max(15, Math.round(req * 0.25));
         dt.tuVi = Math.min(req, cur + tang);
         dt.haoCam = Math.min(100, (Number(dt.haoCam) || 0) + 15);
 
-        // Đệ tử kiêu ngạo khác tăng đố kỵ nhẹ
+        // Đệ tử đồng môn tăng đố kỵ
         data.danhSachDeTu.forEach((d) => {
-          if (d.id !== dt.id && (d.tinhCach === 'kieu_ngao' || d.khuynhHuong === 'ma_dao')) {
-            d.doKy = Math.min(100, (Number(d.doKy) || 0) + 6);
+          if (d.id !== dt.id) {
+            const tangDoKy = (d.tinhCach === 'kieu_ngao' || d.khuynhHuong === 'ma_dao') ? 6 : 5;
+            d.doKy = Math.min(100, (Number(d.doKy) || 0) + tangDoKy);
           }
         });
 
-        ghiNhatKy(data, `Sư tôn quán đảnh truyền công cho ${dt.ten}, tăng ${tang} tu vi.`, ctx.run?.nam ?? 1);
+        ghiNhatKy(data, `Sư tôn quán đảnh truyền công cho ${dt.ten}, tiêu hao 0.5 chân nguyên, tăng ${tang} tu vi.`, ctx.run?.nam ?? 1);
         h.setData(data);
         return 'khong_tick';
       });
@@ -797,15 +817,21 @@
         const data = layTrangThaiMod(h);
         const dt = data.danhSachDeTu.find((d) => d.id === args?.deTuId);
         if (!dt) return 'khong_tick';
-        if (dt.trangThai?.loai === 'lich_luyen') return 'khong_tick';
+        if (dt.trangThai?.loai === 'lich_luyen' || dt.trangThai?.loai === 'ma_hoa') return 'khong_tick';
 
         const nv = ctx.run?.nhanVat;
         const soTien = Math.max(10, Number(args?.soTien) || 30);
         if (!nv || (Number(nv.linhThach) || 0) < soTien) return 'khong_tick';
 
         nv.linhThach = Math.max(0, (Number(nv.linhThach) || 0) - soTien);
-        dt.haoCam = Math.min(100, (Number(dt.haoCam) || 0) + 10);
-        dt.doKy = Math.max(0, (Number(dt.doKy) || 0) - 15);
+        dt.haoCam = Math.min(100, (Number(dt.haoCam) || 0) + 12);
+        dt.doKy = Math.max(0, (Number(dt.doKy) || 0) - 20);
+
+        data.danhSachDeTu.forEach((other) => {
+          if (other.id !== dt.id) {
+            other.doKy = Math.min(100, (Number(other.doKy) || 0) + 4);
+          }
+        });
 
         ghiNhatKy(data, `Sư tôn ban thưởng ${soTien} linh thạch cho đồ đệ ${dt.ten}.`, ctx.run?.nam ?? 1);
         h.setData(data);
@@ -817,15 +843,15 @@
         const data = layTrangThaiMod(h);
         const dt = data.danhSachDeTu.find((d) => d.id === args?.deTuId);
         if (!dt) return 'khong_tick';
-        if (dt.trangThai?.loai === 'lich_luyen') return 'khong_tick';
+        if (dt.trangThai?.loai === 'lich_luyen' || dt.trangThai?.loai === 'ma_hoa') return 'khong_tick';
 
         const req = Math.max(1, Number(dt.tuViYeuCau) || 1);
         const cur = Math.max(0, Number(dt.tuVi) || 0);
-        const tang = Math.round(req * 0.1);
+        const tang = Math.max(8, Math.round(req * 0.1));
         dt.tuVi = Math.min(req, cur + tang);
         dt.haoCam = Math.min(100, (Number(dt.haoCam) || 0) + 5);
 
-        ghiNhatKy(data, `Sư tôn hạ mình luận bàn đấu pháp cùng ${dt.ten}, chỉ điểm kiếm quyết.`, ctx.run?.nam ?? 1);
+        ghiNhatKy(data, `Sư tôn hạ mình luận bàn đấu pháp cùng ${dt.ten}, chỉ điểm kiếm quyết, tăng ${tang} tu vi.`, ctx.run?.nam ?? 1);
         h.setData(data);
         return 'khong_tick';
       });
@@ -835,7 +861,7 @@
         const data = layTrangThaiMod(h);
         const dt = data.danhSachDeTu.find((d) => d.id === args?.deTuId);
         if (!dt) return 'khong_tick';
-        if (dt.trangThai?.loai === 'lich_luyen') return 'khong_tick';
+        if (dt.trangThai?.loai === 'lich_luyen' || dt.trangThai?.loai === 'ma_hoa') return 'khong_tick';
 
         const laDinhPhong = (Number(dt.canhGioi) || 1) >= 5 && (Number(dt.tieuCanhGioi) || 0) >= 3;
         if (laDinhPhong) return 'khong_tick';
@@ -933,7 +959,7 @@
       mod.addAction('bo_nhiem', (ctx, args, h) => {
         const data = layTrangThaiMod(h);
         const dt = data.danhSachDeTu.find((d) => d.id === args?.deTuId);
-        if (!dt) return 'khong_tick';
+        if (!dt || dt.trangThai?.loai === 'ma_hoa') return 'khong_tick';
 
         data.danhSachDeTu.forEach((d) => {
           if (d.vaiVe === 'dai_su_huynh') d.vaiVe = 'de_tu';
@@ -954,7 +980,12 @@
         const data = layTrangThaiMod(h);
         const dt = data.danhSachDeTu.find((d) => d.id === args?.deTuId);
         if (!dt) return 'khong_tick';
-        if (dt.trangThai?.loai === 'lich_luyen') return 'khong_tick';
+        if (dt.trangThai?.loai === 'lich_luyen' || dt.trangThai?.loai === 'ma_hoa') return 'khong_tick';
+
+        // Tự động gỡ bỏ khỏi chức vụ tại đạo tràng nếu đang đảm nhiệm
+        if (data.daoTrang.kienThiet.duocDien?.duocDongId === dt.id) data.daoTrang.kienThiet.duocDien.duocDongId = null;
+        if (data.daoTrang.kienThiet.luyenDanPhong?.danDongId === dt.id) data.daoTrang.kienThiet.luyenDanPhong.danDongId = null;
+        if (data.daoTrang.kienThiet.hoTongDaiTran?.tranDongId === dt.id) data.daoTrang.kienThiet.hoTongDaiTran.tranDongId = null;
 
         const curNam = Number(ctx.run?.nam) || 1;
         const nvKey = args?.nhiemVu && NHIEM_VU_LICH_LUYEN[args.nhiemVu] ? args.nhiemVu : 'hai_duoc';
@@ -990,6 +1021,11 @@
         const nvConfig = NHIEM_VU_LICH_LUYEN[nvKey] ?? NHIEM_VU_LICH_LUYEN.hai_duoc;
         const thuong = nvConfig.tinhThuong(h);
 
+        // Pháp bảo gia trì thêm linh thạch khi thu hoạch
+        if (dt.phapBao && thuong.linhThach) {
+          thuong.linhThach = Math.round(thuong.linhThach * 1.25);
+        }
+
         const nv = ctx.run?.nhanVat ?? {};
         if (thuong.linhThach) {
           nv.linhThach = (Number(nv.linhThach) || 0) + thuong.linhThach;
@@ -998,7 +1034,7 @@
           window.tuTien.core['character/tui_do'].nhanVaoTui(ctx, thuong.vatPham, thuong.soLuong || 1);
         }
 
-        const tuViThuong = Math.round(dt.tuViYeuCau * 0.25);
+        const tuViThuong = 15;
         dt.tuVi = Math.min(dt.tuViYeuCau, (Number(dt.tuVi) || 0) + tuViThuong);
         dt.haoCam = Math.min(100, (Number(dt.haoCam) || 0) + 10);
 
@@ -1012,7 +1048,8 @@
           daThongBao: false,
         };
 
-        ghiNhatKy(data, `Đệ tử ${dt.ten} hoàn thành lịch luyện xuất sơn trở về, ${thuong.moTa}, tăng ${tuViThuong} tu vi!`, ctx.run?.nam ?? 1);
+        const baoGiaTri = dt.phapBao ? ` (Pháp bảo ${dt.phapBao.ten} hộ thể +25% thu hoạch)` : '';
+        ghiNhatKy(data, `Đệ tử ${dt.ten} hoàn thành lịch luyện xuất sơn trở về, ${thuong.moTa}${baoGiaTri}, tăng ${tuViThuong} tu vi!`, ctx.run?.nam ?? 1);
         h.setData(data);
         return 'khong_tick';
       });
@@ -1024,6 +1061,11 @@
         if (idx < 0) return 'khong_tick';
 
         const dt = data.danhSachDeTu.splice(idx, 1)[0];
+        // Gỡ bỏ khỏi chức nghiệp đạo tràng
+        if (data.daoTrang.kienThiet.duocDien?.duocDongId === dt.id) data.daoTrang.kienThiet.duocDien.duocDongId = null;
+        if (data.daoTrang.kienThiet.luyenDanPhong?.danDongId === dt.id) data.daoTrang.kienThiet.luyenDanPhong.danDongId = null;
+        if (data.daoTrang.kienThiet.hoTongDaiTran?.tranDongId === dt.id) data.daoTrang.kienThiet.hoTongDaiTran.tranDongId = null;
+
         if (dt.vaiVe === 'dai_su_huynh' && data.danhSachDeTu.length > 0) {
           data.danhSachDeTu[0].vaiVe = 'dai_su_huynh';
           const danhXung = data.danhSachDeTu[0].gioiTinh === 'nu' ? 'Đại Sư Tỷ' : 'Đại Sư Huynh';
@@ -1062,6 +1104,13 @@
           configList = LUYEN_DAN_CONFIG;
           obj = data.daoTrang.kienThiet.luyenDanPhong;
           tenKienTruc = 'Luyện Đan Các';
+        } else if (loai === 'hoTongDaiTran') {
+          configList = HO_TONG_CONFIG;
+          if (!data.daoTrang.kienThiet.hoTongDaiTran) {
+            data.daoTrang.kienThiet.hoTongDaiTran = { cap: 0, tranDongId: null };
+          }
+          obj = data.daoTrang.kienThiet.hoTongDaiTran;
+          tenKienTruc = 'Hộ Tông Đại Trận';
         } else {
           return 'khong_tick';
         }
@@ -1082,22 +1131,33 @@
         return 'khong_tick';
       });
 
-      // Action: Phân công đệ tử coi sóc Dược Điền / Đan Các
+      // Action: Phân công đệ tử coi sóc Dược Điền / Đan Các / Hộ Tông Trận
       mod.addAction('phan_cong_chuc_nghiep', (ctx, args, h) => {
         const data = layTrangThaiMod(h);
-        const loai = args?.loai; // 'duocDien' | 'luyenDanPhong'
+        const loai = args?.loai; // 'duocDien' | 'luyenDanPhong' | 'hoTongDaiTran'
         const deTuId = args?.deTuId;
 
+        let dt = null;
+        if (deTuId) {
+          dt = data.danhSachDeTu.find((d) => d.id === deTuId);
+          if (!dt || dt.trangThai?.loai === 'lich_luyen' || dt.trangThai?.loai === 'ma_hoa') {
+            return 'khong_tick';
+          }
+        }
+
+        const ten = dt ? dt.ten : 'Không ai';
         if (loai === 'duocDien') {
           data.daoTrang.kienThiet.duocDien.duocDongId = deTuId || null;
-          const dt = data.danhSachDeTu.find((d) => d.id === deTuId);
-          const ten = dt ? dt.ten : 'Không ai';
           ghiNhatKy(data, `Bổ nhiệm ${ten} làm Dược Đồng coi sóc Dược Điền tông môn.`, ctx.run?.nam ?? 1);
         } else if (loai === 'luyenDanPhong') {
           data.daoTrang.kienThiet.luyenDanPhong.danDongId = deTuId || null;
-          const dt = data.danhSachDeTu.find((d) => d.id === deTuId);
-          const ten = dt ? dt.ten : 'Không ai';
           ghiNhatKy(data, `Bổ nhiệm ${ten} làm Đan Đồng chấp chưởng lò luyện đan.`, ctx.run?.nam ?? 1);
+        } else if (loai === 'hoTongDaiTran') {
+          if (!data.daoTrang.kienThiet.hoTongDaiTran) {
+            data.daoTrang.kienThiet.hoTongDaiTran = { cap: 0, tranDongId: null };
+          }
+          data.daoTrang.kienThiet.hoTongDaiTran.tranDongId = deTuId || null;
+          ghiNhatKy(data, `Bổ nhiệm ${ten} làm Trận Đồng trấn thủ Hộ Tông Đại Trận.`, ctx.run?.nam ?? 1);
         }
 
         h.setData(data);
@@ -1108,7 +1168,7 @@
       mod.addAction('truyen_cong_phap', (ctx, args, h) => {
         const data = layTrangThaiMod(h);
         const dt = data.danhSachDeTu.find((d) => d.id === args?.deTuId);
-        if (!dt || dt.trangThai?.loai === 'lich_luyen') return 'khong_tick';
+        if (!dt || dt.trangThai?.loai === 'lich_luyen' || dt.trangThai?.loai === 'ma_hoa') return 'khong_tick';
 
         const itemId = args?.itemId;
         const nv = ctx.run?.nhanVat;
@@ -1122,6 +1182,7 @@
         const itemDef = ctx.content?.items?.get(itemId);
         const tenCp = itemDef?.ten || {
           'item.su_do_huyen_thien_tam_phap': 'Huyền Thiên Tâm Pháp',
+          'item.su_do_chan_truyen_ngoc_gian': 'Chân Truyền Ngọc Giản',
           'item.dan_khi_quyet': 'Dẫn Khí Quyết',
           'item.tho_nap_phap': 'Thổ Nạp Pháp',
         }[itemId] || itemId;
@@ -1144,7 +1205,7 @@
       mod.addAction('ban_phap_bao', (ctx, args, h) => {
         const data = layTrangThaiMod(h);
         const dt = data.danhSachDeTu.find((d) => d.id === args?.deTuId);
-        if (!dt || dt.trangThai?.loai === 'lich_luyen') return 'khong_tick';
+        if (!dt || dt.trangThai?.loai === 'lich_luyen' || dt.trangThai?.loai === 'ma_hoa') return 'khong_tick';
 
         const itemId = args?.itemId;
         const nv = ctx.run?.nhanVat;
@@ -1159,6 +1220,7 @@
         const tenPb = itemDef?.ten || {
           'item.su_do_chan_truyen_phap_bao': 'Trấn Môn Thanh Phong Kiếm',
           'item.su_do_ho_menh_ngoc_bai': 'Ngọc Bài Hộ Mệnh',
+          'item.su_do_ho_tong_tran_ban': 'Trận Bàn Hộ Tông',
           'item.cot_thu': 'Cốt Thủ',
           'item.thau_cot_cham': 'Thấu Cốt Châm',
           'item.xich_viem_phu': 'Xích Viêm Phù',
@@ -1182,7 +1244,7 @@
       mod.addAction('ban_dan_duoc', (ctx, args, h) => {
         const data = layTrangThaiMod(h);
         const dt = data.danhSachDeTu.find((d) => d.id === args?.deTuId);
-        if (!dt || dt.trangThai?.loai === 'lich_luyen') return 'khong_tick';
+        if (!dt || dt.trangThai?.loai === 'lich_luyen' || dt.trangThai?.loai === 'ma_hoa') return 'khong_tick';
 
         const itemId = args?.itemId;
         const nv = ctx.run?.nhanVat;
@@ -1212,7 +1274,7 @@
         const dtA = data.danhSachDeTu.find((d) => d.id === args?.deTuIdA);
         const dtB = data.danhSachDeTu.find((d) => d.id === args?.deTuIdB);
         if (!dtA || !dtB || dtA.id === dtB.id) return 'khong_tick';
-        if (dtA.trangThai?.loai === 'lich_luyen' || dtB.trangThai?.loai === 'lich_luyen') return 'khong_tick';
+        if (dtA.trangThai?.loai === 'lich_luyen' || dtB.trangThai?.loai === 'lich_luyen' || dtA.trangThai?.loai === 'ma_hoa' || dtB.trangThai?.loai === 'ma_hoa') return 'khong_tick';
 
         // 1. Tính điểm cơ bản
         const baseA = (Number(dtA.canhGioi) || 1) * 100 + (Number(dtA.tieuCanhGioi) || 0) * 25;
@@ -1304,6 +1366,17 @@
         if (idx < 0) return 'khong_tick';
 
         const dt = data.danhSachDeTu.splice(idx, 1)[0];
+        // Gỡ bỏ khỏi chức nghiệp đạo tràng
+        if (data.daoTrang.kienThiet.duocDien?.duocDongId === dt.id) data.daoTrang.kienThiet.duocDien.duocDongId = null;
+        if (data.daoTrang.kienThiet.luyenDanPhong?.danDongId === dt.id) data.daoTrang.kienThiet.luyenDanPhong.danDongId = null;
+        if (data.daoTrang.kienThiet.hoTongDaiTran?.tranDongId === dt.id) data.daoTrang.kienThiet.hoTongDaiTran.tranDongId = null;
+
+        if (dt.vaiVe === 'dai_su_huynh' && data.danhSachDeTu.length > 0) {
+          data.danhSachDeTu[0].vaiVe = 'dai_su_huynh';
+          const danhXung = data.danhSachDeTu[0].gioiTinh === 'nu' ? 'Đại Sư Tỷ' : 'Đại Sư Huynh';
+          ghiNhatKy(data, `Vị trí thủ tịch trống, tự động chuyển giao danh hiệu ${danhXung} cho ${data.danhSachDeTu[0].ten}.`, ctx.run?.nam ?? 1);
+        }
+
         const tuiMod = window.tuTien?.core?.['character/tui_do'];
         if (dt.phapBao?.id && tuiMod) {
           tuiMod.nhanVaoTui(ctx, dt.phapBao.id, 1);
@@ -1321,6 +1394,17 @@
         if (idx < 0) return 'khong_tick';
 
         const dt = data.danhSachDeTu.splice(idx, 1)[0];
+        // Gỡ bỏ khỏi chức nghiệp đạo tràng
+        if (data.daoTrang.kienThiet.duocDien?.duocDongId === dt.id) data.daoTrang.kienThiet.duocDien.duocDongId = null;
+        if (data.daoTrang.kienThiet.luyenDanPhong?.danDongId === dt.id) data.daoTrang.kienThiet.luyenDanPhong.danDongId = null;
+        if (data.daoTrang.kienThiet.hoTongDaiTran?.tranDongId === dt.id) data.daoTrang.kienThiet.hoTongDaiTran.tranDongId = null;
+
+        if (dt.vaiVe === 'dai_su_huynh' && data.danhSachDeTu.length > 0) {
+          data.danhSachDeTu[0].vaiVe = 'dai_su_huynh';
+          const danhXung = data.danhSachDeTu[0].gioiTinh === 'nu' ? 'Đại Sư Tỷ' : 'Đại Sư Huynh';
+          ghiNhatKy(data, `Vị trí thủ tịch trống, tự động chuyển giao danh hiệu ${danhXung} cho ${data.danhSachDeTu[0].ten}.`, ctx.run?.nam ?? 1);
+        }
+
         const nv = ctx.run?.nhanVat;
         if (nv) {
           nv.linhThach = (Number(nv.linhThach) || 0) + 50;
@@ -1356,7 +1440,7 @@
         const capDD = Number(data.daoTrang.kienThiet.duocDien.cap) || 0;
         const cfgDD = DUOC_DIEN_CONFIG[capDD] ?? DUOC_DIEN_CONFIG[0];
         if (capDD > 0 && cfgDD.sanPham.length > 0) {
-          const duocDong = data.danhSachDeTu.find((d) => d.id === data.daoTrang.kienThiet.duocDien.duocDongId);
+          const duocDong = data.danhSachDeTu.find((d) => d.id === data.daoTrang.kienThiet.duocDien.duocDongId && d.trangThai?.loai !== 'lich_luyen' && d.trangThai?.loai !== 'ma_hoa');
           const hasBonusDD = duocDong && (duocDong.he?.includes('moc') || duocDong.he?.includes('thuy') || duocDong.tinhCach === 'can_man');
           const tocDoDD = cfgDD.tocDo * (hasBonusDD ? 1.5 : 1.0);
           data.daoTrang.kienThiet.duocDien.tienDo = (Number(data.daoTrang.kienThiet.duocDien.tienDo) || 0) + years * tocDoDD;
@@ -1381,7 +1465,7 @@
         const capLDP = Number(data.daoTrang.kienThiet.luyenDanPhong.cap) || 0;
         const cfgLDP = LUYEN_DAN_CONFIG[capLDP] ?? LUYEN_DAN_CONFIG[0];
         if (capLDP > 0 && cfgLDP.sanPham) {
-          const danDong = data.danhSachDeTu.find((d) => d.id === data.daoTrang.kienThiet.luyenDanPhong.danDongId);
+          const danDong = data.danhSachDeTu.find((d) => d.id === data.daoTrang.kienThiet.luyenDanPhong.danDongId && d.trangThai?.loai !== 'lich_luyen' && d.trangThai?.loai !== 'ma_hoa');
           const hasBonusLDP = danDong && (danDong.he?.includes('hoa') || danDong.he?.includes('kim'));
           const tocDoLDP = cfgLDP.tocDo * (hasBonusLDP ? 1.5 : 1.0);
           data.daoTrang.kienThiet.luyenDanPhong.tienDo = (Number(data.daoTrang.kienThiet.luyenDanPhong.tienDo) || 0) + years * tocDoLDP;
@@ -1397,13 +1481,25 @@
           }
         }
 
-        // 4. Duyệt danh sách đệ tử
+        // 4. Hộ Tông Đại Trận hỗ trợ phục hồi thương thế cho Sư Tôn
+        const capHT = Number(data.daoTrang.kienThiet.hoTongDaiTran?.cap) || 0;
+        if (capHT > 0 && nv && (Number(nv.thuongThe) || 0) > 0) {
+          const tranDong = data.danhSachDeTu.find((d) => d.id === data.daoTrang.kienThiet.hoTongDaiTran?.tranDongId && d.trangThai?.loai !== 'lich_luyen' && d.trangThai?.loai !== 'ma_hoa');
+          const tiLeHoiPhuc = (capHT >= 3 ? 0.45 : 0.25) + (tranDong ? 0.2 : 0);
+          if (h.random() < tiLeHoiPhuc) {
+            nv.thuongThe = Math.max(0, (Number(nv.thuongThe) || 0) - 1);
+            ghiNhatKy(data, `🛡️ Hộ Tông Đại Trận hội tụ địa mạch linh khí, giúp Sư Tôn chữa lành 1 tầng thương thế!`, nam);
+          }
+        }
+
+        // 5. Duyệt danh sách đệ tử
         data.danhSachDeTu.forEach((dt) => {
           dt.tuoi = (Number(dt.tuoi) || 14) + years;
 
           const heSoTuChat = { pho_thong: 1.5, kha: 2.5, thien_tai: 4.0, yeu_nghiet: 6.5 }[dt.tuChat] ?? 2.0;
           const heSoTLT = 1 + (cfgTLT.deTuHieuQua || 0);
-          const tuViTang = Math.round(years * heSoTuChat * heSoTLT);
+          const cpBonus = dt.congPhap ? Math.round(years * (dt.congPhap.phamCap || 1) * 1.5) : 0;
+          const tuViTang = Math.round(years * heSoTuChat * heSoTLT) + cpBonus;
           const req = Math.max(1, Number(dt.tuViYeuCau) || tuViYeuCauChoCanhGioi(dt.canhGioi ?? 1, dt.tieuCanhGioi ?? 0));
           dt.tuViYeuCau = req;
           dt.tuVi = Math.min(req, (Number(dt.tuVi) || 0) + tuViTang);
@@ -1453,7 +1549,13 @@
         // Khi Sư Tôn tấn công ('ta')
         if (attacker?.ma === 'ta') {
           const deTuKhoeManh = danhSach.filter((d) => d.trangThai?.loai !== 'lich_luyen' && d.trangThai?.loai !== 'ma_hoa');
-          const deTuBuff = Math.min(0.20, deTuKhoeManh.length * 0.02);
+          let deTuBuff = Math.min(0.20, deTuKhoeManh.length * 0.02);
+          deTuKhoeManh.forEach((d) => {
+            if (d.phapBao) deTuBuff += 0.01;
+            if (d.congPhap) deTuBuff += 0.01;
+          });
+          deTuBuff = Math.min(0.35, deTuBuff);
+
           const capTLT = Number(data.daoTrang?.kienThiet?.tuLinhTran?.cap) || 0;
           const tltBuff = TU_LINH_TRAN_CONFIG[capTLT]?.satThuong || 0;
           return val * (1 + deTuBuff + tltBuff);
@@ -1461,11 +1563,24 @@
 
         // Khi Sư Tôn bị tấn công (target === 'ta')
         if (target?.ma === 'ta') {
+          let giam = 0;
           const daiSuHuynh = danhSach.find((d) => d.vaiVe === 'dai_su_huynh' && d.trangThai?.loai !== 'lich_luyen' && d.trangThai?.loai !== 'ma_hoa');
           if (daiSuHuynh && (Number(daiSuHuynh.canhGioi) || 1) >= 2) {
-            const giam = (Number(daiSuHuynh.canhGioi) || 1) >= 3 ? 0.10 : 0.05;
-            return val * (1 - giam);
+            giam += (Number(daiSuHuynh.canhGioi) || 1) >= 3 ? 0.10 : 0.05;
           }
+
+          // Hộ Tông Đại Trận giảm sát thương
+          const capHT = Number(data.daoTrang?.kienThiet?.hoTongDaiTran?.cap) || 0;
+          const htCfg = HO_TONG_CONFIG[capHT] ?? HO_TONG_CONFIG[0];
+          giam += htCfg.giamSatThuong || 0;
+
+          const tranDong = danhSach.find((d) => d.id === data.daoTrang?.kienThiet?.hoTongDaiTran?.tranDongId && d.trangThai?.loai !== 'lich_luyen' && d.trangThai?.loai !== 'ma_hoa');
+          if (tranDong && capHT > 0) {
+            giam += 0.03;
+          }
+
+          giam = Math.min(0.45, giam);
+          return val * (1 - giam);
         }
 
         return val;
@@ -1493,9 +1608,9 @@
         if (!s) return val;
 
         const data = layModData(s);
-        const thiênTaiCount = data.danhSachDeTu.filter((d) => d.tuChat === 'thien_tai').length;
+        const thienTaiCount = data.danhSachDeTu.filter((d) => d.tuChat === 'thien_tai').length;
         const yeuNghietCount = data.danhSachDeTu.filter((d) => d.tuChat === 'yeu_nghiet').length;
-        const bonus = Math.min(0.20, thiênTaiCount * 0.03 + yeuNghietCount * 0.06);
+        const bonus = Math.min(0.20, thienTaiCount * 0.03 + yeuNghietCount * 0.06);
 
         return val * (1 + bonus);
       });
@@ -1516,7 +1631,7 @@
     // ========================================================
     ready(tt, mod) {
       window.__suDoModUi = mod.ui;
-      mod.log('Mod Sư Đồ Truyền Thừa đã sẵn sàng (Pha ready v1.1.0)');
+      mod.log('Mod Sư Đồ Truyền Thừa đã sẵn sàng (Pha ready v1.2.0)');
       const kit = tt.ui.kit;
 
       injectMasterStyles();
@@ -1830,6 +1945,12 @@
             text: '❤️ Cảm Hóa (80LT/0.5TV)',
             kind: 'chinh',
             onClick: () => {
+              const curS = ttInstance.state();
+              const curNv = curS?.run?.nhanVat;
+              if (!curNv || (Number(curNv.linhThach) || 0) < 80 || (Number(curNv.tuVi) || 0) < 0.5) {
+                ttInstance.ui.toast('Sư tôn không đủ 80 linh thạch hoặc 0.5 tu vi để cảm hóa!');
+                return;
+              }
               ttInstance.game.modAction('su_do', 'cam_hoa_nghich_do', { deTuId: currentDt.id });
               ttInstance.ui.toast(`Đã dùng vô thượng chân tâm cảm hóa ${currentDt.ten}!`);
             },
@@ -2738,7 +2859,9 @@
           </div>
         `;
 
-        if (capLDP > 0 && deTuList.length > 0) {
+        const eligibleDeTu = deTuList.filter((d) => d.trangThai?.loai !== 'lich_luyen' && d.trangThai?.loai !== 'ma_hoa');
+
+        if (capLDP > 0 && eligibleDeTu.length > 0) {
           const rowPhanCongDan = document.createElement('div');
           rowPhanCongDan.style.cssText = 'display:flex; align-items:center; gap:6px; margin-top:2px;';
           const selLDP = document.createElement('select');
@@ -2747,7 +2870,7 @@
           optNoneDan.value = '';
           optNoneDan.textContent = '-- Để trống --';
           selLDP.append(optNoneDan);
-          deTuList.forEach((d) => {
+          eligibleDeTu.forEach((d) => {
             const opt = document.createElement('option');
             opt.value = d.id;
             opt.textContent = `${d.ten} (${dinhDangHe(d.he)})`;
@@ -2779,6 +2902,74 @@
           cardLDP.append(btnUpLDP);
         }
         box.append(cardLDP);
+
+        // 4. Hộ Tông Đại Trận
+        const cardHT = document.createElement('div');
+        cardHT.className = 'su-do-kienthiet-card';
+        const capHT = Number(kt.hoTongDaiTran?.cap) || 0;
+        const cfgHT = HO_TONG_CONFIG[capHT] ?? HO_TONG_CONFIG[0];
+        const nextHT = HO_TONG_CONFIG[capHT + 1];
+        const tranDong = deTuList.find((d) => d.id === kt.hoTongDaiTran?.tranDongId);
+
+        cardHT.innerHTML = `
+          <div class="su-do-kienthiet-header">
+            <span class="su-do-kienthiet-title">🛡️ ${cfgHT.ten}</span>
+            <span class="su-do-badge" style="color:#8b5cf6; background:rgba(139,92,246,0.12); border:1px solid #8b5cf6; font-size:9.5px; padding:0 4px;">Cấp ${capHT}/4</span>
+          </div>
+          <div style="font-size:11.5px; line-height:1.4; color:var(--muc-nhat);">${cfgHT.moTa}</div>
+          <div style="font-size:11px; margin-top:2px;">
+            <b>Trận Đồng:</b> ${tranDong ? tranDong.ten : 'Chưa phân công'}
+            ${tranDong && (tranDong.he?.includes('tho') || tranDong.he?.includes('kim') || tranDong.tinhCach === 'kien_dinh') ? '<span style="color:#8b5cf6; font-weight:bold;"> (🛡️ +3% phòng ngự, hỗ trợ chữa thương)</span>' : ''}
+          </div>
+        `;
+
+        if (capHT > 0 && eligibleDeTu.length > 0) {
+          const rowPhanCongTran = document.createElement('div');
+          rowPhanCongTran.style.cssText = 'display:flex; align-items:center; gap:6px; margin-top:2px;';
+          const selHT = document.createElement('select');
+          selHT.style.cssText = 'flex:1 1 auto; font-size:11px; padding:2px 4px; border:1px solid var(--vien-hud); background:var(--nen-hud); border-radius:4px;';
+          const optNoneTran = document.createElement('option');
+          optNoneTran.value = '';
+          optNoneTran.textContent = '-- Để trống --';
+          selHT.append(optNoneTran);
+          eligibleDeTu.forEach((d) => {
+            const opt = document.createElement('option');
+            opt.value = d.id;
+            opt.textContent = `${d.ten} (${dinhDangHe(d.he)})`;
+            if (d.id === kt.hoTongDaiTran?.tranDongId) opt.selected = true;
+            selHT.append(opt);
+          });
+          selHT.addEventListener('change', (e) => {
+            tt.game.modAction('su_do', 'phan_cong_chuc_nghiep', { loai: 'hoTongDaiTran', deTuId: e.target.value || null });
+            tt.ui.toast('Đã cập nhật Trận Đồng!');
+          });
+          rowPhanCongTran.append(selHT);
+          cardHT.append(rowPhanCongTran);
+        }
+
+        if (nextHT) {
+          const btnUpHT = kit.button({
+            text: `Nâng Cấp Hộ Tông Trận (${cfgHT.phi} LT)`,
+            kind: curLt >= cfgHT.phi ? 'chinh' : 'phu',
+            onClick: () => {
+              if (curLt < cfgHT.phi) {
+                tt.ui.toast(`Sư tôn không đủ ${cfgHT.phi} linh thạch!`);
+                return;
+              }
+              tt.game.modAction('su_do', 'nang_cap_kien_thiet', { loai: 'hoTongDaiTran' });
+              tt.ui.toast(`Đã nâng cấp Hộ Tông Đại Trận lên ${nextHT.ten}!`);
+            },
+          });
+          btnUpHT.style.cssText += 'margin-top:2px; font-size:11px; padding:3px 6px;';
+          cardHT.append(btnUpHT);
+        } else {
+          const maxLabel = document.createElement('div');
+          maxLabel.className = 'hud-phu';
+          maxLabel.style.cssText = 'font-size:11px; color:#10b981; font-weight:bold;';
+          maxLabel.textContent = '✨ Hộ Tông Đại Trận đã đạt cấp Đỉnh Phong Viên Mãn!';
+          cardHT.append(maxLabel);
+        }
+        box.append(cardHT);
       }
 
       // ==========================================
@@ -2786,7 +2977,7 @@
       // ==========================================
       function capNhatLuanKiem(data, box) {
         box.innerHTML = '';
-        const deTuList = data.danhSachDeTu.filter((d) => d.trangThai?.loai !== 'lich_luyen');
+        const deTuList = data.danhSachDeTu.filter((d) => d.trangThai?.loai !== 'lich_luyen' && d.trangThai?.loai !== 'ma_hoa');
 
         const arenaBox = document.createElement('div');
         arenaBox.className = 'su-do-arena-box';
@@ -2872,6 +3063,22 @@
             <div>${cb.hiep2}</div>
             <div style="font-weight:bold; color:var(--chu-do);">${cb.chungCuoc}</div>
           `;
+
+          // Sắc phong nhanh đệ tử chiến thắng lên làm Đại Sư Huynh/Tỷ nếu chưa phải
+          const currentDaiSuHuynh = data.danhSachDeTu.find((d) => d.vaiVe === 'dai_su_huynh');
+          if (cb.thang && cb.thang !== currentDaiSuHuynh?.id) {
+            const btnPromoteWinner = kit.button({
+              text: `👑 Sắc Phong ${cb.thangTen} Làm Thủ Tịch`,
+              kind: 'phu',
+              onClick: () => {
+                tt.game.modAction('su_do', 'bo_nhiem', { deTuId: cb.thang });
+                tt.ui.toast(`Đã sắc phong ${cb.thangTen} làm Đại Sư Huynh / Đại Sư Tỷ!`);
+              },
+            });
+            btnPromoteWinner.style.cssText += 'margin-top:4px; width:100%; font-size:11px; padding:2px 6px;';
+            logBox.append(btnPromoteWinner);
+          }
+
           arenaBox.append(logBox);
         }
 
@@ -2967,9 +3174,11 @@
 
           const count = newData.danhSachDeTu.length;
           const capTLT = Number(newData.daoTrang?.kienThiet?.tuLinhTran?.cap) || 0;
+          const capHT = Number(newData.daoTrang?.kienThiet?.hoTongDaiTran?.cap) || 0;
           statsRow.innerHTML = `
             <span>👥 Đồ đệ: <b>${count}/${newMaxDt}</b></span>
             <span>⚡ Tụ Linh: <b>Lv${capTLT}</b></span>
+            <span>🛡️ Hộ Tông: <b>Lv${capHT}</b></span>
             <span>💰 Linh thạch: <b>${newNv?.linhThach ?? 0}</b></span>
           `;
         };
@@ -3068,6 +3277,7 @@
             const count = data.danhSachDeTu.length;
             const capTLT = Number(data.daoTrang.kienThiet.tuLinhTran.cap) || 0;
             const capDD = Number(data.daoTrang.kienThiet.duocDien.cap) || 0;
+            const capHT = Number(data.daoTrang.kienThiet.hoTongDaiTran?.cap) || 0;
 
             const hasMaHoa = data.danhSachDeTu.some((d) => d.trangThai?.loai === 'ma_hoa');
             const hasXongLichLuyen = data.danhSachDeTu.some((d) => d.trangThai?.loai === 'lich_luyen' && (Number(d.trangThai?.namConLai) || 0) <= 0);
@@ -3081,6 +3291,7 @@
               <div style="font-size:10.5px; color:var(--muc-nhat); display:flex; gap:6px;">
                 <span>⚡ Tụ Linh: Lv${capTLT}</span>
                 <span>🌾 Dược Điền: Lv${capDD}</span>
+                <span>🛡️ Hộ Tông: Lv${capHT}</span>
               </div>
               ${hasMaHoa ? '<div style="color:#ef4444; font-weight:bold; font-size:10.5px;">🔴 Có nghịch đồ ma hóa!</div>' : ''}
               ${hasXongLichLuyen ? '<div style="color:#10b981; font-weight:bold; font-size:10.5px;">📜 Đệ tử lịch luyện đã về!</div>' : ''}

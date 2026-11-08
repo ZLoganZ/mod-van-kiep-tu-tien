@@ -157,3 +157,79 @@
         - time: 0.02
         - tu_vi: 2.0
         - log: 'Ngươi lưu lại một đạo thần niệm chỉ điểm, đệ tử bừng tỉnh đại ngộ, lập tức lui về bế quan củng cố đạo cảnh.'
+
+- id: ev.su_do_nghich_do_phuc_kich
+  kind: su_kien
+  ten: Ma đồ phục kích sơn môn
+  tags:
+    noi: [tong_mon, dinh_nui]
+    canh_gioi: [2, 3, 4, 5]
+    tinh_chat: [hiem_hoa]
+  weight: 1
+  text: >
+    Trong đêm tối mịt mùng, hộ tông đại trận bỗng rung chuyển dữ dội!
+    Một bóng đen tà khí ngút trời dẫn theo đám ma tu bao vây sơn môn, cất tiếng cười the thé:
+    "Lão tặc sư tôn! Ngày trước ngươi phế bỏ tu vi, trục xuất ta khỏi cửa, hôm nay ta trở lại san bằng đạo tràng của ngươi!"
+  choices:
+    - text: Đích thân xuất thủ, kích hoạt Hộ Tông Đại Trận trảm diệt nghịch đồ
+      effects:
+        - time: 0.08
+        - tu_vi: 3.0
+        - add_item: item.su_do_nghich_do_ma_hoan
+        - log: 'Trận pháp đại phát quang minh, kiếm ý ngập trời trấn sát toàn bộ ma tu! Nghịch đồ đền tội trước tổ sư bài vị.'
+    - text: Hạ mình chiêu an, dùng đại nghĩa phân tích thiện ác
+      effects:
+        - time: 0.04
+        - tu_vi: 1.0
+        - log: 'Ngươi nghiêm nghị giảng giải nhân quả nghiệp báo. Ma đồ chấn động tâm can, thẹn thùng dẫn tàn quân rút lui vào bóng đêm.'
+
+- id: ev.su_do_khi_van_tong_mon
+  kind: su_kien
+  ten: Khí vận tông môn đại thịnh
+  tags:
+    noi: [tong_mon, phuong_thi]
+    canh_gioi: [1, 2, 3, 4]
+    tinh_chat: [co_duyen]
+  weight: 2
+  text: >
+    Đạo tràng ngày càng hưng thịnh, đệ tử quy tụ đông đúc siêng năng tu hành, khiến thiên địa sinh dị tượng.
+    Tường vân bảy sắc che phủ đỉnh núi, đàn tiên hạc lượn quanh ngâm nga, ban tặng một trận linh vũ xối xả khắp bổn môn!
+  choices:
+    - text: Cùng đệ tử nghênh đón linh vũ tẩy lễ
+      effects:
+        - time: 0.05
+        - tu_vi: 4.0
+        - add_item: item.su_do_ho_mach_dan
+        - log: 'Linh vũ gội rửa trần ai, toàn thể sư đồ kinh mạch thông suốt, tu vi tăng tiến vượt bậc!'
+    - text: Đóng chặt sơn môn, thu gom linh dịch vào đan thất
+      effects:
+        - time: 0.03
+        - tu_vi: 2.5
+        - add_item: item.su_do_tuyet_lien_tra
+        - log: 'Ngươi thu được linh dịch thuần khiết, dự trữ vào đan phòng để đệ tử dùng lâu dài.'
+
+- id: ev.su_do_co_nhan_gui_gam
+  kind: su_kien
+  ten: Cố nhân gửi gắm bảo vật
+  tags:
+    noi: [dong_phu, thanh, tong_mon]
+    canh_gioi: [2, 3, 4]
+    tinh_chat: [co_duyen]
+  weight: 1
+  text: >
+    Một phong phi kiếm truyền thư từ phương xa xé gió bay tới, cắm thẳng trước tĩnh thất của ngươi.
+    Đó là di thư từ một vị hảo hữu năm xưa sắp độ kiếp phi thăng, muốn gửi gắm bảo vật gia truyền cho đạo tràng của ngươi:
+    "Đạo hữu đức cao vọng trọng, mở tông lập phái, bảo vật này để lại cho đệ tử đời sau của ngươi hộ thân!"
+  choices:
+    - text: Tiếp nhận trận bàn và thành kính bái tạ
+      effects:
+        - time: 0.03
+        - tu_vi: 2.0
+        - add_item: item.su_do_ho_tong_tran_ban
+        - log: 'Ngươi nhận lấy Trận Bàn Hộ Tông gia truyền, cảm tạ thâm tình cố nhân, bố trí vào đại trận hộ môn.'
+    - text: Nhận chân truyền ngọc giản bồi dưỡng hậu bối
+      effects:
+        - time: 0.03
+        - tu_vi: 2.0
+        - add_item: item.su_do_chan_truyen_ngoc_gian
+        - log: 'Ngươi tiếp nhận Chân Truyền Ngọc Giản, đưa vào tàng kinh các để đệ tử môn phái nghiền ngẫm tu luyện.'
