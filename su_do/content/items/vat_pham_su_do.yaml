@@ -1,0 +1,30 @@
+- id: item.su_do_tin_vat
+  ten: Lệnh Bài Sư Môn
+  loai: bao_vat
+  pham_cap: 2
+  canh_gioi: 1
+  he: [kim]
+  gia: 50
+  mo_ta: >
+    Lệnh bài khắc phong hiệu của sư tôn, tỏa ra khí tức ấm áp chở che.
+    Đệ tử mang theo bên mình sẽ kiên định đạo tâm, không sợ tâm ma.
+
+- id: item.su_do_ho_mach_dan
+  ten: Hộ Mạch Tụ Khí Đan
+  loai: dan_duoc
+  pham_cap: 2
+  canh_gioi: 1
+  gia: 40
+  mo_ta: >
+    Linh đan do sư phụ dày công luyện chế, dùng khi hộ pháp cho đồ đệ xung kích cảnh giới,
+    bảo vệ kinh mạch khỏi bị lôi kiếp xé rách.
+
+- id: item.su_do_truyen_am_phu
+  ten: Vạn Lý Truyền Âm Phù
+  loai: phu_luc
+  pham_cap: 1
+  canh_gioi: 0
+  gia: 20
+  mo_ta: >
+    Bùa chú liên lạc thần thức giữa sư phụ và đệ tử, dùng để truyền tin tức tốc khi đệ tử lịch luyện gặp nguy nan.
+

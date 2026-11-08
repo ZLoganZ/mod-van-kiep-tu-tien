@@ -1,0 +1,30 @@
+id: su_do
+name: Sư Đồ Truyền Thừa
+version: 1.0.0
+api_version: 1
+author: Antigravity & Tu Tiên Giả
+description: |
+  Khai tông lập phái, thu nhận và dạy dỗ đệ tử, bồi dưỡng truyền thừa y bát.
+  Tương tác đa tầng: Luận đạo vấn tâm, truyền thụ công pháp, luận bàn đấu pháp,
+  hộ pháp gánh lôi kiếp, bổ nhiệm Đại sư huynh, phái đồ đệ lịch luyện tầm bảo,
+  hóa giải ân oán thế lực và kiếp sau tương phùng với đệ tử cũ!
+
+options:
+  - key: ti_le_ky_ngo
+    label: Tần suất kỳ ngộ thu đồ
+    hint: Xác suất bắt gặp thiếu niên, cô nhi bái sư khi chu du thế giới
+    type: choice
+    default: thuong
+    choices:
+      - { value: it, label: Hiếm gặp (10%) }
+      - { value: thuong, label: Bình thường (25%) }
+      - { value: nhieu, label: Thường xuyên (50%) }
+
+  - key: thong_bao_su_mon
+    label: Thông báo sự kiện sư môn
+    hint: Báo popup ngắn khi đệ tử đột phá hoặc kết thúc lịch luyện
+    type: bool
+    default: true
+
+script: main.js
+
