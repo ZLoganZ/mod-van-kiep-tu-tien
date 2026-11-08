@@ -108,13 +108,13 @@ Game luôn phục vụ gói mod mẫu chính thức tại đường dẫn cố �
 
 ---
 
-## 5. QUY TẮC ĐỒNG BỘ GIT & GITHUB (TỰ ĐỘNG COMMIT & PUSH)
+## 5. GIT & GITHUB SYNCHRONIZATION RULES (AUTOMATIC COMMIT & PUSH)
 
-* **Bắt buộc commit & push ngay sau khi sửa file**: Mỗi khi hoàn tất tạo mới, chỉnh sửa hoặc xóa bất kỳ file nào trong workspace (code logic, tài liệu, cấu hình `mod.yaml`, dữ liệu content, v.v.), Agent **BẮT BUỘC** phải tự động commit và push toàn bộ thay đổi lên GitHub ngay lập tức:
+* **Mandatory Commit & Push on File Modification**: Whenever any file in the workspace is created, updated, or deleted (logic scripts, docs, `mod.yaml`, content configs, assets, etc.), the Agent **MUST** immediately commit and push all changes to GitHub:
   ```bash
   git add .
-  git commit -m "<mô tả ngắn gọn nội dung thay đổi>"
+  git commit -m "<concise description of changes>"
   git push
   ```
-* **Không trì hoãn**: Tuyệt đối không để dồn thay đổi qua nhiều lượt làm việc hoặc kết thúc yêu cầu mà chưa đồng bộ lên remote GitHub.
+* **No Delay**: Never batch changes across multiple turns or conclude a request without synchronizing changes to the remote GitHub repository.
 
