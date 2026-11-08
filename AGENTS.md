@@ -51,6 +51,13 @@ Mọi bản mod đều tuân thủ Semantic Versioning trong `mod.yaml`:
    - Ưu tiên sử dụng bộ component tích hợp `tuTien.ui.kit` (`button`, `select`, `combobox`, `checkbox`, `stepper`, `slider`, `modal`, `popup`...) để đảm bảo đồng bộ giao diện và tự tương thích khi game cập nhật style.
 4. **Vá dữ liệu gốc (`patchContent` / `patch`):**
    - Thêm vào danh sách/mảng có sẵn luôn dùng `$append`, tránh chép đè cả mảng gốc để không xung đột với các mod khác hoặc các bản cập nhật sau của game.
+5. **Đóng gói Module Scope (IIFE) cho `main.js`:**
+   - Khi chia sẻ hằng số, bảng tra cứu hoặc hàm tiện ích (`CANH_GIOI_TEN`, `dinhDangCanhGioi`, `sucChuaDeTu`...) giữa cả 2 pha `boot` và `ready`, **bắt buộc** bọc file script trong closure `(() => { ... })();`. Tuyệt đối không khai báo cục bộ riêng trong `boot()` để tránh lỗi sập giao diện `ReferenceError` khi `ready()` gọi tới.
+6. **Quy chuẩn Callback Modifier (`mod.modify`):**
+   - Điểm móc nhận tham số đầu vào là một object duy nhất: `({ id, slot, value }, h)`.
+   - Hàm callback **bắt buộc luôn trả về một số hữu hạn hợp lệ (`number`)**, ví dụ `return (value ?? 1) * heSo;`. Trả về `undefined` hoặc object sẽ khiến engine game ngắt giao dịch và vô hiệu hóa mod vĩnh viễn.
+7. **Đặc tính của `tuTien.game.modAction` trong kiểm thử:**
+   - Engine bọc hành động qua `Game.act` và trả về `void` / `undefined`. Khi viết bài test kiểm thử tự động, **không assert giá trị trả về của `modAction`**, mà phải assert sự thay đổi (hoặc giữ nguyên khi bị chặn) của trạng thái trong `window.tuTien.state()`.
 
 ---
 
@@ -185,5 +192,51 @@ Thiết kế chính thức của game hỗ trợ quản lý và chỉnh sửa ch
 
 ### 4. Đánh Giá Ảnh Hưởng Đối Với Mod:
 * Đối với các mod thiên về logic, giao diện và sự kiện phân nhánh (như `su_do`): Cốt truyện kỳ ngộ giữ vững ở `content/encounters/*.yaml`. Bảng dữ liệu CSV được dùng để tra cứu ID vật phẩm/nguyên liệu/đan phương gốc của game hoặc bổ sung/chỉnh sửa chỉ số vật phẩm hàng loạt khi cần mở rộng kho trang bị, đan dược.
+
+---
+
+## 9. QUY TẮC BẮT BUỘC VỀ VĂN PHONG, LORE & XƯNG HÔ TIÊN HIỆP
+
+1. **Tuyệt đối tránh từ Hán-Việt đa nghĩa gây hiểu nhầm sang họ tên người chơi:**
+   - Tránh dùng từ cổ như "Bạch sư tôn" (dễ bị hiểu lầm thành Sư tôn họ Bạch khi nhân vật người chơi mang họ khác như Mạc, Lâm, Diệp...).
+   - **Xưng hô chuẩn mực:** Dùng *"Khởi bẩm Sư tôn"*, *"Bẩm Sư tôn"*, *"Đệ tử kính bái Sư tôn"*, hoặc nối họ tên động: `${nv.ten} Sư tôn`.
+2. **Quy tắc phân định danh xưng theo giới tính:**
+   - Đệ tử đứng đầu môn phái:
+     - Đệ tử nam (`gioiTinh === 'nam'`): **`Đại Sư Huynh`**.
+     - Đệ tử nữ (`gioiTinh === 'nu'`): **`Đại Sư Tỷ`**.
+   - Phải áp dụng đồng bộ danh xưng giới tính trên toàn bộ các thành phần: Huy hiệu trên thẻ (Badge), Biên niên sử nhật ký, Thông báo bái sư, Tooltip nút sắc phong 👑 và Hộp thoại Modal.
+3. **Phân định rạch ròi giữa "Đột Phá" vs "Độ Kiếp":**
+   - **Đột Phá Tiểu Cảnh Giới & Trúc Cơ:** Thuần túy là xung mạch phá quan, đúc tạo đạo cơ, **hoàn toàn KHÔNG CÓ lôi kiếp/độ kiếp**. Sư tôn hộ trì **0 bị thương** (`thuongThe = 0`).
+   - **Độ Kiếp Đại Cảnh Giới Cao (Kết Đan trở lên):** Mới thực sự có Cửu Thiên Lôi Kiếp. Nếu sư tôn gánh lôi kiếp, chỉ tăng đúng **+1 tầng thương thế** trên thang chuẩn `0..3` của game (`Thương nhẹ` = 1/3 thanh), tuyệt đối không để vọt quá 3 gây tình trạng nguy kịch *"Thua trận là chết"*.
+
+---
+
+## 10. BẢNG CHECKLIST QUẢN TRỊ TRẠNG THÁI & EDGE CASES CHO THỰC THỂ (NPC/ĐỆ TỬ)
+
+Khi thiết kế tính năng tương tác với thực thể (đệ tử, đạo lữ, linh thú, NPC môn phái), lập trình viên và AI Agent **BẮT BUỘC** phải rà soát và cài đặt chốt chặn cho các kịch bản biên sau:
+
+1. **Chặn toàn diện trạng thái vắng mặt (Absent / Away State Guard):**
+   - Khi thực thể đang ở trạng thái đi xa (như `lich_luyen` / lịch luyện bí cảnh, bế quan, thám hiểm di tích):
+     - **Tầng Action:** Bắt buộc kiểm tra `if (dt.trangThai?.loai === 'lich_luyen' && (dt.trangThai?.namConLai ?? 0) > 0) return 'khong_tick';` trên tất cả hành động trực tiếp (đàm tâm, truyền công, luận bàn đấu pháp, ban thưởng, hộ pháp đột phá).
+     - **Tầng UI:** Bắt buộc kiểm tra điều kiện để hiện toast báo đệ tử đang xuất sơn; hiển thị nhãn trạng thái trực quan trên thẻ nhân vật: `[Lịch luyện (X năm)]`.
+     - **Tầng Hook thế giới:** Chặn các sự kiện tương tác nội bộ tại bổn môn (như đệ tử hiếu thảo nấu Tuyết Liên Trà dâng sư tôn) khi thực thể đang vắng mặt ở phương xa.
+2. **Khống chế trần bình cảnh tu vi (Cultivation Bottleneck Ceiling):**
+   - Trong tu tiên, khi gặp bình cảnh (tu vi đạt 100%), thực thể không thể hấp thu thêm linh khí.
+   - **Công thức an toàn:** `dt.tuVi = Math.min(dt.tuViYeuCau, dt.tuVi + tang);` (áp dụng cho cả nhịp thời gian trôi qua năm `addTickHook` lẫn hành động `truyen_cong`).
+   - Chặn truyền công lãng phí chân nguyên của người chơi khi đệ tử đã chạm trần bình cảnh và yêu cầu đột phá trước.
+3. **Cơ chế kế nhiệm vai vế khi biến động nhân sự (Succession Fallback):**
+   - Khi thực thể giữ vai trò cốt cán (Đại sư huynh / Đại sư tỷ) bị trục xuất, qua đời, tọa hóa hoặc rời tông môn:
+   - Hệ thống phải **tự động chuyển giao danh hiệu** cho thực thể lớn tiếp theo trong danh sách (`data.danhSachDeTu[0].vaiVe = 'dai_su_huynh'`) kèm biên niên sử ghi nhận để môn phái không bao giờ bị khuyết vị trí lãnh đạo.
+4. **Chống điều động trùng lặp (Anti-Double Dispatch):**
+   - Chặn phái đi làm nhiệm vụ mới khi thực thể đang trong một chuyến lịch luyện chưa hoàn thành.
+5. **Cực hạn cảnh giới nhân gian (World Realm Ceiling):**
+   - Khi thực thể đạt cảnh giới cao nhất mà thế giới hỗ trợ (Hóa Thần Đại viên mãn), khóa hành động đột phá và chuyển sang huy hiệu vinh danh `✨ Đỉnh Phong Viên Mãn`.
+6. **Quy chuẩn bố cục thẻ nhân vật chống tràn chữ (Card Spacing & Badge Placement):**
+   - **Quy tắc phân tầng:**
+     - *Hàng 1:* `[Tên]` + `[Danh hiệu vai vế]` + `[Badge phẩm cấp / tư chất]` + `[Giới tính · Tuổi]` (căn phải).
+     - *Hàng 2:* `[Cảnh giới]` + `·` + `[Hệ ngũ hành]` + `[Badge trạng thái đặc biệt nếu có]`.
+     - *Hàng 3:* `[Tính cách]` + `·` + `[Hảo cảm]` + `·` + `[Đố kỵ]`.
+   - **Tuyệt đối không dồn Badge tư chất vào chung hàng với tên cảnh giới dài**: Tránh việc các chuỗi dài (như `Luyện Khí Đại viên mãn · Hệ Thủy · Thổ`) kết hợp cùng badge có `margin-left: auto` bị đẩy tràn ra ngoài mép phải của khung hiển thị.
+
 
 
