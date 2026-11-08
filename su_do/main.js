@@ -1,7 +1,7 @@
 /**
  * Mod Sư Đồ Truyền Thừa (su_do) - Vạn Kiếp Tu Tiên
  * Tác giả: Antigravity & Tu Tiên Giả
- * Phiên bản: 1.1.0
+ * Phiên bản: 1.3.0
  * Tương thích: apiVersion 1 (Đại Tu Toàn Diện Tông Môn, Kiến Thiết Đạo Tràng, Luận Kiếm, Ma Hóa, HUD Dock)
  */
 
@@ -677,7 +677,49 @@
         };
       }
 
-      function layTrangThaiMod(h) {
+      
+  function dongBoNpcDeTu(ctx, dt, data) {
+    if (!ctx?.run || !dt) return;
+    ctx.run.npc ??= {};
+    const isDead = dt.trangThai?.loai === 'da_khuat' || dt.song === false;
+    const isMaHoa = dt.trangThai?.loai === 'ma_hoa';
+    const isDaiSu = dt.vaiVe === 'dai_su_huynh';
+
+    let danhPhan = 'quen_biet';
+    if (isMaHoa) {
+      danhPhan = 'phan_boi';
+    } else if (isDaiSu || (Number(dt.haoCam) || 0) >= 60) {
+      danhPhan = 'tri_ky';
+    } else if ((Number(dt.haoCam) || 0) >= 30) {
+      danhPhan = 'bang_huu';
+    }
+
+    const existing = ctx.run.npc[dt.id] ?? {};
+    ctx.run.npc[dt.id] = {
+      ...existing,
+      ten: dt.ten,
+      goc: 'npc.su_do_de_tu',
+      gioiTinh: dt.gioiTinh ?? 'nam',
+      namSinh: existing.namSinh ?? Math.floor((Number(ctx.run.nam) || 1) - (Number(dt.tuoi) || 16)),
+      canhGioi: Number(dt.canhGioi) || 1,
+      tieuCanhGioi: Number(dt.tieuCanhGioi) || 0,
+      tuVi: Number(dt.tuVi) || 0,
+      phamChat: dt.tuChat === 'yeu_nghiet' ? 3 : dt.tuChat === 'thien_tai' ? 2 : 1,
+      haoCam: Number(dt.haoCam) || 0,
+      danhPhan,
+      namDanhPhan: existing.namDanhPhan ?? Math.floor(Number(ctx.run.nam) || 1),
+      tamTinh: dt.tinhCach === 'hieu_thuan' ? { trong_nghia: 4 } : dt.tinhCach === 'kieu_ngao' ? { trong_danh: 3 } : { trong_nghia: 2 },
+      theLuc: ctx.run.nhanVat?.theLuc ?? (data?.daoTrangTen || 'Thanh Khê Đạo Tràng'),
+      noiGap: existing.noiGap ?? ctx.run.viTri ?? 'thanh_khe',
+      que: existing.que ?? ctx.run.viTri ?? 'thanh_khe',
+      namGap: existing.namGap ?? Math.floor(Number(ctx.run.nam) || 1),
+      namCapNhat: Math.floor(Number(ctx.run.nam) || 1),
+      song: !isDead,
+      namMat: isDead ? Math.floor(Number(ctx.run.nam) || 1) : undefined,
+    };
+  }
+
+  function layTrangThaiMod(h) {
         const data = h.data() ?? {};
         data.version = Number(data.version) || 2;
         data.daoTrangTen = typeof data.daoTrangTen === 'string' && data.daoTrangTen.trim() ? data.daoTrangTen : 'Thanh Khê Đạo Tràng';
@@ -748,6 +790,7 @@
         }
 
         data.danhSachDeTu.push(deTuMoi);
+        dongBoNpcDeTu(ctx, deTuMoi, data);
         const danhXung = deTuMoi.gioiTinh === 'nu' ? 'Đại Sư Tỷ' : 'Đại Sư Huynh';
         const vaiVeStr = deTuMoi.vaiVe === 'dai_su_huynh' ? ` (Sắc phong: ${danhXung})` : '';
         ghiNhatKy(data, `Đón nhận đệ tử ${deTuMoi.ten} gia nhập bổn môn${vaiVeStr}.`, ctx.run?.nam ?? 1);
@@ -775,6 +818,7 @@
           ? 'thuận theo tự nhiên, tiêu dao tự tại giữa đất trời'
           : 'nghịch thiên cải mệnh, kẻ mạnh vi tôn';
 
+        dongBoNpcDeTu(ctx, dt, data);
         ghiNhatKy(data, `Sư tôn đàm đạo cùng ${dt.ten}, chỉ dạy đạo lý "${loiGiai}". Đạo tâm đệ tử đại chấn! Hảo cảm tăng tiến.`, ctx.run?.nam ?? 1);
         h.setData(data);
         return 'khong_tick';
@@ -795,18 +839,18 @@
         if (!nv || (Number(nv.tuVi) || 0) < 0.5) return 'khong_tick';
 
         nv.tuVi = Math.max(0, (Number(nv.tuVi) || 0) - 0.5);
-        const tang = Math.max(15, Math.round(req * 0.25));
+        const tang = 15;
         dt.tuVi = Math.min(req, cur + tang);
         dt.haoCam = Math.min(100, (Number(dt.haoCam) || 0) + 15);
 
         // Đệ tử đồng môn tăng đố kỵ
         data.danhSachDeTu.forEach((d) => {
           if (d.id !== dt.id) {
-            const tangDoKy = (d.tinhCach === 'kieu_ngao' || d.khuynhHuong === 'ma_dao') ? 6 : 5;
-            d.doKy = Math.min(100, (Number(d.doKy) || 0) + tangDoKy);
+            d.doKy = Math.min(100, (Number(d.doKy) || 0) + 5);
           }
         });
 
+        dongBoNpcDeTu(ctx, dt, data);
         ghiNhatKy(data, `Sư tôn quán đảnh truyền công cho ${dt.ten}, tiêu hao 0.5 chân nguyên, tăng ${tang} tu vi.`, ctx.run?.nam ?? 1);
         h.setData(data);
         return 'khong_tick';
@@ -833,6 +877,7 @@
           }
         });
 
+        dongBoNpcDeTu(ctx, dt, data);
         ghiNhatKy(data, `Sư tôn ban thưởng ${soTien} linh thạch cho đồ đệ ${dt.ten}.`, ctx.run?.nam ?? 1);
         h.setData(data);
         return 'khong_tick';
@@ -851,6 +896,7 @@
         dt.tuVi = Math.min(req, cur + tang);
         dt.haoCam = Math.min(100, (Number(dt.haoCam) || 0) + 5);
 
+        dongBoNpcDeTu(ctx, dt, data);
         ghiNhatKy(data, `Sư tôn hạ mình luận bàn đấu pháp cùng ${dt.ten}, chỉ điểm kiếm quyết, tăng ${tang} tu vi.`, ctx.run?.nam ?? 1);
         h.setData(data);
         return 'khong_tick';
@@ -951,6 +997,7 @@
           ghiNhatKy(data, `⚠️ Đệ tử ${dt.ten} xung kích quan ải thất bại, khí huyết nghịch hành, tổn thất 50% tu vi.`, nam);
         }
 
+        dongBoNpcDeTu(ctx, dt, data);
         h.setData(data);
         return 'khong_tick';
       });
@@ -970,6 +1017,7 @@
         dt.doKy = 0;
 
         const danhXung = dt.gioiTinh === 'nu' ? 'Đại Sư Tỷ' : 'Đại Sư Huynh';
+        data.danhSachDeTu.forEach((d) => dongBoNpcDeTu(ctx, d, data));
         ghiNhatKy(data, `Sư tôn sắc phong ${dt.ten} làm ${danhXung} đứng đầu môn phái, thống lĩnh các đồng môn!`, ctx.run?.nam ?? 1);
         h.setData(data);
         return 'khong_tick';
@@ -986,6 +1034,7 @@
         if (data.daoTrang.kienThiet.duocDien?.duocDongId === dt.id) data.daoTrang.kienThiet.duocDien.duocDongId = null;
         if (data.daoTrang.kienThiet.luyenDanPhong?.danDongId === dt.id) data.daoTrang.kienThiet.luyenDanPhong.danDongId = null;
         if (data.daoTrang.kienThiet.hoTongDaiTran?.tranDongId === dt.id) data.daoTrang.kienThiet.hoTongDaiTran.tranDongId = null;
+        if (ctx?.run?.npc?.[args?.deTuId]) { ctx.run.npc[args.deTuId].theLuc = undefined; ctx.run.npc[args.deTuId].danhPhan = "quen_biet"; }
 
         const curNam = Number(ctx.run?.nam) || 1;
         const nvKey = args?.nhiemVu && NHIEM_VU_LICH_LUYEN[args.nhiemVu] ? args.nhiemVu : 'hai_duoc';
@@ -1049,6 +1098,7 @@
         };
 
         const baoGiaTri = dt.phapBao ? ` (Pháp bảo ${dt.phapBao.ten} hộ thể +25% thu hoạch)` : '';
+        dongBoNpcDeTu(ctx, dt, data);
         ghiNhatKy(data, `Đệ tử ${dt.ten} hoàn thành lịch luyện xuất sơn trở về, ${thuong.moTa}${baoGiaTri}, tăng ${tuViThuong} tu vi!`, ctx.run?.nam ?? 1);
         h.setData(data);
         return 'khong_tick';
@@ -2358,6 +2408,18 @@
             }
           },
         });
+        const btnNhanMach = kitInstance.button({
+          text: '👁️',
+          tip: 'Xem vị trí & mối quan hệ của đồ đệ trong bảng Nhân Mạch (phím tắt N)',
+          kind: 'nho',
+          onClick: () => {
+            ttInstance.ui.gamePanel('relations', true);
+          },
+        });
+        btnNhanMach.classList.add('su-do-btn-wrap');
+        btnNhanMach.style.cssText += 'padding: 2px 5px; font-size: 10px;';
+        rightGroup.append(btnNhanMach);
+
         btnTrucXuat.classList.add('su-do-btn-wrap');
         rightGroup.append(btnTrucXuat);
 
@@ -2734,6 +2796,16 @@
       // ==========================================
       function capNhatKienThiet(data, box, s, nv) {
         box.innerHTML = '';
+        const bannerKT = document.createElement('div');
+        bannerKT.className = 'su-do-header';
+        bannerKT.style.cssText = 'padding: 6px 8px; margin-bottom: 2px;';
+        bannerKT.innerHTML = `
+          <div style="font-weight: bold; color: var(--chu-do); font-size: 12px;">🛡️ Sư Đồ Đồng Lòng · Động Phủ & Kiếm Trận</div>
+          <div style="font-size: 10.5px; color: var(--muc-nhat); line-height: 1.4; margin-top: 2px;">
+            Đồ đệ phân công chức sự ngày đêm hộ trì kiếm trận, tương trợ Sư Tôn giảm sát thương khi giao chiến và tăng tỉ lệ độ kiếp.
+          </div>
+        `;
+        box.append(bannerKT);
         const kt = data.daoTrang.kienThiet;
         const curLt = Number(nv?.linhThach) || 0;
         const deTuList = data.danhSachDeTu;
@@ -3188,7 +3260,214 @@
       }
 
       // ==========================================
-      // 5. CẮM Ô TAB VÀO MÀN HÌNH NHÂN VẬT (SLOT)
+      // 5. HÀM DỰNG GIAO DIỆN SƯ MÔN CHÍNH THỐNG
+      // ==========================================
+      function taoSuMonDashboard(container, ttInstance, kitInstance, { isCharacterTab = false } = {}) {
+        const s0 = ttInstance.state();
+        const data0 = layModData(s0);
+        const nv0 = s0.run?.nhanVat;
+        const maxDt0 = sucChuaDeTu(nv0?.canhGioi ?? 0);
+
+        const header = taoDaoTrangHeader(data0, nv0, maxDt0, kitInstance, ttInstance);
+        container.append(header);
+
+        const tabUpdaters = {};
+
+        const tabsEl = kitInstance.tabs({
+          tabs: [
+            // TAB 1: ĐỒ ĐỆ
+            {
+              id: 'tab_de_tu',
+              title: `Đồ Đệ (${data0.danhSachDeTu.length})`,
+              mount(box) {
+                box.style.cssText = 'display: flex; flex-direction: column; gap: 8px; margin-top: 6px; padding-bottom: 24px;';
+
+                const topAct = document.createElement('div');
+                topAct.style.cssText = 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; gap: 8px;';
+
+                const desc = document.createElement('div');
+                desc.style.cssText = 'font-size: 11.5px; color: var(--muc-nhat); white-space: nowrap;';
+                topAct.append(desc);
+
+                const btnChieuMo = kitInstance.button({
+                  text: '📜 Chiêu Mộ Đồ Đệ',
+                  kind: 'chinh',
+                  onClick: () => {
+                    ttInstance.game.modAction('su_do', 'tuyen_do', {});
+                    ttInstance.ui.toast('Đã mở kỳ tuyển đồ! 3 ứng viên xuất hiện bên dưới.');
+                  },
+                });
+                btnChieuMo.classList.add('su-do-btn-wrap');
+                btnChieuMo.style.cssText += 'padding: 3px 8px; font-size: 11px;';
+                topAct.append(btnChieuMo);
+                box.append(topAct);
+
+                const listUngVien = document.createElement('div');
+                listUngVien.style.cssText = 'display: flex; flex-direction: column; gap: 6px;';
+                box.append(listUngVien);
+
+                const listDeTu = document.createElement('div');
+                listDeTu.style.cssText = 'display: flex; flex-direction: column; gap: 6px;';
+                box.append(listDeTu);
+
+                tabUpdaters.tab_de_tu = (data, s, nv, maxDt) => {
+                  desc.textContent = `Đệ tử: ${data.danhSachDeTu.length}/${maxDt}`;
+                  capNhatUngVien(data.ungVien, listUngVien, data.danhSachDeTu.length, maxDt);
+                  capNhatDanhSachDeTu(data.danhSachDeTu, listDeTu, s?.run?.nam ?? 1);
+                };
+
+                const curS = ttInstance.state();
+                const curData = layModData(curS);
+                const curNv = curS.run?.nhanVat;
+                tabUpdaters.tab_de_tu(curData, curS, curNv, sucChuaDeTu(curNv?.canhGioi ?? 0));
+
+                return () => {
+                  delete tabUpdaters.tab_de_tu;
+                };
+              },
+            },
+
+            // TAB 2: KIẾN THIẾT ĐẠO TRÀNG / ĐỘNG PHỦ
+            {
+              id: 'tab_kien_thiet',
+              title: 'Kiến Thiết',
+              mount(box) {
+                box.style.cssText = 'display: flex; flex-direction: column; gap: 8px; margin-top: 6px; padding-bottom: 24px;';
+
+                tabUpdaters.tab_kien_thiet = (data, s, nv) => {
+                  capNhatKienThiet(data, box, s, nv);
+                };
+
+                const curS = ttInstance.state();
+                const curData = layModData(curS);
+                const curNv = curS.run?.nhanVat;
+                tabUpdaters.tab_kien_thiet(curData, curS, curNv);
+
+                return () => {
+                  delete tabUpdaters.tab_kien_thiet;
+                };
+              },
+            },
+
+            // TAB 3: LUẬN KIẾM TÔNG MÔN
+            {
+              id: 'tab_luan_kiem',
+              title: 'Luận Kiếm',
+              mount(box) {
+                box.style.cssText = 'display: flex; flex-direction: column; gap: 8px; margin-top: 6px; padding-bottom: 24px;';
+
+                tabUpdaters.tab_luan_kiem = (data) => {
+                  capNhatLuanKiem(data, box);
+                };
+
+                const curS = ttInstance.state();
+                const curData = layModData(curS);
+                tabUpdaters.tab_luan_kiem(curData);
+
+                return () => {
+                  delete tabUpdaters.tab_luan_kiem;
+                };
+              },
+            },
+
+            // TAB 4: LỊCH LUYỆN
+            {
+              id: 'tab_lich_luyen',
+              title: 'Lịch Luyện',
+              mount(box) {
+                box.style.cssText = 'display: flex; flex-direction: column; gap: 8px; margin-top: 6px; padding-bottom: 24px;';
+
+                tabUpdaters.tab_lich_luyen = (data, s) => {
+                  capNhatLichLuyen(data.danhSachDeTu, box, s?.run?.nam ?? 1);
+                };
+
+                const curS = ttInstance.state();
+                const curData = layModData(curS);
+                tabUpdaters.tab_lich_luyen(curData, curS);
+
+                return () => {
+                  delete tabUpdaters.tab_lich_luyen;
+                };
+              },
+            },
+
+            // TAB 5: NHẬT KÝ SƯ MÔN
+            {
+              id: 'tab_su_mon',
+              title: 'Nhật Ký',
+              mount(box) {
+                box.style.cssText = 'display: flex; flex-direction: column; gap: 8px; margin-top: 6px; padding-bottom: 24px;';
+
+                tabUpdaters.tab_su_mon = (data) => {
+                  capNhatNhatKy(data.nhatKy, box);
+                };
+
+                const curS = ttInstance.state();
+                const curData = layModData(curS);
+                tabUpdaters.tab_su_mon(curData);
+
+                return () => {
+                  delete tabUpdaters.tab_su_mon;
+                };
+              },
+            },
+
+            // TAB 6: TIỀN DUYÊN
+            {
+              id: 'tab_truyen_thua',
+              title: 'Tiền Duyên',
+              mount(box) {
+                box.style.cssText = 'display: flex; flex-direction: column; gap: 10px; margin-top: 6px; font-size: 13px; padding-bottom: 24px;';
+
+                tabUpdaters.tab_truyen_thua = () => {
+                  capNhatTienDuyen(box);
+                };
+
+                tabUpdaters.tab_truyen_thua();
+
+                return () => {
+                  delete tabUpdaters.tab_truyen_thua;
+                };
+              },
+            },
+          ],
+        });
+
+        container.append(tabsEl);
+
+        const onStateChange = () => {
+          const s = ttInstance.state();
+          const data = layModData(s);
+          const nv = s.run?.nhanVat;
+          const maxDt = sucChuaDeTu(nv?.canhGioi ?? 0);
+
+          header._update?.(data, nv, maxDt);
+
+          const tab1Btn = tabsEl.querySelector('.ui-tabs > button:nth-child(1)');
+          if (tab1Btn) {
+            const expectedTitle = `Đồ Đệ (${data.danhSachDeTu.length})`;
+            if (tab1Btn.textContent !== expectedTitle) {
+              tab1Btn.textContent = expectedTitle;
+            }
+          }
+
+          for (const k of Object.keys(tabUpdaters)) {
+            try {
+              tabUpdaters[k]?.(data, s, nv, maxDt);
+            } catch (err) {
+              console.error(`[Mod Sư Đồ] Lỗi khi cập nhật tab ${k}:`, err);
+            }
+          }
+        };
+
+        const unsubState = ttInstance.subscribe(onStateChange);
+        return () => {
+          unsubState();
+        };
+      }
+
+      // ==========================================
+      // 6. CẮM Ô TAB VÀO MÀN HÌNH NHÂN VẬT (CHARACTER TAB SLOT)
       // ==========================================
       mod.ui.addSlot('characterTab', {
         id: 'de_tu_tab',
@@ -3196,60 +3475,72 @@
         mount(el) {
           injectMasterStyles();
           el.innerHTML = '';
-
           const container = document.createElement('div');
-          container.className = 'su-do-panel';
-          container.style.cssText = 'padding: 4px 0; display: flex; flex-direction: column; gap: 8px;';
-
-          const topBar = document.createElement('div');
-          topBar.style.cssText = 'display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--vien-hud); padding-bottom: 6px;';
-
-          const titleSpan = document.createElement('span');
-          titleSpan.style.cssText = 'font-weight: bold; font-size: 13px; color: var(--chu-do);';
-          titleSpan.textContent = 'Đồ Đệ Môn Phái';
-          topBar.append(titleSpan);
-
-          const btnMoDaoTrang = kit.button({
-            text: '🏛️ Vào Đạo Tràng',
-            kind: 'chinh',
-            onClick: () => {
-              mod.ui.openPanel('dao_trang_panel');
-            },
-          });
-          btnMoDaoTrang.classList.add('su-do-btn-wrap');
-          btnMoDaoTrang.style.cssText += 'padding: 3px 8px; font-size: 11px;';
-          topBar.append(btnMoDaoTrang);
-          container.append(topBar);
-
-          const listContainer = document.createElement('div');
-          listContainer.style.cssText = 'display: flex; flex-direction: column; gap: 6px;';
-          container.append(listContainer);
+          container.className = 'su-do-panel su-do-in-char-tab';
+          container.style.cssText = 'padding: 4px 0; width: 100%; box-sizing: border-box;';
           el.append(container);
+          return taoSuMonDashboard(container, tt, kit, { isCharacterTab: true });
+        },
+      });
 
-          const capNhatSlot = () => {
+      // ==========================================
+      // 7. CẮM Ô KHUNG NƠI CHỐN (PLACE INFO SLOT)
+      // ==========================================
+      mod.ui.addSlot('placeInfo', {
+        id: 'su_do_place_slot',
+        title: '🏯 Sư Môn Đạo Tràng',
+        mount(el) {
+          injectMasterStyles();
+          el.innerHTML = '';
+
+          const box = document.createElement('div');
+          box.style.cssText = 'display: flex; flex-direction: column; gap: 6px; font-size: 12px; padding: 4px 0;';
+
+          const updatePlaceSlot = () => {
             const s = tt.state();
             const data = layModData(s);
-            const dtList = data.danhSachDeTu;
+            const nv = s.run?.nhanVat;
+            const maxDt = sucChuaDeTu(nv?.canhGioi ?? 0);
+            const count = data.danhSachDeTu.length;
+            const conLaiLichLuyen = data.danhSachDeTu.filter((d) => d.trangThai?.loai === 'lich_luyen').length;
+            const choDotPha = data.danhSachDeTu.filter((d) => (Number(d.tuVi) || 0) >= (Number(d.tuViYeuCau) || 1)).length;
 
-            if (dtList.length === 0) {
-              listContainer.innerHTML = `
-                <div style="text-align: center; color: var(--muc-nhat); font-size: 12px; padding: 16px 8px; line-height: 1.5;">
-                  Chưa có đồ đệ.<br/>
-                  Bấm <b>"Vào Đạo Tràng"</b> để chiêu mộ đệ tử đầu tiên!
-                </div>
-              `;
-              return;
-            }
+            box.innerHTML = `
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-weight: bold; color: var(--chu-do);">${data.daoTrangTen}</span>
+                <span class="hud-phu">Đồ đệ: ${count}/${maxDt}</span>
+              </div>
+              <div style="font-size: 11px; color: var(--muc-nhat); line-height: 1.4;">
+                ${conLaiLichLuyen > 0 ? `<span>🗺️ ${conLaiLichLuyen} đệ tử đang xuất sơn lịch luyện.<br/></span>` : ''}
+                ${choDotPha > 0 ? `<span style="color: #f59e0b;">⚡ ${choDotPha} đệ tử tu vi viên mãn, sẵn sàng phá quan!<br/></span>` : ''}
+                ${count === 0 ? '<span>Chưa có đồ đệ môn hạ. Mở kỳ tuyển đồ để thu nạp thiếu niên có linh căn.</span>' : ''}
+              </div>
+            `;
 
-            listContainer.innerHTML = '';
-            dtList.forEach((dt) => {
-              const card = taoTheDeTuNho(dt, tt, kit);
-              listContainer.append(card);
+            const btnRow = document.createElement('div');
+            btnRow.style.cssText = 'display: flex; gap: 6px; margin-top: 2px;';
+
+            const btnMoSuMon = kit.button({
+              text: '👥 Quản Trị Sư Môn',
+              kind: 'chinh',
+              onClick: () => {
+                tt.ui.gamePanel('character', true);
+                setTimeout(() => {
+                  const tabBtn = Array.from(document.querySelectorAll('.bnv-tren button, .mod-tab-nv button, button'))
+                    .find((b) => b.textContent && (b.textContent.includes('Sư Môn') || b.textContent.includes('Đồ Đệ')));
+                  if (tabBtn) tabBtn.click();
+                  else mod.ui.openPanel('dao_trang_panel');
+                }, 150);
+              },
             });
+            btnMoSuMon.style.cssText += 'padding: 3px 8px; font-size: 11px; flex: 1;';
+            btnRow.append(btnMoSuMon);
+            box.append(btnRow);
           };
 
-          capNhatSlot();
-          const unsub = tt.subscribe(capNhatSlot);
+          updatePlaceSlot();
+          el.append(box);
+          const unsub = tt.subscribe(updatePlaceSlot);
           return () => {
             unsub();
           };
@@ -3257,7 +3548,7 @@
       });
 
       // ==========================================
-      // 6. TIỆN ÍCH HUD MINI-DOCK (TRỤ CỘT 5)
+      // 8. TIỆN ÍCH HUD MINI-DOCK (TRỤ CỘT 5)
       // ==========================================
       mod.ui.addDock({
         id: 'su_do_dock',
@@ -3319,7 +3610,7 @@
       });
 
       // ==========================================
-      // 7. BẢNG ĐIỀU KHIỂN CHÍNH: ĐẠO TRÀNG (PANEL)
+      // 9. BẢNG ĐIỀU KHIỂN CHÍNH: ĐẠO TRÀNG (PANEL)
       // ==========================================
       mod.ui.addPanel({
         id: 'dao_trang_panel',
@@ -3327,216 +3618,11 @@
         mount(el) {
           injectMasterStyles();
           el.innerHTML = '';
-
-          const s0 = tt.state();
-          const data0 = layModData(s0);
-          const nv0 = s0.run?.nhanVat;
-          const maxDt0 = sucChuaDeTu(nv0?.canhGioi ?? 0);
-
           const container = document.createElement('div');
           container.className = 'su-do-panel';
-          container.style.cssText = 'min-height: 440px;';
-
-          const header = taoDaoTrangHeader(data0, nv0, maxDt0, kit, tt);
-          container.append(header);
-
-          const tabUpdaters = {};
-
-          const tabsEl = kit.tabs({
-            tabs: [
-              // TAB 1: ĐỒ ĐỆ
-              {
-                id: 'tab_de_tu',
-                title: `Đồ Đệ (${data0.danhSachDeTu.length})`,
-                mount(box) {
-                  box.style.cssText = 'display: flex; flex-direction: column; gap: 8px; margin-top: 6px; padding-bottom: 24px;';
-
-                  const topAct = document.createElement('div');
-                  topAct.style.cssText = 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; gap: 8px;';
-
-                  const desc = document.createElement('div');
-                  desc.style.cssText = 'font-size: 11.5px; color: var(--muc-nhat); white-space: nowrap;';
-                  topAct.append(desc);
-
-                  const btnChieuMo = kit.button({
-                    text: '📜 Chiêu Mộ Đồ Đệ',
-                    kind: 'chinh',
-                    onClick: () => {
-                      tt.game.modAction('su_do', 'tuyen_do', {});
-                      tt.ui.toast('Đã mở kỳ tuyển đồ! 3 ứng viên xuất hiện bên dưới.');
-                    },
-                  });
-                  btnChieuMo.classList.add('su-do-btn-wrap');
-                  btnChieuMo.style.cssText += 'padding: 3px 10px; font-size: 11.5px; font-weight: bold;';
-                  topAct.append(btnChieuMo);
-                  box.append(topAct);
-
-                  const uvBox = document.createElement('div');
-                  uvBox.style.cssText = 'background: rgba(218, 165, 32, 0.06); border: 1px dashed var(--vang-kim); border-radius: 8px; padding: 8px 10px; display: flex; flex-direction: column; gap: 6px;';
-                  box.append(uvBox);
-
-                  const discipleContainer = document.createElement('div');
-                  discipleContainer.style.cssText = 'display: flex; flex-direction: column; gap: 8px;';
-                  box.append(discipleContainer);
-
-                  tabUpdaters.tab_de_tu = (data, s, nv, maxDt) => {
-                    const namHienTai = s?.run?.nam ?? 1;
-                    data.danhSachDeTu.forEach((dt) => dongBoTienDoLichLuyen(dt, namHienTai));
-                    desc.innerHTML = `Đệ tử: <b>${data.danhSachDeTu.length}/${maxDt}</b>`;
-                    capNhatUngVien(data.ungVien, uvBox);
-                    capNhatDanhSachDeTu(data.danhSachDeTu, discipleContainer);
-                  };
-
-                  const curS = tt.state();
-                  const curData = layModData(curS);
-                  const curNv = curS.run?.nhanVat;
-                  tabUpdaters.tab_de_tu(curData, curS, curNv, sucChuaDeTu(curNv?.canhGioi ?? 0));
-
-                  return () => {
-                    delete tabUpdaters.tab_de_tu;
-                  };
-                },
-              },
-
-              // TAB 2: KIẾN THIẾT ĐẠO TRÀNG
-              {
-                id: 'tab_kien_thiet',
-                title: 'Kiến Thiết',
-                mount(box) {
-                  box.style.cssText = 'display: flex; flex-direction: column; gap: 8px; margin-top: 6px; padding-bottom: 24px;';
-
-                  tabUpdaters.tab_kien_thiet = (data, s, nv) => {
-                    capNhatKienThiet(data, box, s, nv);
-                  };
-
-                  const curS = tt.state();
-                  const curData = layModData(curS);
-                  const curNv = curS.run?.nhanVat;
-                  tabUpdaters.tab_kien_thiet(curData, curS, curNv);
-
-                  return () => {
-                    delete tabUpdaters.tab_kien_thiet;
-                  };
-                },
-              },
-
-              // TAB 3: LUẬN KIẾM TÔNG MÔN
-              {
-                id: 'tab_luan_kiem',
-                title: 'Luận Kiếm',
-                mount(box) {
-                  box.style.cssText = 'display: flex; flex-direction: column; gap: 8px; margin-top: 6px; padding-bottom: 24px;';
-
-                  tabUpdaters.tab_luan_kiem = (data) => {
-                    capNhatLuanKiem(data, box);
-                  };
-
-                  const curS = tt.state();
-                  const curData = layModData(curS);
-                  tabUpdaters.tab_luan_kiem(curData);
-
-                  return () => {
-                    delete tabUpdaters.tab_luan_kiem;
-                  };
-                },
-              },
-
-              // TAB 4: LỊCH LUYỆN
-              {
-                id: 'tab_lich_luyen',
-                title: 'Lịch Luyện',
-                mount(box) {
-                  box.style.cssText = 'display: flex; flex-direction: column; gap: 8px; margin-top: 6px; padding-bottom: 24px;';
-
-                  tabUpdaters.tab_lich_luyen = (data, s) => {
-                    capNhatLichLuyen(data.danhSachDeTu, box, s?.run?.nam ?? 1);
-                  };
-
-                  const curS = tt.state();
-                  const curData = layModData(curS);
-                  tabUpdaters.tab_lich_luyen(curData, curS);
-
-                  return () => {
-                    delete tabUpdaters.tab_lich_luyen;
-                  };
-                },
-              },
-
-              // TAB 5: NHẬT KÝ SƯ MÔN
-              {
-                id: 'tab_su_mon',
-                title: 'Nhật Ký',
-                mount(box) {
-                  box.style.cssText = 'display: flex; flex-direction: column; gap: 8px; margin-top: 6px; padding-bottom: 24px;';
-
-                  tabUpdaters.tab_su_mon = (data) => {
-                    capNhatNhatKy(data.nhatKy, box);
-                  };
-
-                  const curS = tt.state();
-                  const curData = layModData(curS);
-                  tabUpdaters.tab_su_mon(curData);
-
-                  return () => {
-                    delete tabUpdaters.tab_su_mon;
-                  };
-                },
-              },
-
-              // TAB 6: TIỀN DUYÊN
-              {
-                id: 'tab_truyen_thua',
-                title: 'Tiền Duyên',
-                mount(box) {
-                  box.style.cssText = 'display: flex; flex-direction: column; gap: 10px; margin-top: 6px; font-size: 13px; padding-bottom: 24px;';
-
-                  tabUpdaters.tab_truyen_thua = () => {
-                    capNhatTienDuyen(box);
-                  };
-
-                  tabUpdaters.tab_truyen_thua();
-
-                  return () => {
-                    delete tabUpdaters.tab_truyen_thua;
-                  };
-                },
-              },
-            ],
-          });
-
-          container.append(tabsEl);
+          container.style.cssText = 'min-height: 440px; width: 100%;';
           el.append(container);
-
-          const onStateChange = () => {
-            const s = tt.state();
-            const data = layModData(s);
-            const nv = s.run?.nhanVat;
-            const maxDt = sucChuaDeTu(nv?.canhGioi ?? 0);
-
-            header._update?.(data, nv, maxDt);
-
-            const tab1Btn = tabsEl.querySelector('.ui-tabs > button:nth-child(1)');
-            if (tab1Btn) {
-              const expectedTitle = `Đồ Đệ (${data.danhSachDeTu.length})`;
-              if (tab1Btn.textContent !== expectedTitle) {
-                tab1Btn.textContent = expectedTitle;
-              }
-            }
-
-            for (const k of Object.keys(tabUpdaters)) {
-              try {
-                tabUpdaters[k]?.(data, s, nv, maxDt);
-              } catch (err) {
-                console.error(`[Mod Sư Đồ] Lỗi khi cập nhật tab ${k}:`, err);
-              }
-            }
-          };
-
-          const unsubState = tt.subscribe(onStateChange);
-
-          return () => {
-            unsubState();
-          };
+          return taoSuMonDashboard(container, tt, kit, { isCharacterTab: false });
         },
       });
     },

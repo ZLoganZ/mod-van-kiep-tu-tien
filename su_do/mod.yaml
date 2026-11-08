@@ -1,16 +1,16 @@
 id: su_do
 name: Sư Đồ Truyền Thừa
-version: 1.2.0
+version: 1.3.0
 api_version: 1
 author: Antigravity & Tu Tiên Giả
 description: |
-  Đại tu toàn diện tông môn & hệ thống sư đồ sống động:
-  - Kiến thiết Đạo Tràng 4 phân khu: Tụ Linh Trận tăng tu vi, Dược Điền gieo cấy thảo dược, Luyện Đan Các luyện đan, Hộ Tông Đại Trận giảm sát thương & phản kích.
-  - Ban thưởng & Truyền thụ: Ban tặng Pháp khí, Phòng cụ, Đan dược và truyền thụ Công pháp từ túi đồ của Sư Tôn (tăng tốc độ tu luyện và đóng góp chiến đấu của đệ tử).
-  - Tâm tính & Biến cố: Đố kỵ bùng phát, Nghịch đồ ma hóa phản môn, Cảm hóa hoàn lương, Phế truất hoặc Trừ ma vệ đạo.
-  - Nội Môn Luận Kiếm: Tỉ thí võ học kịch tính, chiến báo 3 hiệp, sắc phong Chân Truyền Đại Sư Huynh / Đại Sư Tỷ.
-  - Sư Đồ Đồng Lòng: Đệ tử hộ thể tăng sát thương, giảm thương thế, trợ trận tăng tỉ lệ đột phá đại cảnh giới cho Sư Tôn!
-  - HUD Mini-Dock: Tiện ích nổi kiểm tra nhanh tình hình Đạo Tràng và thông báo sư môn cấp tốc.
+  Hòa nhập tự nhiên vào thế giới tu tiên với hệ thống Sư Đồ & Nhân Mạch chính tông:
+  - Tích hợp toàn diện vào Bảng Nhân Vật (Tab Sư Môn) & Khung Nơi Chốn: Quản trị đồ đệ, truyền công, ban thưởng trực tiếp không cần rời mạch game.
+  - Kết nối sâu Nhân Mạch (N): Đồ đệ hiển thị sống động trong mạng lưới quan hệ thế giới (Tri kỷ, Bằng hữu, Kẻ phản bội ma hóa, Đã khuất).
+  - Kiến thiết Động Phủ & Sư Đồ Đồng Lòng: Phân công chức sự đệ tử (Tụ linh, Dược điền, Đan phòng, Hộ trận) trợ chiến giảm sát thương và tương trợ đột phá.
+  - Xuất Sơn Lịch Luyện & Bí Cảnh: Đệ tử chu du hồng trần, gửi thư báo sự vụ và mang về kỳ trân dị bảo dâng sư tôn.
+  - Nội Môn Luận Kiếm & Đạo Tâm: Tỉ thí võ học tranh đoạt vị trí Đại Sư Huynh / Đại Sư Tỷ; xử lý biến cố đố kỵ và nghịch đồ ma hóa.
+  - HUD Mini-Dock: Tiện ích nổi theo dõi cấp tốc tình hình sư môn.
 
 options:
   - key: ti_le_ky_ngo

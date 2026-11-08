@@ -1,0 +1,6 @@
+- id: npc.su_do_de_tu
+  loai: qua_duong
+  goi: đồ đệ môn hạ
+  pham_chat: kha
+  dich: enemy.de_tu_noi_mon
+  tinh: Đệ tử chân truyền của ngươi, ngày đêm khổ tu vì danh tiếng sư môn.
