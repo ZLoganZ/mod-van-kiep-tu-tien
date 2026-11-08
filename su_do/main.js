@@ -1,8 +1,8 @@
 /**
  * Mod Sư Đồ Truyền Thừa (su_do) - Vạn Kiếp Tu Tiên
  * Tác giả: Antigravity & Tu Tiên Giả
- * Phiên bản: 1.0.3
- * Tương thích: apiVersion 1 (Hỗ trợ UI Kit: progress, badge, empty, toggle)
+ * Phiên bản: 1.0.4
+ * Tương thích: apiVersion 1 (Giao diện Tiên Hiệp Cổ Phong Tinh Mỹ, Ẩn Scrollbar 100%)
  */
 
 (window.tuTienMods ??= []).push({
@@ -53,7 +53,7 @@
       // Tính cách
       const tinhCach = TINH_CACH_LIST[Math.floor(rngVal * 555) % TINH_CACH_LIST.length];
 
-      // Cảnh giới ban đầu: thường là Luyện Khí tầng 1 - 4
+      // Cảnh giới ban đầu: thường là Luyện Khí tầng 1 - 3
       const tieuCanhGioi = 1 + (Math.floor(rngVal * 99) % 3);
 
       return {
@@ -94,7 +94,7 @@
     function ghiNhatKy(data, text, nam = 1) {
       data.nhatKy ??= [];
       data.nhatKy.unshift({ nam, text, time: Date.now() });
-      if (data.nhatKy.length > 50) data.nhatKy.pop(); // giữ tối đa 50 sự kiện
+      if (data.nhatKy.length > 50) data.nhatKy.pop();
     }
 
     function sucChuaDeTu(canhGioiNguoiChoi) {
@@ -141,7 +141,6 @@
       const ungVien = data.ungVien?.[idx];
       if (!ungVien) throw new Error('Không tìm thấy thông tin ứng viên!');
 
-      // Nếu chưa có ai làm Đại Sư Huynh, người đầu tiên sẽ là Đại Sư Huynh
       if (data.danhSachDeTu.length === 0) {
         ungVien.vaiVe = 'dai_su_huynh';
       }
@@ -159,7 +158,7 @@
       const dt = data.danhSachDeTu.find((d) => d.id === args?.deTuId);
       if (!dt) throw new Error('Không tìm thấy đệ tử!');
 
-      const huong = args?.huong ?? 'chinh_dao'; // chinh_dao, tieu_dao, ma_dao
+      const huong = args?.huong ?? 'chinh_dao';
       dt.khuynhHuong = huong;
       dt.haoCam = Math.min(100, dt.haoCam + 15);
       dt.tuVi += 5;
@@ -186,18 +185,13 @@
         throw new Error('Tu vi của sư tôn không đủ để truyền công!');
       }
 
-      // Trừ nhẹ tu vi sư phụ để quán đảnh
       nv.tuVi = Math.max(0, nv.tuVi - 0.5);
 
-      // Tăng tu vi đệ tử (x1.5 nếu hợp hệ ngũ hành)
       const tang = 15;
       dt.tuVi += tang;
       dt.haoCam = Math.min(100, dt.haoCam + 10);
-
-      // Giảm đố kỵ của người nhận
       dt.doKy = Math.max(0, dt.doKy - 10);
 
-      // Tăng nhẹ đố kỵ của các đệ tử khác vì thấy sư phụ thiên vị
       data.danhSachDeTu.forEach((other) => {
         if (other.id !== dt.id) {
           other.doKy = Math.min(100, (other.doKy ?? 0) + 5);
@@ -209,7 +203,7 @@
       return 'khong_tick';
     });
 
-    // Action 5: Ban thưởng linh thạch / pháp bảo
+    // Action 5: Ban thưởng linh thạch
     mod.addAction('ban_thuong', (ctx, args, h) => {
       const data = layTrangThaiMod(h);
       const dt = data.danhSachDeTu.find((d) => d.id === args?.deTuId);
@@ -225,7 +219,6 @@
       dt.haoCam = Math.min(100, dt.haoCam + 12);
       dt.doKy = Math.max(0, dt.doKy - 20);
 
-      // Tăng nhẹ đố kỵ của các đệ tử khác
       data.danhSachDeTu.forEach((other) => {
         if (other.id !== dt.id) {
           other.doKy = Math.min(100, (other.doKy ?? 0) + 4);
@@ -243,7 +236,6 @@
       const dt = data.danhSachDeTu.find((d) => d.id === args?.deTuId);
       if (!dt) throw new Error('Không tìm thấy đệ tử!');
 
-      // Sư phụ áp chế tu vi để khảo nghiệm đệ tử
       dt.tuVi += 8;
       dt.haoCam = Math.min(100, dt.haoCam + 5);
 
@@ -262,7 +254,7 @@
         throw new Error('Đệ tử chưa tích lũy đủ tu vi để xung kích cảnh giới!');
       }
 
-      const cach = args?.cach ?? 'ganh_loi_kiep'; // ganh_loi_kiep, ban_dan, tu_luc
+      const cach = args?.cach ?? 'ganh_loi_kiep';
       const nv = ctx.run.nhanVat;
       let thanhCong = false;
 
@@ -280,7 +272,7 @@
         } else {
           throw new Error('Sư tôn không có Hộ Mạch Đan hoặc không đủ 50 linh thạch để mua đan dược!');
         }
-        thanhCong = h.random() > 0.15; // 85% thành công
+        thanhCong = h.random() > 0.15;
         ghiNhatKy(data, `Sư tôn ban đan dược hộ mạch cho ${dt.ten} độ kiếp: ${thanhCong ? 'Thành công viên mãn!' : 'Bình cảnh chưa phá, may nhờ đan dược hộ mệnh nên không nguy hiểm.'}`, ctx.run.nam ?? 1);
       } else {
         thanhCong = h.random() > 0.4;
@@ -324,7 +316,7 @@
       const dt = data.danhSachDeTu.find((d) => d.id === args?.deTuId);
       if (!dt) throw new Error('Không tìm thấy đệ tử!');
 
-      const nhiemVu = args?.nhiemVu ?? 'hai_duoc'; // hai_duoc, dao_khoang, tru_ma, bi_canh
+      const nhiemVu = args?.nhiemVu ?? 'hai_duoc';
       const soNam = Math.max(1, Math.min(5, args?.soNam ?? 2));
 
       dt.trangThai = {
@@ -442,7 +434,7 @@
     const kit = tt.ui.kit;
 
     // ==========================================
-    // 4. TIỆN ÍCH HIỂN THỊ & CSS TOÀN CỤC
+    // 4. TIỆN ÍCH HIỂN THỊ & CSS TOÀN CỤC CỰC MẠNH
     // ==========================================
     const TEN_CANH_GIOI = ['Luyện Khí', 'Trúc Cơ', 'Kim Đan', 'Nguyên Anh', 'Hóa Thần', 'Luyện Hư', 'Hợp Thể', 'Đại Thừa', 'Độ Kiếp'];
 
@@ -455,10 +447,10 @@
     };
 
     const TU_CHAT_MAP = {
-      pho_thong: { ten: 'Phổ Thông', color: 'var(--muc-nhat)', bg: 'rgba(0,0,0,0.06)' },
-      kha: { ten: 'Khá Giỏi', color: 'var(--ngoc-luc)', bg: 'rgba(46,139,87,0.12)' },
-      thien_tai: { ten: 'Thiên Tài', color: 'var(--vang-kim)', bg: 'rgba(218,165,32,0.15)' },
-      yeu_nghiet: { ten: 'Yêu Nghiệt', color: 'var(--cam-do)', bg: 'rgba(220,20,60,0.15)' },
+      pho_thong: { ten: 'Phổ Thông', color: 'var(--muc-nhat)', bg: 'rgba(0,0,0,0.06)', border: 'var(--vien-hud)' },
+      kha: { ten: 'Khá Giỏi', color: '#10b981', bg: 'rgba(16,185,129,0.12)', border: '#10b981' },
+      thien_tai: { ten: 'Thiên Tài', color: '#f59e0b', bg: 'rgba(245,158,11,0.15)', border: '#f59e0b' },
+      yeu_nghiet: { ten: 'Yêu Nghiệt', color: '#ef4444', bg: 'rgba(239,68,68,0.18)', border: '#ef4444' },
     };
 
     const TINH_CACH_MAP = {
@@ -468,36 +460,141 @@
       can_man: 'Cần Mẫn',
     };
 
-    // Chèn CSS ẩn hoàn toàn scrollbar và chống giật layout
-    const styleId = 'mod-su-do-css';
+    // Triệt tiêu 100% scrollbar toàn bộ trang và trong modal để UI không bao giờ bị nhảy/giật
+    const styleId = 'mod-su-do-master-css';
     if (!document.getElementById(styleId)) {
       const style = document.createElement('style');
       style.id = styleId;
       style.textContent = `
-        /* Ẩn hoàn toàn scrollbar nhưng vẫn cho cuộn bằng chuột và vuốt */
-        .su-do-no-scroll,
-        .su-do-no-scroll * {
+        /* Ẩn triệt để scrollbar trên toàn bộ trang nhưng vẫn cuộn cực mượt */
+        * {
           scrollbar-width: none !important;
           -ms-overflow-style: none !important;
         }
-        .su-do-no-scroll::-webkit-scrollbar,
-        .su-do-no-scroll *::-webkit-scrollbar {
+        *::-webkit-scrollbar {
           display: none !important;
           width: 0 !important;
           height: 0 !important;
         }
-        /* Chống vỡ chữ và rớt dòng cho các nút bấm nhỏ */
+        
+        /* Phong cách Tiên Hiệp cho Mod Sư Đồ */
+        .su-do-panel {
+          font-family: inherit;
+          color: var(--muc);
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .su-do-header {
+          border: 1px solid var(--vien-hud);
+          background: linear-gradient(180deg, rgba(218, 165, 32, 0.08) 0%, rgba(0,0,0,0.02) 100%);
+          border-radius: 8px;
+          padding: 10px 12px;
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+
+        .su-do-header-title {
+          font-size: 15px;
+          font-weight: bold;
+          color: var(--chu-do);
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+
+        .su-do-header-sub {
+          font-size: 12px;
+          color: var(--muc-nhat);
+        }
+
+        .su-do-header-stats {
+          display: flex;
+          gap: 12px;
+          font-size: 12px;
+          margin-top: 4px;
+          padding-top: 4px;
+          border-top: 1px dashed var(--vien-trong);
+        }
+
+        /* Thẻ bài đệ tử tinh xảo */
+        .su-do-card {
+          border: 1px solid var(--vien-hud);
+          background: var(--nen-hud);
+          border-radius: 8px;
+          padding: 10px;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+          transition: border-color 0.2s ease;
+        }
+        .su-do-card:hover {
+          border-color: var(--vien-muc);
+        }
+
+        .su-do-avatar {
+          width: 48px;
+          height: 48px;
+          border-radius: 50%;
+          border: 2px solid var(--vien-muc);
+          box-shadow: 0 0 6px rgba(0,0,0,0.1);
+          overflow: hidden;
+          background: #fff;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+
+        .su-do-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 2px;
+          font-size: 11px;
+          padding: 1px 7px;
+          border-radius: 10px;
+          line-height: 1.4;
+          font-weight: 600;
+        }
+
         .su-do-btn-wrap {
           white-space: nowrap !important;
           flex-shrink: 0 !important;
         }
-        .su-do-badge {
-          display: inline-block;
-          font-size: 11px;
-          padding: 1px 6px;
-          border-radius: 4px;
-          line-height: 1.4;
-          font-weight: 500;
+
+        /* Thanh tiến trình tu vi đẹp mắt */
+        .su-do-progress-bar {
+          height: 6px;
+          background: rgba(0,0,0,0.08);
+          border-radius: 3px;
+          overflow: hidden;
+          flex: 1;
+        }
+        .su-do-progress-val {
+          height: 100%;
+          background: linear-gradient(90deg, var(--chu-do), #d97706);
+          border-radius: 3px;
+          transition: width 0.3s ease;
+        }
+
+        /* Hàng nút bấm chia theo cụm */
+        .su-do-action-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 4px;
+          margin-top: 2px;
+        }
+        .su-do-action-subgrid {
+          display: flex;
+          gap: 4px;
+          justify-content: space-between;
+          align-items: center;
+          margin-top: 4px;
+          padding-top: 4px;
+          border-top: 1px dashed var(--vien-trong);
         }
       `;
       document.head.append(style);
@@ -539,26 +636,31 @@
           const s = tt.state();
           const data = s.run?.modData?.su_do ?? {};
           const danhSach = data.danhSachDeTu ?? [];
+          const nv = s.run?.nhanVat;
+          const maxDt = sucChuaDeTu(nv?.canhGioi ?? 0);
 
           const wrap = document.createElement('div');
-          wrap.className = 'su-do-no-scroll';
-          wrap.style.cssText = 'padding: 8px 4px; display: flex; flex-direction: column; gap: 8px;';
+          wrap.className = 'su-do-panel';
+          wrap.style.cssText = 'padding: 8px 4px;';
 
-          // Thanh công cụ đầu tab
+          // Header nhỏ gọn
           const topBar = document.createElement('div');
-          topBar.style.cssText = 'display: flex; justify-content: space-between; align-items: center;';
-
-          const title = document.createElement('div');
-          title.style.cssText = 'font-size: 13px;';
-          title.innerHTML = `<b>Đạo Tràng:</b> ${data.daoTrangTen ?? 'Thanh Khê Đạo Tràng'} <span class="hud-phu">(${danhSach.length} đệ tử)</span>`;
-          topBar.append(title);
+          topBar.className = 'su-do-header';
+          topBar.innerHTML = `
+            <div class="su-do-header-title">
+              <span>🏛️ ${data.daoTrangTen ?? 'Thanh Khê Đạo Tràng'}</span>
+              <span class="hud-phu" style="font-size:12px; font-weight:normal;">(${danhSach.length}/${maxDt})</span>
+            </div>
+            <div class="su-do-header-sub">Sư Tôn khai sơn lập phái, thụ nghiệp truyền đạo.</div>
+          `;
 
           const btnMoDaoTrang = kit.button({
-            text: '🏛️ Đạo Tràng',
+            text: 'Mở Bảng Đạo Tràng',
             kind: 'chinh',
             onClick: () => mod.ui.openPanel('dao_trang_panel'),
           });
           btnMoDaoTrang.classList.add('su-do-btn-wrap');
+          btnMoDaoTrang.style.cssText += 'margin-top: 6px;';
           topBar.append(btnMoDaoTrang);
           wrap.append(topBar);
 
@@ -566,13 +668,12 @@
             wrap.append(
               kit.empty({
                 text: 'Chưa có đồ đệ nào bái nhập sư môn',
-                hint: 'Hãy mở Đạo Tràng để tổ chức kỳ tuyển mộ đệ tử!',
+                hint: 'Hãy mở Đạo Tràng để chiêu mộ những kỳ tài đầu tiên!',
               })
             );
           } else {
             danhSach.forEach((dt) => {
-              const card = taoTheDeTuNho(dt, tt, kit);
-              wrap.append(card);
+              wrap.append(taoTheDeTuNho(dt, tt, kit));
             });
           }
 
@@ -598,76 +699,97 @@
           const danhSach = data.danhSachDeTu ?? [];
           const ungVien = data.ungVien ?? [];
           const nv = s.run?.nhanVat;
+          const maxDt = sucChuaDeTu(nv?.canhGioi ?? 0);
 
           const container = document.createElement('div');
-          container.className = 'su-do-no-scroll';
-          container.style.cssText = 'display: flex; flex-direction: column; gap: 8px; min-height: 420px; overflow-y: auto;';
+          container.className = 'su-do-panel';
+          container.style.cssText = 'min-height: 420px;';
 
-          // 4 TABS RÚT GỌN ĐỂ KHÔNG BỊ RỚT DÒNG
+          // HEADER ĐẠO TRÀNG SANG TRỌNG
+          const header = document.createElement('div');
+          header.className = 'su-do-header';
+          header.innerHTML = `
+            <div class="su-do-header-title">
+              <span>🏛️ ${data.daoTrangTen ?? 'THANH KHÊ ĐẠO TRÀNG'}</span>
+              <span class="su-do-badge" style="color:var(--vang-kim); background:rgba(218,165,32,0.12); border:1px solid var(--vang-kim);">
+                ${TEN_CANH_GIOI[nv?.canhGioi ?? 0]} Sư Tôn
+              </span>
+            </div>
+            <div class="su-do-header-sub">Khai sơn lập phái · Quảng truyền đạo pháp · Vạn thế lưu danh</div>
+            <div class="su-do-header-stats">
+              <span>🥋 Đồ Đệ: <b>${danhSach.length} / ${maxDt}</b></span>
+              <span>📜 Tông Môn: <b>Hưng Thịnh</b></span>
+              <span>✨ Ứng Viên Chờ: <b>${ungVien.length}</b></span>
+            </div>
+          `;
+          container.append(header);
+
+          // 4 TABS RÚT GỌN NẰM TRÊN 1 HÀNG
           const tabsEl = kit.tabs({
             tabs: [
-              // TAB 1: DANH SÁCH ĐỒ ĐỆ
+              // TAB 1: ĐỒ ĐỆ
               {
                 id: 'tab_de_tu',
                 title: `Đồ Đệ (${danhSach.length})`,
                 mount(box) {
-                  box.className = 'su-do-no-scroll';
                   box.style.cssText = 'display: flex; flex-direction: column; gap: 8px; margin-top: 6px;';
 
                   // Nút mở kỳ tuyển đồ
-                  const rowTuyen = document.createElement('div');
-                  rowTuyen.style.cssText = 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;';
+                  const topAct = document.createElement('div');
+                  topAct.style.cssText = 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;';
 
-                  const scSpan = document.createElement('div');
-                  scSpan.style.cssText = 'font-size: 13px; color: var(--muc);';
-                  const maxDt = sucChuaDeTu(nv?.canhGioi ?? 0);
-                  scSpan.innerHTML = `Sức chứa: <b>${danhSach.length} / ${maxDt}</b> đệ tử`;
-                  rowTuyen.append(scSpan);
+                  const desc = document.createElement('div');
+                  desc.style.cssText = 'font-size: 12px; color: var(--muc-nhat);';
+                  desc.innerHTML = `Đệ tử môn hạ: <b>${danhSach.length}/${maxDt}</b>`;
+                  topAct.append(desc);
 
                   const btnChieuMo = kit.button({
                     text: '📜 Chiêu Mộ Đồ Đệ',
-                    kind: 'phu',
+                    kind: 'chinh',
                     onClick: () => {
                       tt.game.modAction('su_do', 'tuyen_do', {});
-                      tt.ui.toast('Đã mở kỳ tuyển đồ! 3 ứng viên đang chờ bên dưới.');
+                      tt.ui.toast('Đã mở kỳ tuyển đồ! 3 ứng viên xuất hiện bên dưới.');
                     },
                   });
                   btnChieuMo.classList.add('su-do-btn-wrap');
-                  rowTuyen.append(btnChieuMo);
-                  box.append(rowTuyen);
+                  topAct.append(btnChieuMo);
+                  box.append(topAct);
 
-                  // Danh sách ứng viên đang chờ nếu có
+                  // BẢNG VÀNG ỨNG VIÊN ĐANG CHỜ BÁI SƯ
                   if (ungVien.length > 0) {
                     const uvBox = document.createElement('div');
-                    uvBox.style.cssText = 'background: rgba(218, 165, 32, 0.08); border: 1px dashed var(--vang-kim); border-radius: 6px; padding: 8px; margin-bottom: 8px; display: flex; flex-direction: column; gap: 6px;';
+                    uvBox.style.cssText = 'background: rgba(218, 165, 32, 0.06); border: 1px dashed var(--vang-kim); border-radius: 8px; padding: 8px 10px; display: flex; flex-direction: column; gap: 6px;';
 
                     const uvHeader = document.createElement('div');
-                    uvHeader.style.cssText = 'font-size: 13px; font-weight: 600; color: var(--vang-kim);';
-                    uvHeader.innerHTML = `⚡ Ứng viên đang chờ bái sư (${ungVien.length}):`;
+                    uvHeader.style.cssText = 'font-size: 13px; font-weight: bold; color: var(--vang-kim); display: flex; justify-content: space-between;';
+                    uvHeader.innerHTML = `<span>⚡ Ứng viên cầu đạo đang chờ bái sư (${ungVien.length}):</span>`;
                     uvBox.append(uvHeader);
 
                     ungVien.forEach((uv, idx) => {
                       const itemCard = document.createElement('div');
-                      itemCard.style.cssText = 'background: var(--nen-hud); border: 1px solid var(--vien-hud); border-radius: 6px; padding: 6px 8px; display: flex; justify-content: space-between; align-items: center; gap: 6px;';
+                      itemCard.style.cssText = 'background: var(--nen-hud); border: 1px solid var(--vien-hud); border-radius: 6px; padding: 6px 10px; display: flex; justify-content: space-between; align-items: center; gap: 8px;';
 
                       const colLeft = document.createElement('div');
                       colLeft.style.cssText = 'display: flex; flex-direction: column; gap: 2px; font-size: 12px;';
 
-                      const tc = TU_CHAT_MAP[uv.tuChat] ?? { ten: uv.tuChat, color: 'inherit', bg: 'transparent' };
+                      const tc = TU_CHAT_MAP[uv.tuChat] ?? { ten: uv.tuChat, color: 'inherit', bg: 'transparent', border: 'transparent' };
                       const heStr = uv.he.map((h) => HE_MAP[h] ?? h).join(' · ');
 
                       colLeft.innerHTML = `
-                        <div style="font-size: 13px;"><b>${uv.ten}</b> <span class="hud-phu">(${uv.gioiTinh === 'nam' ? 'Nam' : 'Nữ'}, ${uv.tuoi} tuổi)</span></div>
-                        <div style="display:flex; gap:6px; align-items:center; margin-top:2px;">
+                        <div style="font-size: 13px;">
+                          <b>${uv.ten}</b>
+                          <span class="hud-phu" style="font-size:11px;">(${uv.gioiTinh === 'nam' ? 'Nam' : 'Nữ'}, ${uv.tuoi}t)</span>
+                        </div>
+                        <div style="display:flex; gap:6px; align-items:center;">
                           <span>Hệ: <b>${heStr}</b></span>
-                          <span class="su-do-badge" style="color:${tc.color}; background:${tc.bg}; border:1px solid ${tc.color};">${tc.ten}</span>
+                          <span class="su-do-badge" style="color:${tc.color}; background:${tc.bg}; border:1px solid ${tc.border};">${tc.ten}</span>
                         </div>
                       `;
                       itemCard.append(colLeft);
 
                       const btnNhan = kit.button({
-                        text: 'Thu nhận',
-                        kind: 'nho',
+                        text: 'Thu Nhận',
+                        kind: 'chinh',
                         onClick: () => {
                           try {
                             tt.game.modAction('su_do', 'nhan_de_tu', { index: idx });
@@ -678,7 +800,7 @@
                         },
                       });
                       btnNhan.classList.add('su-do-btn-wrap');
-                      btnNhan.style.cssText += 'padding: 4px 10px; font-weight: bold;';
+                      btnNhan.style.cssText += 'padding: 4px 12px; font-weight: bold; font-size: 12px;';
                       itemCard.append(btnNhan);
 
                       uvBox.append(itemCard);
@@ -686,12 +808,12 @@
                     box.append(uvBox);
                   }
 
-                  // Danh sách đệ tử chính thức
+                  // DANH SÁCH ĐỒ ĐỆ CHÍNH THỨC
                   if (danhSach.length === 0) {
                     box.append(
                       kit.empty({
                         text: 'Đạo tràng chưa có đệ tử nào',
-                        hint: 'Hãy bấm nút "Chiêu Mộ Đồ Đệ" ở trên để tìm kiếm kỳ tài tu tiên!',
+                        hint: 'Hãy bấm nút "Chiêu Mộ Đồ Đệ" ở trên để tìm kiếm thiên tài!',
                       })
                     );
                   } else {
@@ -702,12 +824,11 @@
                 },
               },
 
-              // TAB 2: SƯ MÔN NHẬT KÝ
+              // TAB 2: NHẬT KÝ SƯ MÔN
               {
                 id: 'tab_su_mon',
                 title: 'Nhật Ký',
                 mount(box) {
-                  box.className = 'su-do-no-scroll';
                   box.style.cssText = 'display: flex; flex-direction: column; gap: 8px; margin-top: 6px;';
 
                   const nhatKy = data.nhatKy ?? [];
@@ -715,12 +836,11 @@
                     box.append(kit.empty({ text: 'Chưa có sự kiện sư môn nào được ghi lại' }));
                   } else {
                     const logList = document.createElement('div');
-                    logList.className = 'su-do-no-scroll';
-                    logList.style.cssText = 'max-height: 340px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px;';
+                    logList.style.cssText = 'max-height: 340px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;';
                     nhatKy.forEach((nk) => {
                       const item = document.createElement('div');
-                      item.style.cssText = 'font-size: 12px; padding: 4px 6px; border-bottom: 1px solid var(--vien-trong);';
-                      item.innerHTML = `<span class="hud-phu">[Năm ${nk.nam}]</span> ${nk.text}`;
+                      item.style.cssText = 'font-size: 12px; padding: 6px 8px; border-left: 2px solid var(--chu-do); background: rgba(0,0,0,0.02); border-radius: 0 4px 4px 0;';
+                      item.innerHTML = `<span style="color:var(--chu-do); font-weight:600;">[Năm ${nk.nam}]</span> ${nk.text}`;
                       logList.append(item);
                     });
                     box.append(logList);
@@ -733,7 +853,6 @@
                 id: 'tab_lich_luyen',
                 title: 'Lịch Luyện',
                 mount(box) {
-                  box.className = 'su-do-no-scroll';
                   box.style.cssText = 'display: flex; flex-direction: column; gap: 8px; margin-top: 6px;';
 
                   const dangLichLuyen = danhSach.filter((d) => d.trangThai?.loai === 'lich_luyen');
@@ -745,12 +864,16 @@
                   } else {
                     dangLichLuyen.forEach((dt) => {
                       const row = document.createElement('div');
-                      row.style.cssText = 'border: 1px solid var(--vien-hud); background: var(--nen-hud); border-radius: 6px; padding: 6px 10px; display: flex; justify-content: space-between; align-items: center;';
+                      row.className = 'su-do-card';
+                      row.style.cssText = 'display: flex; justify-content: space-between; align-items: center;';
 
                       const info = document.createElement('div');
-                      info.style.cssText = 'font-size: 12px;';
+                      info.style.cssText = 'font-size: 12px; display: flex; flex-direction: column; gap: 2px;';
                       const conLai = dt.trangThai?.namConLai ?? 0;
-                      info.innerHTML = `<b>${dt.ten}</b> - Nhiệm vụ: <i>${dt.trangThai?.nhiemVu}</i><br><span class="hud-phu">${conLai > 0 ? `Còn ${conLai} năm nữa trở về` : '✅ Đã hoàn thành, chờ thu nhận!'}</span>`;
+                      info.innerHTML = `
+                        <div><b>${dt.ten}</b> - Nhiệm vụ: <i style="color:var(--chu-do);">${dt.trangThai?.nhiemVu}</i></div>
+                        <div class="hud-phu">${conLai > 0 ? `⏳ Còn <b>${conLai} năm</b> nữa trở về` : '✅ Đã hoàn thành, chờ thu nhận!'}</div>
+                      `;
                       row.append(info);
 
                       if (conLai === 0) {
@@ -773,8 +896,14 @@
                   if (ranhRoi.length > 0) {
                     ranhRoi.forEach((dt) => {
                       const row = document.createElement('div');
-                      row.style.cssText = 'border: 1px solid var(--vien-hud); background: var(--nen-hud); border-radius: 6px; padding: 6px 10px; display: flex; justify-content: space-between; align-items: center; margin: 4px 0; font-size: 13px;';
-                      row.innerHTML = `<span><b>${dt.ten}</b> <span class="hud-phu">(${TEN_CANH_GIOI[dt.canhGioi]} tầng ${dt.tieuCanhGioi})</span></span>`;
+                      row.className = 'su-do-card';
+                      row.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 8px 10px;';
+                      row.innerHTML = `
+                        <div style="font-size:13px;">
+                          <b>${dt.ten}</b> 
+                          <span class="hud-phu" style="font-size:12px;">(${TEN_CANH_GIOI[dt.canhGioi]} tầng ${dt.tieuCanhGioi})</span>
+                        </div>
+                      `;
 
                       const btnPhai = kit.button({
                         text: 'Phái Đi',
@@ -786,7 +915,7 @@
                               modalBox.style.cssText = 'display: flex; flex-direction: column; gap: 8px;';
 
                               const msg = document.createElement('div');
-                              msg.innerHTML = 'Chọn nhiệm vụ lịch luyện cho đồ đệ:';
+                              msg.innerHTML = 'Chọn phương hướng lịch luyện cho đồ đệ:';
                               modalBox.append(msg);
 
                               const selNv = kit.select({
@@ -805,7 +934,7 @@
                               modalBox.append(timeInfo);
 
                               const btnXacNhan = kit.button({
-                                text: 'Xuất Phát',
+                                text: 'Xuất Sơn',
                                 kind: 'chinh',
                                 onClick: () => {
                                   tt.game.modAction('su_do', 'phai_lich_luyen', {
@@ -835,11 +964,11 @@
                 id: 'tab_truyen_thua',
                 title: 'Tiền Duyên',
                 mount(box) {
-                  box.className = 'su-do-no-scroll';
                   box.style.cssText = 'display: flex; flex-direction: column; gap: 10px; margin-top: 6px; font-size: 13px;';
 
                   const intro = document.createElement('div');
-                  intro.innerHTML = 'Tông môn truyền thừa qua vạn kiếp. Những đệ tử xuất sắc của kiếp trước khi sư phụ tọa hóa sẽ tiếp tục tu hành, kiếp sau có cơ hội tương phùng tái ngộ!';
+                  intro.style.cssText = 'line-height: 1.5; color: var(--muc);';
+                  intro.innerHTML = 'Tông môn truyền thừa qua muôn vàn kiếp số. Đồ đệ xuất sắc khi sư tôn tọa hóa sẽ tiếp tục tu hành, kiếp sau có cơ hội tương phùng tái ngộ!';
                   box.append(intro);
 
                   let tienDuyen = [];
@@ -876,18 +1005,19 @@
     });
 
     // ==========================================
-    // 7. CÁC HÀM TẠO CARD / GIAO DIỆN CON
+    // 7. CÁC HÀM TẠO THẺ ĐỆ TỬ TINH XẢO
     // ==========================================
 
     function taoTheDeTuNho(dt, tt, kit) {
       const card = document.createElement('div');
-      card.style.cssText = 'border: 1px solid var(--vien-hud); background: var(--nen-hud); border-radius: 6px; padding: 6px 8px; display: flex; flex-direction: column; gap: 4px;';
+      card.className = 'su-do-card';
+      card.style.cssText = 'padding: 8px; gap: 4px;';
 
       const rowTop = document.createElement('div');
       rowTop.style.cssText = 'display: flex; justify-content: space-between; align-items: center; font-size: 13px;';
 
       const tenSpan = document.createElement('span');
-      tenSpan.innerHTML = `<b>${dt.ten}</b> ${dt.vaiVe === 'dai_su_huynh' ? '<span style="color:var(--vang-kim); font-size:11px;">[Đại Sư Huynh]</span>' : ''}`;
+      tenSpan.innerHTML = `<b>${dt.ten}</b> ${dt.vaiVe === 'dai_su_huynh' ? '<span style="color:var(--vang-kim); font-size:11px; font-weight:bold;">[Đại Sư Huynh]</span>' : ''}`;
       rowTop.append(tenSpan);
 
       const cgSpan = document.createElement('span');
@@ -896,40 +1026,36 @@
       rowTop.append(cgSpan);
       card.append(rowTop);
 
-      // Thanh tu vi progress
+      // Thanh tu vi progress thanh mảnh
       const pct = Math.min(100, Math.floor((dt.tuVi / dt.tuViYeuCau) * 100));
-      if (kit.progress) {
-        card.append(kit.progress({ value: dt.tuVi, max: dt.tuViYeuCau }));
-      } else {
-        const bar = document.createElement('div');
-        bar.style.cssText = 'height: 4px; background: rgba(0,0,0,0.1); border-radius: 2px; overflow: hidden; margin: 2px 0;';
-        bar.innerHTML = `<div style="height:100%; width:${pct}%; background:var(--chu-do);"></div>`;
-        card.append(bar);
-      }
+      const progBox = document.createElement('div');
+      progBox.className = 'su-do-progress-bar';
+      progBox.innerHTML = `<div class="su-do-progress-val" style="width: ${pct}%;"></div>`;
+      card.append(progBox);
 
       return card;
     }
 
     function taoTheDeTuChiTiet(dt, tt, kit) {
       const card = document.createElement('div');
-      card.style.cssText = 'border: 1px solid var(--vien-hud); background: var(--nen-hud); border-radius: 6px; padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; margin-bottom: 6px;';
+      card.className = 'su-do-card';
 
       const top = document.createElement('div');
       top.style.cssText = 'display: flex; gap: 10px; align-items: center;';
 
-      // Chân dung NPC thủy mặc bằng npcFace
+      // Chân dung NPC thủy mặc
       const faceUrl = tt.assets?.npcFace?.(dt.id, dt.gioiTinh, dt.tuoi, 'su_phu');
       const avatar = document.createElement('div');
-      avatar.style.cssText = 'width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--vien-muc); overflow: hidden; background: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0;';
+      avatar.className = 'su-do-avatar';
       if (faceUrl) {
         avatar.innerHTML = `<img src="${faceUrl}" style="width:100%; height:100%; object-fit:cover;" />`;
       } else {
-        avatar.innerHTML = `<span style="font-size:18px;">🥋</span>`;
+        avatar.innerHTML = `<span style="font-size:20px;">🥋</span>`;
       }
       top.append(avatar);
 
-      // Thông tin cơ bản
-      const tc = TU_CHAT_MAP[dt.tuChat] ?? { ten: dt.tuChat, color: 'inherit', bg: 'transparent' };
+      // Thông tin chi tiết
+      const tc = TU_CHAT_MAP[dt.tuChat] ?? { ten: dt.tuChat, color: 'inherit', bg: 'transparent', border: 'transparent' };
       const heStr = dt.he.map((h) => HE_MAP[h] ?? h).join(' · ');
       const tcStr = TINH_CACH_MAP[dt.tinhCach] ?? dt.tinhCach;
 
@@ -939,33 +1065,36 @@
         <div style="font-size:14px; display:flex; gap:6px; align-items:center;">
           <b>${dt.ten}</b>
           ${dt.vaiVe === 'dai_su_huynh' ? '<span style="color:var(--vang-kim); font-size:11px; font-weight:bold;">[Đại Sư Huynh]</span>' : ''}
-          <span class="hud-phu">(${dt.gioiTinh === 'nam' ? 'Nam' : 'Nữ'}, ${dt.tuoi}t)</span>
+          <span class="hud-phu" style="font-size:11px;">(${dt.gioiTinh === 'nam' ? 'Nam' : 'Nữ'}, ${dt.tuoi}t)</span>
         </div>
         <div style="display:flex; gap:6px; align-items:center; margin-top:2px;">
           <span>${TEN_CANH_GIOI[dt.canhGioi]} tầng ${dt.tieuCanhGioi}</span> · 
-          <span>${heStr}</span>
-          <span class="su-do-badge" style="color:${tc.color}; background:${tc.bg}; border:1px solid ${tc.color};">${tc.ten}</span>
+          <span>Hệ ${heStr}</span>
+          <span class="su-do-badge" style="color:${tc.color}; background:${tc.bg}; border:1px solid ${tc.border};">${tc.ten}</span>
         </div>
-        <div class="hud-phu">Tính cách: <i>${tcStr}</i> | Hiếu cảm: <b>${dt.haoCam}</b> | Đố kỵ: <b style="color:${dt.doKy > 50 ? 'var(--cam-do)' : 'inherit'}">${dt.doKy}</b></div>
+        <div class="hud-phu" style="font-size:11px;">Tính cách: <i>${tcStr}</i> | Hiếu cảm: <b>${dt.haoCam}</b> | Đố kỵ: <b style="color:${dt.doKy > 50 ? 'var(--cam-do)' : 'inherit'}">${dt.doKy}</b></div>
       `;
       top.append(info);
       card.append(top);
 
-      // Thanh tu vi
+      // Thanh tu vi kèm %
       const pct = Math.min(100, Math.floor((dt.tuVi / dt.tuViYeuCau) * 100));
-      const progBox = document.createElement('div');
-      progBox.style.cssText = 'display:flex; align-items:center; gap:8px; font-size:11px;';
-      progBox.innerHTML = `<span>Tu vi: ${dt.tuVi}/${dt.tuViYeuCau} (${pct}%)</span>`;
-      if (kit.progress) {
-        progBox.append(kit.progress({ value: dt.tuVi, max: dt.tuViYeuCau }));
-      }
-      card.append(progBox);
+      const progRow = document.createElement('div');
+      progRow.style.cssText = 'display:flex; align-items:center; gap:8px; font-size:11px;';
+      progRow.innerHTML = `
+        <span class="hud-phu" style="font-size:11px; white-space:nowrap;">Tu vi:</span>
+        <div class="su-do-progress-bar">
+          <div class="su-do-progress-val" style="width: ${pct}%;"></div>
+        </div>
+        <span style="font-size:11px; white-space:nowrap; font-weight:600;">${pct}%</span>
+      `;
+      card.append(progRow);
 
-      // HÀNG NÚT TƯƠNG TÁC
-      const btnRow = document.createElement('div');
-      btnRow.style.cssText = 'display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px;';
+      // HÀNG NÚT TƯƠNG TÁC CHÍNH (3 Nút hàng trên)
+      const gridMain = document.createElement('div');
+      gridMain.className = 'su-do-action-grid';
 
-      // 1. Nút Đàm tâm
+      // 1. Đàm tâm
       const btnDamTam = kit.button({
         text: '🗣️ Đàm Tâm',
         kind: 'nho',
@@ -1018,9 +1147,9 @@
         },
       });
       btnDamTam.classList.add('su-do-btn-wrap');
-      btnRow.append(btnDamTam);
+      gridMain.append(btnDamTam);
 
-      // 2. Nút Truyền công
+      // 2. Truyền công
       const btnTruyenCong = kit.button({
         text: '📖 Truyền Công',
         kind: 'nho',
@@ -1034,11 +1163,28 @@
         },
       });
       btnTruyenCong.classList.add('su-do-btn-wrap');
-      btnRow.append(btnTruyenCong);
+      gridMain.append(btnTruyenCong);
 
-      // 3. Nút Ban thưởng
+      // 3. Luận bàn
+      const btnDauPhap = kit.button({
+        text: '⚔️ Luận Bàn',
+        kind: 'nho',
+        onClick: () => {
+          tt.game.modAction('su_do', 'dau_phap', { deTuId: dt.id });
+          tt.ui.toast(`Đã luận bàn đấu pháp cùng ${dt.ten}!`);
+        },
+      });
+      btnDauPhap.classList.add('su-do-btn-wrap');
+      gridMain.append(btnDauPhap);
+      card.append(gridMain);
+
+      // HÀNG PHỤ: Ban Thưởng, Độ Kiếp, Đại Sư Huynh, Trục Xuất
+      const subRow = document.createElement('div');
+      subRow.className = 'su-do-action-subgrid';
+
+      // Nút Ban thưởng
       const btnBanThuong = kit.button({
-        text: '🎁 Ban Thưởng',
+        text: '🎁 Ban Thưởng (30 LT)',
         kind: 'nho',
         onClick: () => {
           try {
@@ -1050,21 +1196,9 @@
         },
       });
       btnBanThuong.classList.add('su-do-btn-wrap');
-      btnRow.append(btnBanThuong);
+      subRow.append(btnBanThuong);
 
-      // 4. Nút Luận bàn đấu pháp
-      const btnDauPhap = kit.button({
-        text: '⚔️ Luận Bàn',
-        kind: 'nho',
-        onClick: () => {
-          tt.game.modAction('su_do', 'dau_phap', { deTuId: dt.id });
-          tt.ui.toast(`Đã luận bàn đấu pháp cùng ${dt.ten}!`);
-        },
-      });
-      btnDauPhap.classList.add('su-do-btn-wrap');
-      btnRow.append(btnDauPhap);
-
-      // 5. Nút Hộ pháp độ kiếp nếu đủ tu vi
+      // Nút Hộ pháp nếu đủ tu vi
       if (dt.tuVi >= dt.tuViYeuCau) {
         const btnHoPhap = kit.button({
           text: '⚡ Độ Kiếp',
@@ -1121,13 +1255,17 @@
           },
         });
         btnHoPhap.classList.add('su-do-btn-wrap');
-        btnRow.append(btnHoPhap);
+        subRow.append(btnHoPhap);
       }
 
-      // 6. Nút Bổ nhiệm Đại Sư Huynh
+      // Cụm chức năng quản trị bên phải
+      const rightGroup = document.createElement('div');
+      rightGroup.style.cssText = 'display: flex; gap: 4px; align-items: center;';
+
       if (dt.vaiVe !== 'dai_su_huynh') {
         const btnBoNhiem = kit.button({
-          text: '👑 Đại Sư Huynh',
+          text: '👑',
+          tip: 'Sắc phong làm Đại Sư Huynh',
           kind: 'nho',
           onClick: () => {
             tt.game.modAction('su_do', 'bo_nhiem', { deTuId: dt.id });
@@ -1135,17 +1273,17 @@
           },
         });
         btnBoNhiem.classList.add('su-do-btn-wrap');
-        btnRow.append(btnBoNhiem);
+        rightGroup.append(btnBoNhiem);
       }
 
-      // 7. Nút Trục xuất
       const btnTrucXuat = kit.button({
-        text: '❌ Trục Xuất',
+        text: '✕',
+        tip: 'Trục xuất đồ đệ khỏi môn phái',
         kind: 'nho',
         onClick: async () => {
           const ok = await tt.ui.confirm({
             title: 'Trục Xuất Đệ Tử',
-            text: `Sư tôn có chắc chắn muốn trục xuất ${dt.ten} khỏi môn phái? Đoạn tuyệt duyên phận sư đồ không thể vãn hồi!`,
+            text: `Sư tôn có chắc chắn muốn trục xuất ${dt.ten} khỏi môn phái?`,
           });
           if (ok) {
             tt.game.modAction('su_do', 'truc_xuat', { deTuId: dt.id });
@@ -1154,9 +1292,11 @@
         },
       });
       btnTrucXuat.classList.add('su-do-btn-wrap');
-      btnRow.append(btnTrucXuat);
+      rightGroup.append(btnTrucXuat);
 
-      card.append(btnRow);
+      subRow.append(rightGroup);
+      card.append(subRow);
+
       return card;
     }
   },
