@@ -127,6 +127,18 @@
       return 'khong_tick';
     });
 
+    // Action 1.5: Đổi tên đạo tràng
+    mod.addAction('doi_ten_dao_trang', (ctx, args, h) => {
+      const data = layTrangThaiMod(h);
+      const tenMoi = String(args?.ten ?? '').trim();
+      if (!tenMoi || tenMoi.length > 24) return 'khong_tick';
+      const tenCu = data.daoTrangTen ?? 'Thanh Khê Đạo Tràng';
+      data.daoTrangTen = tenMoi;
+      ghiNhatKy(data, `Sư tôn đổi tên đạo tràng thành "${tenMoi}".`, ctx.run.nam ?? 1);
+      h.setData(data);
+      return 'khong_tick';
+    });
+
     // Action 2: Thu nhận 1 đệ tử
     mod.addAction('nhan_de_tu', (ctx, args, h) => {
       const data = layTrangThaiMod(h);
@@ -134,12 +146,12 @@
       const maxDt = sucChuaDeTu(nv.canhGioi);
 
       if (data.danhSachDeTu.length >= maxDt) {
-        throw new Error(`Đạo tràng hiện tại chỉ có thể chứa tối đa ${maxDt} đệ tử. Hãy nâng cảnh giới để mở rộng!`);
+        return 'khong_tick';
       }
 
       const idx = args?.index ?? 0;
       const ungVien = data.ungVien?.[idx];
-      if (!ungVien) throw new Error('Không tìm thấy thông tin ứng viên!');
+      if (!ungVien) return 'khong_tick';
 
       if (data.danhSachDeTu.length === 0) {
         ungVien.vaiVe = 'dai_su_huynh';
@@ -156,7 +168,7 @@
     mod.addAction('luan_dao', (ctx, args, h) => {
       const data = layTrangThaiMod(h);
       const dt = data.danhSachDeTu.find((d) => d.id === args?.deTuId);
-      if (!dt) throw new Error('Không tìm thấy đệ tử!');
+      if (!dt) return 'khong_tick';
 
       const huong = args?.huong ?? 'chinh_dao';
       dt.khuynhHuong = huong;
@@ -178,11 +190,11 @@
     mod.addAction('truyen_cong', (ctx, args, h) => {
       const data = layTrangThaiMod(h);
       const dt = data.danhSachDeTu.find((d) => d.id === args?.deTuId);
-      if (!dt) throw new Error('Không tìm thấy đệ tử!');
+      if (!dt) return 'khong_tick';
 
       const nv = ctx.run.nhanVat;
       if (nv.tuVi < 1) {
-        throw new Error('Tu vi của sư tôn không đủ để truyền công!');
+        return 'khong_tick';
       }
 
       nv.tuVi = Math.max(0, nv.tuVi - 0.5);
@@ -207,12 +219,12 @@
     mod.addAction('ban_thuong', (ctx, args, h) => {
       const data = layTrangThaiMod(h);
       const dt = data.danhSachDeTu.find((d) => d.id === args?.deTuId);
-      if (!dt) throw new Error('Không tìm thấy đệ tử!');
+      if (!dt) return 'khong_tick';
 
       const nv = ctx.run.nhanVat;
       const soTien = args?.soTien ?? 30;
       if (nv.linhThach < soTien) {
-        throw new Error(`Sư tôn không đủ ${soTien} linh thạch để ban thưởng!`);
+        return 'khong_tick';
       }
 
       nv.linhThach -= soTien;
@@ -234,7 +246,7 @@
     mod.addAction('dau_phap', (ctx, args, h) => {
       const data = layTrangThaiMod(h);
       const dt = data.danhSachDeTu.find((d) => d.id === args?.deTuId);
-      if (!dt) throw new Error('Không tìm thấy đệ tử!');
+      if (!dt) return 'khong_tick';
 
       dt.tuVi += 8;
       dt.haoCam = Math.min(100, dt.haoCam + 5);
@@ -248,10 +260,10 @@
     mod.addAction('ho_phap', (ctx, args, h) => {
       const data = layTrangThaiMod(h);
       const dt = data.danhSachDeTu.find((d) => d.id === args?.deTuId);
-      if (!dt) throw new Error('Không tìm thấy đệ tử!');
+      if (!dt) return 'khong_tick';
 
       if (dt.tuVi < dt.tuViYeuCau) {
-        throw new Error('Đệ tử chưa tích lũy đủ tu vi để xung kích cảnh giới!');
+        return 'khong_tick';
       }
 
       const cach = args?.cach ?? 'ganh_loi_kiep';
@@ -270,7 +282,7 @@
         } else if (nv.linhThach >= 50) {
           nv.linhThach -= 50;
         } else {
-          throw new Error('Sư tôn không có Hộ Mạch Đan hoặc không đủ 50 linh thạch để mua đan dược!');
+          return 'khong_tick';
         }
         thanhCong = h.random() > 0.15;
         ghiNhatKy(data, `Sư tôn ban đan dược hộ mạch cho ${dt.ten} độ kiếp: ${thanhCong ? 'Thành công viên mãn!' : 'Bình cảnh chưa phá, may nhờ đan dược hộ mệnh nên không nguy hiểm.'}`, ctx.run.nam ?? 1);
@@ -299,7 +311,7 @@
     mod.addAction('bo_nhiem', (ctx, args, h) => {
       const data = layTrangThaiMod(h);
       const dt = data.danhSachDeTu.find((d) => d.id === args?.deTuId);
-      if (!dt) throw new Error('Không tìm thấy đệ tử!');
+      if (!dt) return 'khong_tick';
 
       data.danhSachDeTu.forEach((d) => (d.vaiVe = 'de_tu'));
       dt.vaiVe = 'dai_su_huynh';
@@ -314,7 +326,7 @@
     mod.addAction('phai_lich_luyen', (ctx, args, h) => {
       const data = layTrangThaiMod(h);
       const dt = data.danhSachDeTu.find((d) => d.id === args?.deTuId);
-      if (!dt) throw new Error('Không tìm thấy đệ tử!');
+      if (!dt) return 'khong_tick';
 
       const nhiemVu = args?.nhiemVu ?? 'hai_duoc';
       const soNam = Math.max(1, Math.min(5, args?.soNam ?? 2));
@@ -341,10 +353,10 @@
     mod.addAction('thu_hoach_lich_luyen', (ctx, args, h) => {
       const data = layTrangThaiMod(h);
       const dt = data.danhSachDeTu.find((d) => d.id === args?.deTuId);
-      if (!dt) throw new Error('Không tìm thấy đệ tử!');
+      if (!dt) return 'khong_tick';
 
       if (dt.trangThai?.loai !== 'lich_luyen' || (dt.trangThai?.namConLai ?? 0) > 0) {
-        throw new Error('Đệ tử chưa hoàn thành lịch luyện!');
+        return 'khong_tick';
       }
 
       const nv = ctx.run.nhanVat;
@@ -381,7 +393,7 @@
     mod.addAction('truc_xuat', (ctx, args, h) => {
       const data = layTrangThaiMod(h);
       const idx = data.danhSachDeTu.findIndex((d) => d.id === args?.deTuId);
-      if (idx === -1) throw new Error('Không tìm thấy đệ tử!');
+      if (idx === -1) return 'khong_tick';
 
       const dt = data.danhSachDeTu[idx];
       data.danhSachDeTu.splice(idx, 1);
@@ -705,6 +717,10 @@
           border-radius: 3px;
           transition: width 0.3s ease;
         }
+        .su-do-progress-val.su-do-progress-max {
+          background: linear-gradient(90deg, #d97706, #ef4444) !important;
+          box-shadow: 0 0 6px rgba(239, 68, 68, 0.4);
+        }
 
         /* Hàng nút bấm chia theo cụm */
         .su-do-action-grid {
@@ -851,7 +867,9 @@
           header.className = 'su-do-header';
           header.innerHTML = `
             <div class="su-do-header-title">
-              <span class="su-do-title-text">🏛️ ${data.daoTrangTen ?? 'Thanh Khê Đạo Tràng'}</span>
+              <span class="su-do-title-text" style="display:inline-flex; align-items:center; gap:4px; cursor:pointer;" title="Bấm để đổi tên Đạo Tràng">
+                🏛️ <b>${data.daoTrangTen ?? 'Thanh Khê Đạo Tràng'}</b> <span style="font-size:10px; opacity:0.6;">✏️</span>
+              </span>
               <span class="su-do-badge" style="color:var(--vang-kim); background:rgba(218,165,32,0.12); border:1px solid var(--vang-kim);">
                 ${TEN_CANH_GIOI[nv?.canhGioi ?? 0]} Sư Tôn
               </span>
@@ -863,6 +881,50 @@
               <span>✨ Chờ bái: <b>${ungVien.length}</b></span>
             </div>
           `;
+
+          const titleBtn = header.querySelector('.su-do-title-text');
+          if (titleBtn) {
+            titleBtn.onclick = () => {
+              const m = kit.modal({
+                title: 'Đổi Tên Đạo Tràng',
+                mount(modalBox) {
+                  modalBox.style.cssText = 'display: flex; flex-direction: column; gap: 8px; font-size: 13px;';
+                  const tip = document.createElement('div');
+                  tip.innerHTML = 'Nhập tên mới cho tông môn / đạo tràng của sư tôn (tối đa 24 ký tự):';
+                  modalBox.append(tip);
+
+                  const input = document.createElement('input');
+                  input.type = 'text';
+                  input.value = data.daoTrangTen ?? 'Thanh Khê Đạo Tràng';
+                  input.maxLength = 24;
+                  input.style.cssText = 'padding: 6px 10px; font-size: 13px; border: 1px solid var(--vien-hud); background: var(--nen-hud); color: var(--muc); border-radius: 4px; outline: none;';
+                  modalBox.append(input);
+
+                  const btnSave = kit.button({
+                    text: 'Xác Nhận Đổi Tên',
+                    kind: 'chinh',
+                    onClick: () => {
+                      const tenMoi = input.value.trim();
+                      if (!tenMoi) {
+                        tt.ui.toast('Tên đạo tràng không được để trống!');
+                        return;
+                      }
+                      try {
+                        tt.game.modAction('su_do', 'doi_ten_dao_trang', { ten: tenMoi });
+                        m.close();
+                        tt.ui.toast(`Đã đổi tên đạo tràng thành: "${tenMoi}"`);
+                      } catch (err) {
+                        tt.ui.toast(err.message);
+                      }
+                    },
+                  });
+                  btnSave.classList.add('su-do-btn-wrap');
+                  modalBox.append(btnSave);
+                },
+              });
+            };
+          }
+
           container.append(header);
 
           // 4 TABS RÚT GỌN NẰM TRÊN 1 HÀNG
@@ -1171,11 +1233,19 @@
       rowTop.append(cgSpan);
       card.append(rowTop);
 
-      // Thanh tu vi progress thanh mảnh
-      const pct = Math.min(100, Math.floor((dt.tuVi / dt.tuViYeuCau) * 100));
+      // Thanh tu vi progress thanh mảnh kèm số điểm
+      const pct = Math.min(100, Math.floor(((dt.tuVi ?? 0) / (dt.tuViYeuCau || 1)) * 100));
+      const sanSang = (dt.tuVi ?? 0) >= (dt.tuViYeuCau || 1);
       const progBox = document.createElement('div');
-      progBox.className = 'su-do-progress-bar';
-      progBox.innerHTML = `<div class="su-do-progress-val" style="width: ${pct}%;"></div>`;
+      progBox.style.cssText = 'display: flex; align-items: center; gap: 6px; font-size: 10px;';
+      progBox.innerHTML = `
+        <div class="su-do-progress-bar">
+          <div class="su-do-progress-val ${sanSang ? 'su-do-progress-max' : ''}" style="width: ${pct}%;"></div>
+        </div>
+        <span style="font-size: 10px; white-space: nowrap; font-weight: 600; color: ${sanSang ? 'var(--chu-do)' : 'inherit'};">
+          ${dt.tuVi ?? 0}/${dt.tuViYeuCau} (${pct}%)
+        </span>
+      `;
       card.append(progBox);
 
       return card;
@@ -1223,16 +1293,19 @@
       top.append(info);
       card.append(top);
 
-      // Thanh tu vi kèm %
-      const pct = Math.min(100, Math.floor((dt.tuVi / dt.tuViYeuCau) * 100));
+      // Thanh tu vi kèm số điểm và %
+      const pct = Math.min(100, Math.floor(((dt.tuVi ?? 0) / (dt.tuViYeuCau || 1)) * 100));
+      const sanSangDoKiep = (dt.tuVi ?? 0) >= (dt.tuViYeuCau || 1);
       const progRow = document.createElement('div');
-      progRow.style.cssText = 'display:flex; align-items:center; gap:8px; font-size:11px;';
+      progRow.style.cssText = 'display:flex; align-items:center; gap:6px; font-size:11px;';
       progRow.innerHTML = `
         <span class="hud-phu" style="font-size:11px; white-space:nowrap;">Tu vi:</span>
         <div class="su-do-progress-bar">
-          <div class="su-do-progress-val" style="width: ${pct}%;"></div>
+          <div class="su-do-progress-val ${sanSangDoKiep ? 'su-do-progress-max' : ''}" style="width: ${pct}%;"></div>
         </div>
-        <span style="font-size:11px; white-space:nowrap; font-weight:600;">${pct}%</span>
+        <span style="font-size:10.5px; white-space:nowrap; font-weight:600; color:${sanSangDoKiep ? 'var(--chu-do)' : 'inherit'};">
+          ${dt.tuVi ?? 0}/${dt.tuViYeuCau} (${pct}%)${sanSangDoKiep ? ' ⚡' : ''}
+        </span>
       `;
       card.append(progRow);
 

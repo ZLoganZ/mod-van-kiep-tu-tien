@@ -132,4 +132,24 @@ Game luôn phục vụ gói mod mẫu chính thức tại đường dẫn cố �
      - **Khoảng cách & Cân đối (Spacing & Hierarchy)**: Các cột, nút bấm, thanh tiến trình (progress bar), nhãn thông tin phải có padding/margin cân đối, thẩm mỹ theo phong cách thủy mặc / tiên hiệp của game.
   5. **Điều kiện tiên quyết để quyết định xong task (Done Task)**: Chỉ được phép xác nhận hoàn thành công việc sau khi đã chạy kiểm thử trực quan trên UI thật, lưu ảnh minh chứng và xác nhận không còn bất kỳ lỗi tràn viền hay vỡ bố cục nào.
 
+---
+
+## 7. QUY TẮC BẮT BUỘC KIỂM THỬ CHỨC NĂNG & MỤC ĐÍCH GAMEPLAY (FUNCTIONAL & INTENT VERIFICATION)
+
+* **Nguyên tắc "Không Văng Lỗi Phá Huỷ" trong `mod.addAction`**:
+  - Engine của game bọc hành động mod bằng hàm bắt lỗi `Rw(e, t, n)`. Khi một action quăng ra `throw new Error(...)`, engine sẽ kích hoạt hàm `jwt()` đánh dấu `e.disabled = true`, hiển thị thông báo *"Mod gặp lỗi, đã tạm tắt"* và **vô hiệu hóa vĩnh viễn mod trong suốt ván chơi**!
+  - **Quy tắc vàng**: Mod actions **TUYỆT ĐỐI KHÔNG DÙNG `throw new Error(...)`** để từ chối nghiệp vụ (như thiếu tiền, thiếu tu vi, tên rỗng, danh sách đầy). Thay vào đó:
+    - Trong action: Kiểm tra điều kiện, nếu không thoả thì trả về `'khong_tick'` và kết thúc an toàn.
+    - Trong giao diện (UI): Kiểm tra điều kiện đầu vào trước khi gọi `modAction`, nếu vi phạm thì gọi `tt.ui.toast(...)` để báo cho người chơi một cách êm ái.
+
+* **Tiêu Chuẩn Kiểm Thử Chức Năng Tự Động (Automated Functional Testing)**:
+  Trước khi bàn giao hoặc đánh dấu hoàn thành bất kỳ tính năng mod nào, Agent bắt buộc phải tạo/chạy kịch bản kiểm thử tự động với `puppeteer-core` bao quát toàn diện các khía cạnh:
+  1. **Kiểm thử đúng ý định nghiệp vụ (Intent Verification)**:
+     - Kiểm tra toàn bộ các đột biến trạng thái (state mutations): Ví dụ truyền công phải trừ chân nguyên sư tôn, tăng tu vi đệ tử, tăng đố kỵ đồng môn; hộ pháp thành công phải tăng tiểu cảnh giới, reset tu vi về 0, nâng tu vi yêu cầu cho tầng kế tiếp.
+  2. **Kiểm thử biên & Chặn điều kiện an toàn (Edge Cases & Boundary Validation)**:
+     - Kiểm tra các trường hợp không đủ điều kiện (tên rỗng, vượt quá sức chứa môn phái, đệ tử chưa đủ tu vi đột phá, sư tôn không đủ linh thạch, v.v.). Xác nhận trạng thái không bị thay đổi sai trái và hệ thống không văng lỗi unhandled crash.
+  3. **Kiểm thử nhịp thế giới (World Tick Hook Verification)**:
+     - Giả lập bước nhảy thời gian qua năm (bằng `window.tuTien.core.index.passTime(ctx, years)` trong giao dịch `act`) để xác minh: đệ tử tăng tuổi theo năm, tích lũy tu vi theo hệ số tư chất, đếm lùi thời gian lịch luyện và kích hoạt các sự kiện tâm tính (hiếu thuận, đố kỵ).
+  4. **Nghiệm thu tỷ lệ đạt 100%**: Chỉ được phép xác nhận tính năng sẵn sàng khi 100% bài test trong bộ kiểm thử chức năng tự động trả về `PASS`.
+
 
