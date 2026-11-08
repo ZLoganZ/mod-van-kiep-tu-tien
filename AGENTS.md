@@ -118,3 +118,18 @@ Game luôn phục vụ gói mod mẫu chính thức tại đường dẫn cố �
   ```
 * **No Delay**: Never batch changes across multiple turns or conclude a request without synchronizing changes to the remote GitHub repository.
 
+---
+
+## 6. QUY TẮC BẮT BUỘC KIỂM THỬ TRỰC QUAN GIAO DIỆN (UI VERIFICATION BEFORE DONE TASK)
+
+* **Tuyệt đối không suy đoán giao diện**: Khi thêm mới, tinh chỉnh hoặc sửa lỗi bất kỳ thành phần UI nào (Panel, Modal, Dock, Slot, Card, Tab, Button...):
+  1. **Khởi chạy kiểm thử tự động với trình duyệt thật**: Sử dụng `puppeteer-core` (kết nối trực tiếp tới `C:\Program Files\Google\Chrome\Application\chrome.exe`) để truy cập web game `https://van-kiep-tu-tien.vuhaiquan2k1.workers.dev/`.
+  2. **Nạp mod & Khởi tạo dữ liệu kiểm thử**: Khởi chạy một ván chơi mẫu (`tuTien.game.newRun({})`), kích hoạt script mod, tiêm dữ liệu mô phỏng đại diện (trường hợp danh sách rỗng, 1 phần tử, nhiều phần tử, tên dài, danh hiệu...) và mở giao diện cần kiểm tra (`mod.ui.openPanel`, `kit.modal`, v.v.).
+  3. **Chụp ảnh màn hình (Screenshot) & Thẩm định trực quan**: Chụp ảnh màn hình phần tử UI hoặc toàn trang, sau đó đọc lại file ảnh bằng công cụ `read_file` để tự mắt nhìn và thẩm định chất lượng hiển thị.
+  4. **Tiêu chuẩn nghiệm thu UI (UI Acceptance Criteria)**:
+     - **Không tràn viền (Overflow)**: Nội dung phải nằm gọn gàng bên trong khung hiển thị tiêu chuẩn (khoảng 300px – 360px của game).
+     - **Không gãy chữ/vỡ chữ ngớ ngẩn (No Awkward Word-Wrapping)**: Các cụm từ có nghĩa (tên nhân vật, danh xưng, cảnh giới, linh căn, phẩm cấp, nhãn tab, badge...) phải được bảo vệ nguyên vẹn bằng `white-space: nowrap`, không bao giờ được để vỡ thành từng chữ đơn rải rác trên nhiều dòng (như `Khương / Vy`, `Đại Sư / Huynh`, `Hóa Thần / Sư Tôn`, `Phổ / Thông`).
+     - **Khoảng cách & Cân đối (Spacing & Hierarchy)**: Các cột, nút bấm, thanh tiến trình (progress bar), nhãn thông tin phải có padding/margin cân đối, thẩm mỹ theo phong cách thủy mặc / tiên hiệp của game.
+  5. **Điều kiện tiên quyết để quyết định xong task (Done Task)**: Chỉ được phép xác nhận hoàn thành công việc sau khi đã chạy kiểm thử trực quan trên UI thật, lưu ảnh minh chứng và xác nhận không còn bất kỳ lỗi tràn viền hay vỡ bố cục nào.
+
+

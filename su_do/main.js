@@ -444,6 +444,11 @@
       thuy: 'Thủy',
       hoa: 'Hỏa',
       tho: 'Thổ',
+      loi: 'Lôi',
+      phong: 'Phong',
+      bang: 'Băng',
+      quang: 'Quang',
+      am: 'Ám',
     };
 
     const TU_CHAT_MAP = {
@@ -477,46 +482,109 @@
           height: 0 !important;
         }
         
+        /* Mở rộng bề ngang cho Mod Sư Đồ hiển thị khoáng đạt, không bị gò bó */
+        .hud-phai:has(.su-do-panel) {
+          width: 360px !important;
+        }
+        .hud-khung.mod-panel:has(.su-do-panel) {
+          width: 360px !important;
+          max-width: calc(100vw - 20px) !important;
+        }
+        .mod-panel-dau {
+          display: flex !important;
+          align-items: center !important;
+          gap: 6px !important;
+          white-space: nowrap !important;
+          overflow: hidden !important;
+        }
+        .mod-panel-dau b {
+          font-size: 13.5px !important;
+          white-space: nowrap !important;
+          flex-shrink: 0 !important;
+        }
+        .mod-panel-dau .hud-phu {
+          font-size: 11px !important;
+          white-space: nowrap !important;
+          overflow: hidden !important;
+          text-overflow: ellipsis !important;
+        }
+
         /* Phong cách Tiên Hiệp cho Mod Sư Đồ */
         .su-do-panel {
           font-family: inherit;
           color: var(--muc);
           display: flex;
           flex-direction: column;
-          gap: 10px;
+          gap: 8px;
+        }
+
+        /* Tab tinh giản, chống rớt dòng */
+        .su-do-panel .ui-tabs {
+          display: flex !important;
+          flex-wrap: nowrap !important;
+          gap: 3px !important;
+          margin: 0 0 6px 0 !important;
+        }
+        .su-do-panel .ui-tabs > button {
+          flex: 1 1 0 !important;
+          min-width: 0 !important;
+          padding: 4px 2px !important;
+          font-size: 11px !important;
+          white-space: nowrap !important;
+          text-overflow: ellipsis !important;
+          overflow: hidden !important;
+          text-align: center !important;
         }
 
         .su-do-header {
           border: 1px solid var(--vien-hud);
           background: linear-gradient(180deg, rgba(218, 165, 32, 0.08) 0%, rgba(0,0,0,0.02) 100%);
           border-radius: 8px;
-          padding: 10px 12px;
+          padding: 8px 10px;
           display: flex;
           flex-direction: column;
           gap: 4px;
         }
 
         .su-do-header-title {
-          font-size: 15px;
-          font-weight: bold;
-          color: var(--chu-do);
           display: flex;
           justify-content: space-between;
           align-items: center;
+          gap: 6px;
+        }
+
+        .su-do-title-text {
+          font-size: 13.5px;
+          font-weight: bold;
+          color: var(--chu-do);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
 
         .su-do-header-sub {
-          font-size: 12px;
+          font-size: 11px;
           color: var(--muc-nhat);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
 
         .su-do-header-stats {
           display: flex;
-          gap: 12px;
-          font-size: 12px;
-          margin-top: 4px;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 11px;
+          margin-top: 2px;
           padding-top: 4px;
           border-top: 1px dashed var(--vien-trong);
+          white-space: nowrap;
+        }
+        .su-do-header-stats > span {
+          display: inline-flex;
+          align-items: center;
+          gap: 2px;
+          white-space: nowrap;
         }
 
         /* Thẻ bài đệ tử tinh xảo */
@@ -524,10 +592,10 @@
           border: 1px solid var(--vien-hud);
           background: var(--nen-hud);
           border-radius: 8px;
-          padding: 10px;
+          padding: 8px 10px;
           display: flex;
           flex-direction: column;
-          gap: 8px;
+          gap: 6px;
           box-shadow: 0 1px 4px rgba(0,0,0,0.04);
           transition: border-color 0.2s ease;
         }
@@ -536,10 +604,10 @@
         }
 
         .su-do-avatar {
-          width: 48px;
-          height: 48px;
+          width: 44px;
+          height: 44px;
           border-radius: 50%;
-          border: 2px solid var(--vien-muc);
+          border: 1.5px solid var(--vien-muc);
           box-shadow: 0 0 6px rgba(0,0,0,0.1);
           overflow: hidden;
           background: #fff;
@@ -549,15 +617,73 @@
           flex-shrink: 0;
         }
 
+        .su-do-card-info {
+          flex: 1;
+          min-width: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+        }
+
+        .su-do-card-name-row {
+          display: flex;
+          align-items: center;
+          gap: 5px;
+          min-width: 0;
+          line-height: 1.2;
+        }
+
+        .su-do-card-name {
+          font-size: 13.5px;
+          font-weight: bold;
+          white-space: nowrap;
+          flex-shrink: 0;
+        }
+
+        .su-do-card-meta {
+          font-size: 11px;
+          color: var(--muc-nhat);
+          margin-left: auto;
+          white-space: nowrap;
+          flex-shrink: 0;
+        }
+
+        .su-do-card-subrow {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          font-size: 11px;
+          min-width: 0;
+          white-space: nowrap;
+        }
+        .su-do-card-subrow span {
+          white-space: nowrap;
+          flex-shrink: 0;
+        }
+        .su-do-card-subrow .su-do-badge {
+          margin-left: auto;
+        }
+
+        .su-do-card-stats {
+          font-size: 10.5px;
+          color: var(--muc-nhat);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          line-height: 1.2;
+        }
+
         .su-do-badge {
           display: inline-flex;
           align-items: center;
           gap: 2px;
-          font-size: 11px;
-          padding: 1px 7px;
-          border-radius: 10px;
-          line-height: 1.4;
+          font-size: 10px;
+          padding: 1px 6px;
+          border-radius: 8px;
+          line-height: 1.3;
           font-weight: 600;
+          white-space: nowrap;
+          flex-shrink: 0;
         }
 
         .su-do-btn-wrap {
@@ -587,14 +713,29 @@
           gap: 4px;
           margin-top: 2px;
         }
+        .su-do-action-grid button {
+          padding: 3px 2px !important;
+          font-size: 11px !important;
+          white-space: nowrap !important;
+          text-align: center !important;
+          justify-content: center !important;
+          min-width: 0 !important;
+        }
+
         .su-do-action-subgrid {
           display: flex;
           gap: 4px;
           justify-content: space-between;
           align-items: center;
-          margin-top: 4px;
+          margin-top: 2px;
           padding-top: 4px;
           border-top: 1px dashed var(--vien-trong);
+        }
+        .su-do-action-subgrid button {
+          padding: 3px 6px !important;
+          font-size: 11px !important;
+          white-space: nowrap !important;
+          min-width: 0 !important;
         }
       `;
       document.head.append(style);
@@ -690,7 +831,7 @@
     // ==========================================
     mod.ui.addPanel({
       id: 'dao_trang_panel',
-      title: '🏛️ Đạo Tràng Sư Đồ',
+      title: '🏛️ Đạo Tràng',
       mount(el) {
         const veBangDaoTrang = () => {
           el.innerHTML = '';
@@ -710,16 +851,16 @@
           header.className = 'su-do-header';
           header.innerHTML = `
             <div class="su-do-header-title">
-              <span>🏛️ ${data.daoTrangTen ?? 'THANH KHÊ ĐẠO TRÀNG'}</span>
+              <span class="su-do-title-text">🏛️ ${data.daoTrangTen ?? 'Thanh Khê Đạo Tràng'}</span>
               <span class="su-do-badge" style="color:var(--vang-kim); background:rgba(218,165,32,0.12); border:1px solid var(--vang-kim);">
                 ${TEN_CANH_GIOI[nv?.canhGioi ?? 0]} Sư Tôn
               </span>
             </div>
-            <div class="su-do-header-sub">Khai sơn lập phái · Quảng truyền đạo pháp · Vạn thế lưu danh</div>
+            <div class="su-do-header-sub">Khai sơn lập phái · Quảng truyền đạo pháp</div>
             <div class="su-do-header-stats">
-              <span>🥋 Đồ Đệ: <b>${danhSach.length} / ${maxDt}</b></span>
-              <span>📜 Tông Môn: <b>Hưng Thịnh</b></span>
-              <span>✨ Ứng Viên Chờ: <b>${ungVien.length}</b></span>
+              <span>🥋 Đồ đệ: <b>${danhSach.length}/${maxDt}</b></span>
+              <span>📜 Tông môn: <b>Thịnh</b></span>
+              <span>✨ Chờ bái: <b>${ungVien.length}</b></span>
             </div>
           `;
           container.append(header);
@@ -736,11 +877,11 @@
 
                   // Nút mở kỳ tuyển đồ
                   const topAct = document.createElement('div');
-                  topAct.style.cssText = 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;';
+                  topAct.style.cssText = 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; gap: 8px;';
 
                   const desc = document.createElement('div');
-                  desc.style.cssText = 'font-size: 12px; color: var(--muc-nhat);';
-                  desc.innerHTML = `Đệ tử môn hạ: <b>${danhSach.length}/${maxDt}</b>`;
+                  desc.style.cssText = 'font-size: 11.5px; color: var(--muc-nhat); white-space: nowrap;';
+                  desc.innerHTML = `Đệ tử: <b>${danhSach.length}/${maxDt}</b>`;
                   topAct.append(desc);
 
                   const btnChieuMo = kit.button({
@@ -752,6 +893,7 @@
                     },
                   });
                   btnChieuMo.classList.add('su-do-btn-wrap');
+                  btnChieuMo.style.cssText += 'padding: 3px 10px; font-size: 11.5px; font-weight: bold;';
                   topAct.append(btnChieuMo);
                   box.append(topAct);
 
@@ -767,22 +909,22 @@
 
                     ungVien.forEach((uv, idx) => {
                       const itemCard = document.createElement('div');
-                      itemCard.style.cssText = 'background: var(--nen-hud); border: 1px solid var(--vien-hud); border-radius: 6px; padding: 6px 10px; display: flex; justify-content: space-between; align-items: center; gap: 8px;';
+                      itemCard.style.cssText = 'background: var(--nen-hud); border: 1px solid var(--vien-hud); border-radius: 6px; padding: 6px 8px; display: flex; justify-content: space-between; align-items: center; gap: 6px; min-width: 0;';
 
                       const colLeft = document.createElement('div');
-                      colLeft.style.cssText = 'display: flex; flex-direction: column; gap: 2px; font-size: 12px;';
+                      colLeft.style.cssText = 'display: flex; flex-direction: column; gap: 2px; font-size: 11.5px; min-width: 0; flex: 1;';
 
                       const tc = TU_CHAT_MAP[uv.tuChat] ?? { ten: uv.tuChat, color: 'inherit', bg: 'transparent', border: 'transparent' };
                       const heStr = uv.he.map((h) => HE_MAP[h] ?? h).join(' · ');
 
                       colLeft.innerHTML = `
-                        <div style="font-size: 13px;">
+                        <div style="font-size: 13px; display: flex; align-items: center; gap: 6px; white-space: nowrap;">
                           <b>${uv.ten}</b>
-                          <span class="hud-phu" style="font-size:11px;">(${uv.gioiTinh === 'nam' ? 'Nam' : 'Nữ'}, ${uv.tuoi}t)</span>
+                          <span class="hud-phu" style="font-size:11px;">(${uv.gioiTinh === 'nam' ? 'Nam' : 'Nữ'} · ${uv.tuoi}t)</span>
                         </div>
-                        <div style="display:flex; gap:6px; align-items:center;">
+                        <div style="display:flex; gap:6px; align-items:center; white-space:nowrap; font-size:11px;">
                           <span>Hệ: <b>${heStr}</b></span>
-                          <span class="su-do-badge" style="color:${tc.color}; background:${tc.bg}; border:1px solid ${tc.border};">${tc.ten}</span>
+                          <span class="su-do-badge" style="color:${tc.color}; background:${tc.bg}; border:1px solid ${tc.border}; font-size:10px;">${tc.ten}</span>
                         </div>
                       `;
                       itemCard.append(colLeft);
@@ -800,7 +942,7 @@
                         },
                       });
                       btnNhan.classList.add('su-do-btn-wrap');
-                      btnNhan.style.cssText += 'padding: 4px 12px; font-weight: bold; font-size: 12px;';
+                      btnNhan.style.cssText += 'padding: 3px 8px; font-weight: bold; font-size: 11.5px; white-space: nowrap;';
                       itemCard.append(btnNhan);
 
                       uvBox.append(itemCard);
@@ -865,14 +1007,14 @@
                     dangLichLuyen.forEach((dt) => {
                       const row = document.createElement('div');
                       row.className = 'su-do-card';
-                      row.style.cssText = 'display: flex; justify-content: space-between; align-items: center;';
+                      row.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; min-width: 0;';
 
                       const info = document.createElement('div');
-                      info.style.cssText = 'font-size: 12px; display: flex; flex-direction: column; gap: 2px;';
+                      info.style.cssText = 'font-size: 11.5px; display: flex; flex-direction: column; gap: 2px; white-space: nowrap;';
                       const conLai = dt.trangThai?.namConLai ?? 0;
                       info.innerHTML = `
-                        <div><b>${dt.ten}</b> - Nhiệm vụ: <i style="color:var(--chu-do);">${dt.trangThai?.nhiemVu}</i></div>
-                        <div class="hud-phu">${conLai > 0 ? `⏳ Còn <b>${conLai} năm</b> nữa trở về` : '✅ Đã hoàn thành, chờ thu nhận!'}</div>
+                        <div><b>${dt.ten}</b> · <i style="color:var(--chu-do);">${dt.trangThai?.nhiemVu}</i></div>
+                        <div class="hud-phu" style="font-size: 11px;">${conLai > 0 ? `⏳ Còn <b>${conLai} năm</b> nữa trở về` : '✅ Đã hoàn thành, chờ thu nhận!'}</div>
                       `;
                       row.append(info);
 
@@ -886,6 +1028,7 @@
                           },
                         });
                         btnThu.classList.add('su-do-btn-wrap');
+                        btnThu.style.cssText += 'padding: 3px 8px; font-size: 11.5px;';
                         row.append(btnThu);
                       }
                       box.append(row);
@@ -897,11 +1040,11 @@
                     ranhRoi.forEach((dt) => {
                       const row = document.createElement('div');
                       row.className = 'su-do-card';
-                      row.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 8px 10px;';
+                      row.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; min-width: 0;';
                       row.innerHTML = `
-                        <div style="font-size:13px;">
+                        <div style="font-size:12.5px; white-space: nowrap;">
                           <b>${dt.ten}</b> 
-                          <span class="hud-phu" style="font-size:12px;">(${TEN_CANH_GIOI[dt.canhGioi]} tầng ${dt.tieuCanhGioi})</span>
+                          <span class="hud-phu" style="font-size:11px;">(${TEN_CANH_GIOI[dt.canhGioi]} tầng ${dt.tieuCanhGioi})</span>
                         </div>
                       `;
 
@@ -1011,17 +1154,19 @@
     function taoTheDeTuNho(dt, tt, kit) {
       const card = document.createElement('div');
       card.className = 'su-do-card';
-      card.style.cssText = 'padding: 8px; gap: 4px;';
+      card.style.cssText = 'padding: 6px 8px; gap: 4px;';
 
       const rowTop = document.createElement('div');
-      rowTop.style.cssText = 'display: flex; justify-content: space-between; align-items: center; font-size: 13px;';
+      rowTop.style.cssText = 'display: flex; justify-content: space-between; align-items: center; font-size: 12.5px; white-space: nowrap; min-width: 0;';
 
       const tenSpan = document.createElement('span');
-      tenSpan.innerHTML = `<b>${dt.ten}</b> ${dt.vaiVe === 'dai_su_huynh' ? '<span style="color:var(--vang-kim); font-size:11px; font-weight:bold;">[Đại Sư Huynh]</span>' : ''}`;
+      tenSpan.style.cssText = 'display: flex; align-items: center; gap: 4px; white-space: nowrap;';
+      tenSpan.innerHTML = `<b>${dt.ten}</b> ${dt.vaiVe === 'dai_su_huynh' ? '<span class="su-do-badge" style="color:var(--vang-kim); background:rgba(218,165,32,0.12); border:1px solid var(--vang-kim); font-size:9.5px; padding:0 4px;">Đại Sư Huynh</span>' : ''}`;
       rowTop.append(tenSpan);
 
       const cgSpan = document.createElement('span');
       cgSpan.className = 'hud-phu';
+      cgSpan.style.cssText = 'font-size: 11px; white-space: nowrap; margin-left: auto;';
       cgSpan.textContent = `${TEN_CANH_GIOI[dt.canhGioi]} tầng ${dt.tieuCanhGioi}`;
       rowTop.append(cgSpan);
       card.append(rowTop);
@@ -1041,7 +1186,7 @@
       card.className = 'su-do-card';
 
       const top = document.createElement('div');
-      top.style.cssText = 'display: flex; gap: 10px; align-items: center;';
+      top.style.cssText = 'display: flex; gap: 8px; align-items: center; min-width: 0;';
 
       // Chân dung NPC thủy mặc
       const faceUrl = tt.assets?.npcFace?.(dt.id, dt.gioiTinh, dt.tuoi, 'su_phu');
@@ -1050,7 +1195,7 @@
       if (faceUrl) {
         avatar.innerHTML = `<img src="${faceUrl}" style="width:100%; height:100%; object-fit:cover;" />`;
       } else {
-        avatar.innerHTML = `<span style="font-size:20px;">🥋</span>`;
+        avatar.innerHTML = `<span style="font-size:18px;">🥋</span>`;
       }
       top.append(avatar);
 
@@ -1060,19 +1205,20 @@
       const tcStr = TINH_CACH_MAP[dt.tinhCach] ?? dt.tinhCach;
 
       const info = document.createElement('div');
-      info.style.cssText = 'flex: 1; display: flex; flex-direction: column; gap: 2px; font-size: 12px;';
+      info.className = 'su-do-card-info';
       info.innerHTML = `
-        <div style="font-size:14px; display:flex; gap:6px; align-items:center;">
-          <b>${dt.ten}</b>
-          ${dt.vaiVe === 'dai_su_huynh' ? '<span style="color:var(--vang-kim); font-size:11px; font-weight:bold;">[Đại Sư Huynh]</span>' : ''}
-          <span class="hud-phu" style="font-size:11px;">(${dt.gioiTinh === 'nam' ? 'Nam' : 'Nữ'}, ${dt.tuoi}t)</span>
+        <div class="su-do-card-name-row">
+          <span class="su-do-card-name">${dt.ten}</span>
+          ${dt.vaiVe === 'dai_su_huynh' ? '<span class="su-do-badge" style="color:var(--vang-kim); background:rgba(218,165,32,0.14); border:1px solid var(--vang-kim); font-size:10px; padding:0 5px;">Đại Sư Huynh</span>' : ''}
+          <span class="su-do-card-meta">${dt.gioiTinh === 'nam' ? 'Nam' : 'Nữ'} · ${dt.tuoi}t</span>
         </div>
-        <div style="display:flex; gap:6px; align-items:center; margin-top:2px;">
-          <span>${TEN_CANH_GIOI[dt.canhGioi]} tầng ${dt.tieuCanhGioi}</span> · 
+        <div class="su-do-card-subrow">
+          <span>${TEN_CANH_GIOI[dt.canhGioi]} tầng ${dt.tieuCanhGioi}</span>
+          <span style="opacity:0.4;">·</span>
           <span>Hệ ${heStr}</span>
-          <span class="su-do-badge" style="color:${tc.color}; background:${tc.bg}; border:1px solid ${tc.border};">${tc.ten}</span>
+          <span class="su-do-badge" style="color:${tc.color}; background:${tc.bg}; border:1px solid ${tc.border}; font-size:10px;">${tc.ten}</span>
         </div>
-        <div class="hud-phu" style="font-size:11px;">Tính cách: <i>${tcStr}</i> | Hiếu cảm: <b>${dt.haoCam}</b> | Đố kỵ: <b style="color:${dt.doKy > 50 ? 'var(--cam-do)' : 'inherit'}">${dt.doKy}</b></div>
+        <div class="su-do-card-stats">Tính cách: <i>${tcStr}</i> · Hiếu cảm: <b>${dt.haoCam}</b> · Đố kỵ: <b style="color:${dt.doKy > 50 ? 'var(--cam-do)' : 'inherit'}">${dt.doKy}</b></div>
       `;
       top.append(info);
       card.append(top);
