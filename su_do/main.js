@@ -3349,7 +3349,7 @@
                 id: 'tab_de_tu',
                 title: `Đồ Đệ (${data0.danhSachDeTu.length})`,
                 mount(box) {
-                  box.style.cssText = 'display: flex; flex-direction: column; gap: 8px; margin-top: 6px;';
+                  box.style.cssText = 'display: flex; flex-direction: column; gap: 8px; margin-top: 6px; padding-bottom: 24px;';
 
                   const topAct = document.createElement('div');
                   topAct.style.cssText = 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; gap: 8px;';
@@ -3403,7 +3403,7 @@
                 id: 'tab_kien_thiet',
                 title: 'Kiến Thiết',
                 mount(box) {
-                  box.style.cssText = 'display: flex; flex-direction: column; gap: 8px; margin-top: 6px;';
+                  box.style.cssText = 'display: flex; flex-direction: column; gap: 8px; margin-top: 6px; padding-bottom: 24px;';
 
                   tabUpdaters.tab_kien_thiet = (data, s, nv) => {
                     capNhatKienThiet(data, box, s, nv);
@@ -3425,7 +3425,7 @@
                 id: 'tab_luan_kiem',
                 title: 'Luận Kiếm',
                 mount(box) {
-                  box.style.cssText = 'display: flex; flex-direction: column; gap: 8px; margin-top: 6px;';
+                  box.style.cssText = 'display: flex; flex-direction: column; gap: 8px; margin-top: 6px; padding-bottom: 24px;';
 
                   tabUpdaters.tab_luan_kiem = (data) => {
                     capNhatLuanKiem(data, box);
@@ -3446,7 +3446,7 @@
                 id: 'tab_lich_luyen',
                 title: 'Lịch Luyện',
                 mount(box) {
-                  box.style.cssText = 'display: flex; flex-direction: column; gap: 8px; margin-top: 6px;';
+                  box.style.cssText = 'display: flex; flex-direction: column; gap: 8px; margin-top: 6px; padding-bottom: 24px;';
 
                   tabUpdaters.tab_lich_luyen = (data, s) => {
                     capNhatLichLuyen(data.danhSachDeTu, box, s?.run?.nam ?? 1);
@@ -3467,7 +3467,7 @@
                 id: 'tab_su_mon',
                 title: 'Nhật Ký',
                 mount(box) {
-                  box.style.cssText = 'display: flex; flex-direction: column; gap: 8px; margin-top: 6px;';
+                  box.style.cssText = 'display: flex; flex-direction: column; gap: 8px; margin-top: 6px; padding-bottom: 24px;';
 
                   tabUpdaters.tab_su_mon = (data) => {
                     capNhatNhatKy(data.nhatKy, box);
@@ -3488,7 +3488,7 @@
                 id: 'tab_truyen_thua',
                 title: 'Tiền Duyên',
                 mount(box) {
-                  box.style.cssText = 'display: flex; flex-direction: column; gap: 10px; margin-top: 6px; font-size: 13px;';
+                  box.style.cssText = 'display: flex; flex-direction: column; gap: 10px; margin-top: 6px; font-size: 13px; padding-bottom: 24px;';
 
                   tabUpdaters.tab_truyen_thua = () => {
                     capNhatTienDuyen(box);
