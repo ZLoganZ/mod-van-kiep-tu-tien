@@ -1,11 +1,39 @@
 /**
  * Mod Sư Đồ Truyền Thừa (su_do) - Vạn Kiếp Tu Tiên
  * Tác giả: Antigravity & Tu Tiên Giả
- * Phiên bản: 1.0.4
+ * Phiên bản: 1.0.7
  * Tương thích: apiVersion 1 (Giao diện Tiên Hiệp Cổ Phong Tinh Mỹ, Ẩn Scrollbar 100%)
  */
 
-(window.tuTienMods ??= []).push({
+(() => {
+  const CANH_GIOI_TEN = ['Phàm Nhân', 'Luyện Khí', 'Trúc Cơ', 'Kết Đan', 'Nguyên Anh', 'Hóa Thần'];
+  const TIEU_CANH_GIOI_TEN = ['Sơ kỳ', 'Trung kỳ', 'Hậu kỳ', 'Đại viên mãn'];
+
+  function dinhDangCanhGioi(cg, tieu = 0) {
+    if (typeof window !== 'undefined' && window.tuTien?.core?.index?.tenCanhGioi) {
+      return window.tuTien.core.index.tenCanhGioi(cg, tieu);
+    }
+    if (cg <= 0) return 'Phàm Nhân';
+    const cName = CANH_GIOI_TEN[cg] ?? 'Hóa Thần';
+    const tName = TIEU_CANH_GIOI_TEN[tieu] ?? 'Sơ kỳ';
+    return `${cName} ${tName}`;
+  }
+
+  function tuViYeuCauChoCanhGioi(cg, tieu = 0) {
+    const base = Math.max(1, cg);
+    return (base * 4 + tieu + 1) * 12;
+  }
+
+  function sucChuaDeTu(canhGioiNguoiChoi) {
+    const cg = canhGioiNguoiChoi ?? 0;
+    if (cg <= 1) return 2;  // Phàm Nhân / Luyện Khí: 2
+    if (cg === 2) return 4; // Trúc Cơ: 4
+    if (cg === 3) return 6; // Kết Đan: 6
+    if (cg === 4) return 9; // Nguyên Anh: 9
+    return 12;             // Hóa Thần trở lên: 12
+  }
+
+  (window.tuTienMods ??= []).push({
   id: 'su_do',
 
   boot(tt, mod) {
@@ -53,8 +81,9 @@
       // Tính cách
       const tinhCach = TINH_CACH_LIST[Math.floor(rngVal * 555) % TINH_CACH_LIST.length];
 
-      // Cảnh giới ban đầu: thường là Luyện Khí tầng 1 - 3
-      const tieuCanhGioi = 1 + (Math.floor(rngVal * 99) % 3);
+      // Cảnh giới ban đầu: Luyện Khí Sơ kỳ (tieu: 0) hoặc Trung kỳ (tieu: 1)
+      const tieuCanhGioi = rngVal > 0.6 ? 1 : 0;
+      const canhGioi = 1; // 1: Luyện Khí
 
       return {
         id: `dt_${Date.now()}_${Math.floor(rngVal * 10000)}`,
@@ -65,10 +94,10 @@
         tuChat: tuChat.id,
         tinhCach: tinhCach.id,
         khuynhHuong: 'chinh_dao', // chinh_dao, tieu_dao, ma_dao
-        canhGioi: 0, // 0: Luyện Khí
+        canhGioi,
         tieuCanhGioi,
         tuVi: 0,
-        tuViYeuCau: tieuCanhGioi * 10,
+        tuViYeuCau: tuViYeuCauChoCanhGioi(canhGioi, tieuCanhGioi),
         haoCam: 60, // 0 - 100
         doKy: 0,   // 0 - 100
         vaiVe: 'de_tu', // de_tu, dai_su_huynh
@@ -95,14 +124,6 @@
       data.nhatKy ??= [];
       data.nhatKy.unshift({ nam, text, time: Date.now() });
       if (data.nhatKy.length > 50) data.nhatKy.pop();
-    }
-
-    function sucChuaDeTu(canhGioiNguoiChoi) {
-      if (canhGioiNguoiChoi <= 0) return 1;  // Luyện Khí: 1
-      if (canhGioiNguoiChoi === 1) return 3; // Trúc Cơ: 3
-      if (canhGioiNguoiChoi === 2) return 5; // Kim Đan: 5
-      if (canhGioiNguoiChoi === 3) return 8; // Nguyên Anh: 8
-      return 12;                             // Hóa Thần trở lên: 12
     }
 
     // ==========================================
@@ -256,7 +277,7 @@
       return 'khong_tick';
     });
 
-    // Action 7: Hộ pháp độ kiếp
+    // Action 7: Hộ trì phá cảnh / Độ kiếp
     mod.addAction('ho_phap', (ctx, args, h) => {
       const data = layTrangThaiMod(h);
       const dt = data.danhSachDeTu.find((d) => d.id === args?.deTuId);
@@ -266,41 +287,102 @@
         return 'khong_tick';
       }
 
-      const cach = args?.cach ?? 'ganh_loi_kiep';
+      const cach = args?.cach ?? 'tu_luc';
       const nv = ctx.run.nhanVat;
+      const nam = ctx.run.nam ?? 1;
+      const TEN_THUONG = ['Lành lặn', 'Thương nhẹ', 'Thương nặng', 'Trọng thương'];
       let thanhCong = false;
 
-      if (cach === 'ganh_loi_kiep') {
-        thanhCong = true;
-        nv.thuongThe = Math.min(100, (nv.thuongThe ?? 0) + 5);
-        dt.haoCam = 100;
-        ghiNhatKy(data, `⚡ Sư tôn dùng thân thể đón đỡ cửu thiên lôi kiếp hộ ${dt.ten}! ${dt.ten} cảm kích tận xương tủy, đột phá thành công!`, ctx.run.nam ?? 1);
-      } else if (cach === 'ban_dan') {
-        const coDan = (nv.tuiDo?.['item.su_do_ho_mach_dan'] ?? 0) > 0;
-        if (coDan) {
-          nv.tuiDo['item.su_do_ho_mach_dan'] -= 1;
-        } else if (nv.linhThach >= 50) {
-          nv.linhThach -= 50;
-        } else {
-          return 'khong_tick';
-        }
-        thanhCong = h.random() > 0.15;
-        ghiNhatKy(data, `Sư tôn ban đan dược hộ mạch cho ${dt.ten} độ kiếp: ${thanhCong ? 'Thành công viên mãn!' : 'Bình cảnh chưa phá, may nhờ đan dược hộ mệnh nên không nguy hiểm.'}`, ctx.run.nam ?? 1);
-      } else {
-        thanhCong = h.random() > 0.4;
-        ghiNhatKy(data, `${dt.ten} tự mình vượt qua thiên kiếp: ${thanhCong ? 'Thuận lợi thăng cấp!' : 'Bị thiên lôi đánh lui, tu vi hao tổn.'}`, ctx.run.nam ?? 1);
-      }
+      // KIỂM TRA: ĐỘT PHÁ TIỂU CẢNH GIỚI hay ĐẠI CẢNH GIỚI
+      const laDaiCanhGioi = dt.tieuCanhGioi >= 3;
 
-      if (thanhCong) {
-        dt.tieuCanhGioi += 1;
-        if (dt.tieuCanhGioi > 9) {
-          dt.canhGioi += 1;
-          dt.tieuCanhGioi = 1;
+      if (!laDaiCanhGioi) {
+        // === 1. ĐỘT PHÁ TIỂU CẢNH GIỚI (KHÔNG CÓ THIÊN KIẾP / LÔI KIẾP) ===
+        if (cach === 'chi_dan' || cach === 'ganh_loi_kiep' || cach === 'ho_phap') {
+          // Sư tôn chỉ dẫn khí tức: tốn 0.2 tu vi, 100% thành công, KHÔNG BỊ THƯƠNG
+          nv.tuVi = Math.max(0, nv.tuVi - 0.2);
+          thanhCong = true;
+          dt.haoCam = Math.min(100, dt.haoCam + 10);
+          ghiNhatKy(data, `Sư tôn đích thân dẫn khí hộ mạch, ${dt.ten} thuận lợi phá vỡ bình cảnh, đột phá lên ${dinhDangCanhGioi(dt.canhGioi, dt.tieuCanhGioi + 1)}!`, nam);
+        } else if (cach === 'ban_dan') {
+          // Ban đan dược trợ lực: 30 linh thạch
+          if (nv.linhThach < 30) return 'khong_tick';
+          nv.linhThach -= 30;
+          thanhCong = h.random() > 0.15; // 85%
+          ghiNhatKy(data, `Sư tôn ban đan dược trợ lực cho ${dt.ten} xung kích tiểu cảnh giới: ${thanhCong ? 'Thành công phá cảnh!' : 'Bình cảnh kiên cố, chưa thể phá vỡ.'}`, nam);
+        } else {
+          // Tự lực xung kích: 60%
+          thanhCong = h.random() > 0.4;
+          ghiNhatKy(data, `${dt.ten} tự mình vận công xung kích bình cảnh: ${thanhCong ? 'Thuận lợi thăng cấp!' : 'Bình cảnh chưa phá, tu vi hao tổn.'}`, nam);
         }
-        dt.tuVi = 0;
-        dt.tuViYeuCau = (dt.canhGioi * 9 + dt.tieuCanhGioi) * 12;
+
+        if (thanhCong) {
+          dt.tieuCanhGioi += 1;
+          dt.tuVi = 0;
+          dt.tuViYeuCau = tuViYeuCauChoCanhGioi(dt.canhGioi, dt.tieuCanhGioi);
+        } else {
+          dt.tuVi = Math.floor(dt.tuVi * 0.7);
+        }
       } else {
-        dt.tuVi = Math.floor(dt.tuVi * 0.7);
+        // === 2. ĐỘT PHÁ ĐẠI CẢNH GIỚI (Luyện Khí -> Trúc Cơ; Trúc Cơ -> Kết Đan...) ===
+        const tuLuyenKhiLenTrucCo = dt.canhGioi === 1;
+
+        if (tuLuyenKhiLenTrucCo) {
+          // 2A. Luyện Khí Đại viên mãn -> Trúc Cơ: Đúc Đạo Cơ, KHÔNG CÓ LÔI KIẾP
+          if (cach === 'ho_phap' || cach === 'chi_dan' || cach === 'ganh_loi_kiep') {
+            nv.tuVi = Math.max(0, nv.tuVi - 0.5);
+            thanhCong = true;
+            dt.haoCam = Math.min(100, dt.haoCam + 20);
+            ghiNhatKy(data, `🌟 Sư tôn thi triển huyền công hộ pháp đúc đạo cơ! ${dt.ten} ngưng tụ đạo cơ hoàn mỹ, chính thức bước vào Trúc Cơ Sơ kỳ!`, nam);
+          } else if (cach === 'ban_dan') {
+            const coDan = (nv.tuiDo?.['item.truc_co_dan'] ?? 0) > 0;
+            if (coDan) {
+              nv.tuiDo['item.truc_co_dan'] -= 1;
+            } else if (nv.linhThach >= 80) {
+              nv.linhThach -= 80;
+            } else {
+              return 'khong_tick';
+            }
+            thanhCong = h.random() > 0.1; // 90%
+            ghiNhatKy(data, `Sư tôn ban Trúc Cơ Đan cho ${dt.ten} đúc đạo cơ: ${thanhCong ? 'Ngưng tụ đạo cơ thành công!' : 'Đạo cơ chưa vững, ngưng tụ thất bại.'}`, nam);
+          } else {
+            thanhCong = h.random() > 0.5; // 50%
+            ghiNhatKy(data, `${dt.ten} tự thân đúc đạo cơ: ${thanhCong ? 'Thành công bước vào Trúc Cơ!' : 'Thất bại, tu vi hao tổn.'}`, nam);
+          }
+        } else {
+          // 2B. Từ Trúc Cơ trở lên (Kết Đan, Nguyên Anh, Hóa Thần): THẬT SỰ CÓ THIÊN KIẾP / LÔI KIẾP!
+          if (cach === 'ganh_loi_kiep') {
+            thanhCong = true;
+            // CHỈ TĂNG ĐÚNG 1 TẦNG THƯƠNG THẾ (thang điểm 0..3 của game gốc)
+            nv.thuongThe = Math.min(3, (nv.thuongThe ?? 0) + 1);
+            dt.haoCam = 100;
+            ghiNhatKy(data, `⚡ Cửu thiên lôi kiếp giáng xuống! Sư tôn dùng thân thể đón đỡ lôi đình hộ ${dt.ten}! ${dt.ten} cảm kích rơi lệ, vượt thiên kiếp thành công! Sư tôn chịu 1 tầng thương thế (${TEN_THUONG[nv.thuongThe]}).`, nam);
+          } else if (cach === 'ban_dan') {
+            const coDan = (nv.tuiDo?.['item.su_do_ho_mach_dan'] ?? 0) > 0 || (nv.tuiDo?.['item.ket_kim_dan'] ?? 0) > 0;
+            if (coDan) {
+              if (nv.tuiDo?.['item.su_do_ho_mach_dan']) nv.tuiDo['item.su_do_ho_mach_dan'] -= 1;
+              else nv.tuiDo['item.ket_kim_dan'] -= 1;
+            } else if (nv.linhThach >= 100) {
+              nv.linhThach -= 100;
+            } else {
+              return 'khong_tick';
+            }
+            thanhCong = h.random() > 0.2; // 80%
+            ghiNhatKy(data, `Sư tôn ban đan dược hộ mệnh cho ${dt.ten} độ kiếp: ${thanhCong ? 'Độ kiếp thành công viên mãn!' : 'Bình cảnh chưa phá, may có đan dược che chở tính mạng.'}`, nam);
+          } else {
+            thanhCong = h.random() > 0.5; // 50%
+            ghiNhatKy(data, `${dt.ten} tự mình vượt qua thiên kiếp: ${thanhCong ? 'Thuận lợi thăng cấp đại cảnh giới!' : 'Bị thiên lôi đánh lui, tu vi tổn hại nặng nề.'}`, nam);
+          }
+        }
+
+        if (thanhCong) {
+          dt.canhGioi += 1;
+          dt.tieuCanhGioi = 0;
+          dt.tuVi = 0;
+          dt.tuViYeuCau = tuViYeuCauChoCanhGioi(dt.canhGioi, dt.tieuCanhGioi);
+        } else {
+          dt.tuVi = Math.floor(dt.tuVi * 0.6);
+        }
       }
 
       h.setData(data);
@@ -426,9 +508,9 @@
 
         if (dt.tinhCach === 'hieu_thuan' && dt.haoCam >= 80 && h.random() > 0.6) {
           const nv = ctx.run.nhanVat;
-          if (nv.thuongThe > 0) {
-            nv.thuongThe = Math.max(0, nv.thuongThe - 2);
-            ghiNhatKy(data, `Đệ tử hiếu thảo ${dt.ten} nấu chén Tuyết Liên Trà dâng sư tôn, giúp sư tôn bình phục thương thế.`, nam);
+          if ((nv.thuongThe ?? 0) > 0) {
+            nv.thuongThe = Math.max(0, nv.thuongThe - 1);
+            ghiNhatKy(data, `Đệ tử hiếu thảo ${dt.ten} nấu chén Tuyết Liên Trà dâng sư tôn, giúp sư tôn chữa khỏi 1 tầng thương thế.`, nam);
           }
         }
 
@@ -442,6 +524,7 @@
   },
 
   ready(tt, mod) {
+    window.__suDoModUi = mod.ui;
     mod.log('Mod Sư Đồ Truyền Thừa đã sẵn sàng (Pha ready)');
     const kit = tt.ui.kit;
 
@@ -757,14 +840,6 @@
       document.head.append(style);
     }
 
-    function sucChuaDeTu(cg) {
-      if (cg <= 0) return 1;
-      if (cg === 1) return 3;
-      if (cg === 2) return 5;
-      if (cg === 3) return 8;
-      return 12;
-    }
-
     // Lắng nghe kết thúc kiếp để lưu truyền thừa
     tt.on('lifeEnd', () => {
       try {
@@ -871,7 +946,7 @@
                 🏛️ <b>${data.daoTrangTen ?? 'Thanh Khê Đạo Tràng'}</b> <span style="font-size:10px; opacity:0.6;">✏️</span>
               </span>
               <span class="su-do-badge" style="color:var(--vang-kim); background:rgba(218,165,32,0.12); border:1px solid var(--vang-kim);">
-                ${TEN_CANH_GIOI[nv?.canhGioi ?? 0]} Sư Tôn
+                ${CANH_GIOI_TEN[nv?.canhGioi ?? 1] ?? 'Hóa Thần'} Sư Tôn
               </span>
             </div>
             <div class="su-do-header-sub">Khai sơn lập phái · Quảng truyền đạo pháp</div>
@@ -1106,7 +1181,7 @@
                       row.innerHTML = `
                         <div style="font-size:12.5px; white-space: nowrap;">
                           <b>${dt.ten}</b> 
-                          <span class="hud-phu" style="font-size:11px;">(${TEN_CANH_GIOI[dt.canhGioi]} tầng ${dt.tieuCanhGioi})</span>
+                          <span class="hud-phu" style="font-size:11px;">(${dinhDangCanhGioi(dt.canhGioi, dt.tieuCanhGioi)})</span>
                         </div>
                       `;
 
@@ -1190,7 +1265,7 @@
                       box.append(
                         kit.row({
                           label: td.ten,
-                          value: `${TEN_CANH_GIOI[td.canhGioi] ?? 'Trúc Cơ'} · Tư chất: ${tc}`,
+                          value: `${dinhDangCanhGioi(td.canhGioi ?? 1, td.tieuCanhGioi ?? 0)} · Tư chất: ${tc}`,
                         })
                       );
                     });
@@ -1229,7 +1304,7 @@
       const cgSpan = document.createElement('span');
       cgSpan.className = 'hud-phu';
       cgSpan.style.cssText = 'font-size: 11px; white-space: nowrap; margin-left: auto;';
-      cgSpan.textContent = `${TEN_CANH_GIOI[dt.canhGioi]} tầng ${dt.tieuCanhGioi}`;
+      cgSpan.textContent = dinhDangCanhGioi(dt.canhGioi, dt.tieuCanhGioi);
       rowTop.append(cgSpan);
       card.append(rowTop);
 
@@ -1283,7 +1358,7 @@
           <span class="su-do-card-meta">${dt.gioiTinh === 'nam' ? 'Nam' : 'Nữ'} · ${dt.tuoi}t</span>
         </div>
         <div class="su-do-card-subrow">
-          <span>${TEN_CANH_GIOI[dt.canhGioi]} tầng ${dt.tieuCanhGioi}</span>
+          <span>${dinhDangCanhGioi(dt.canhGioi, dt.tieuCanhGioi)}</span>
           <span style="opacity:0.4;">·</span>
           <span>Hệ ${heStr}</span>
           <span class="su-do-badge" style="color:${tc.color}; background:${tc.bg}; border:1px solid ${tc.border}; font-size:10px;">${tc.ten}</span>
@@ -1417,60 +1492,188 @@
       btnBanThuong.classList.add('su-do-btn-wrap');
       subRow.append(btnBanThuong);
 
-      // Nút Hộ pháp nếu đủ tu vi
+      // Nút Hộ trì đột phá / Độ kiếp nếu đủ tu vi
       if (dt.tuVi >= dt.tuViYeuCau) {
+        const laDaiCanhGioi = dt.tieuCanhGioi >= 3;
+        const tuLuyenKhiLenTrucCo = dt.canhGioi === 1 && laDaiCanhGioi;
+        const doKiepThucSu = dt.canhGioi >= 2 && laDaiCanhGioi;
+
+        const nutText = doKiepThucSu
+          ? '⚡ Độ Kiếp'
+          : tuLuyenKhiLenTrucCo
+          ? '🌟 Đột Phá Trúc Cơ'
+          : '⚡ Đột Phá';
+
         const btnHoPhap = kit.button({
-          text: '⚡ Độ Kiếp',
+          text: nutText,
           kind: 'chinh',
           onClick: () => {
-            const m = kit.modal({
-              title: `Hộ Pháp Độ Kiếp Cho ${dt.ten}`,
-              mount(box) {
-                box.style.cssText = 'display: flex; flex-direction: column; gap: 8px; font-size: 13px;';
-                const msg = document.createElement('div');
-                msg.innerHTML = `Đệ tử đã đạt bình cảnh, lôi kiếp sắp giáng xuống! Sư tôn lựa chọn cách hộ pháp nào?`;
-                box.append(msg);
+            if (!laDaiCanhGioi) {
+              // === 1. ĐỘT PHÁ TIỂU CẢNH GIỚI ===
+              const m = kit.modal({
+                title: `Hộ Trì Đột Phá Cho ${dt.ten}`,
+                mount(box) {
+                  box.style.cssText = 'display: flex; flex-direction: column; gap: 8px; font-size: 13px;';
+                  const msg = document.createElement('div');
+                  msg.innerHTML = `Đệ tử <b>${dt.ten}</b> (${dinhDangCanhGioi(dt.canhGioi, dt.tieuCanhGioi)}) đã tích lũy đầy đủ tu vi, chuẩn bị xung mạch phá quan lên <b>${dinhDangCanhGioi(dt.canhGioi, dt.tieuCanhGioi + 1)}</b>! Sư tôn lựa chọn cách hộ trì nào?`;
+                  box.append(msg);
 
-                box.append(
-                  kit.button({
-                    text: '⚡ Gánh lôi kiếp (100% thành công, tổn hao khí huyết)',
-                    kind: 'chinh',
-                    onClick: () => {
-                      tt.game.modAction('su_do', 'ho_phap', { deTuId: dt.id, cach: 'ganh_loi_kiep' });
-                      m.close();
-                      tt.ui.toast('Đã gánh lôi kiếp hộ đồ đệ thành công!');
-                    },
-                  })
-                );
+                  box.append(
+                    kit.button({
+                      text: '✨ Chỉ dẫn khí mạch (100% thành công, tốn 0.2 tu vi, không bị thương)',
+                      kind: 'chinh',
+                      onClick: () => {
+                        const nv = tt.state().run?.nhanVat;
+                        if (nv && (nv.tuVi ?? 0) < 0.2) {
+                          tt.ui.toast('Sư tôn không đủ 0.2 tu vi chân nguyên để chỉ dẫn!');
+                          return;
+                        }
+                        tt.game.modAction('su_do', 'ho_phap', { deTuId: dt.id, cach: 'chi_dan' });
+                        m.close();
+                        tt.ui.toast(`Đã chỉ dẫn khí mạch hộ ${dt.ten} đột phá thành công!`);
+                      },
+                    })
+                  );
 
-                box.append(
-                  kit.button({
-                    text: '💊 Ban Hộ Mạch Đan (85% thành công, 50 linh thạch)',
-                    kind: 'phu',
-                    onClick: () => {
-                      try {
+                  box.append(
+                    kit.button({
+                      text: '💊 Ban đan dược trợ lực (85% thành công, 30 linh thạch)',
+                      kind: 'phu',
+                      onClick: () => {
+                        const nv = tt.state().run?.nhanVat;
+                        if (nv && (nv.linhThach ?? 0) < 30) {
+                          tt.ui.toast('Sư tôn không đủ 30 linh thạch để mua đan dược!');
+                          return;
+                        }
                         tt.game.modAction('su_do', 'ho_phap', { deTuId: dt.id, cach: 'ban_dan' });
                         m.close();
-                        tt.ui.toast('Đã ban đan dược hộ pháp!');
-                      } catch (e) {
-                        tt.ui.toast(e.message);
-                      }
-                    },
-                  })
-                );
+                        tt.ui.toast(`Đã ban đan dược cho ${dt.ten} xung kích tiểu cảnh giới!`);
+                      },
+                    })
+                  );
 
-                box.append(
-                  kit.button({
-                    text: '🛡️ Tự lực cánh sinh (60% thành công)',
-                    kind: 'phu',
-                    onClick: () => {
-                      tt.game.modAction('su_do', 'ho_phap', { deTuId: dt.id, cach: 'tu_luc' });
-                      m.close();
-                    },
-                  })
-                );
-              },
-            });
+                  box.append(
+                    kit.button({
+                      text: '🛡️ Tự lực cánh sinh (60% thành công)',
+                      kind: 'phu',
+                      onClick: () => {
+                        tt.game.modAction('su_do', 'ho_phap', { deTuId: dt.id, cach: 'tu_luc' });
+                        m.close();
+                      },
+                    })
+                  );
+                },
+              });
+            } else if (tuLuyenKhiLenTrucCo) {
+              // === 2. ĐỘT PHÁ TRÚC CƠ (ĐÚC ĐẠO CƠ, KHÔNG CÓ LÔI KIẾP) ===
+              const m = kit.modal({
+                title: `Hộ Đạo Trúc Cơ Cho ${dt.ten}`,
+                mount(box) {
+                  box.style.cssText = 'display: flex; flex-direction: column; gap: 8px; font-size: 13px;';
+                  const msg = document.createElement('div');
+                  msg.innerHTML = `Đồ đệ <b>${dt.ten}</b> đã đạt Luyện Khí Đại viên mãn, chuẩn bị ngưng tụ đạo cơ để bước chân vào Trúc Cơ Sơ kỳ! Sư tôn lựa chọn cách hộ đạo?`;
+                  box.append(msg);
+
+                  box.append(
+                    kit.button({
+                      text: '🌟 Sư tôn hộ pháp đúc đạo cơ (100% thành công, hao 0.5 tu vi, không bị thương)',
+                      kind: 'chinh',
+                      onClick: () => {
+                        const nv = tt.state().run?.nhanVat;
+                        if (nv && (nv.tuVi ?? 0) < 0.5) {
+                          tt.ui.toast('Sư tôn không đủ 0.5 tu vi để hộ pháp đúc đạo cơ!');
+                          return;
+                        }
+                        tt.game.modAction('su_do', 'ho_phap', { deTuId: dt.id, cach: 'ho_phap' });
+                        m.close();
+                        tt.ui.toast(`Đã hộ pháp giúp ${dt.ten} đúc thành đạo cơ Trúc Cơ!`);
+                      },
+                    })
+                  );
+
+                  box.append(
+                    kit.button({
+                      text: '💊 Ban Trúc Cơ Đan (90% thành công, 80 linh thạch hoặc có đan)',
+                      kind: 'phu',
+                      onClick: () => {
+                        const nv = tt.state().run?.nhanVat;
+                        const coDan = (nv?.tuiDo?.['item.truc_co_dan'] ?? 0) > 0;
+                        if (!coDan && (nv?.linhThach ?? 0) < 80) {
+                          tt.ui.toast('Sư tôn không có Trúc Cơ Đan hoặc không đủ 80 linh thạch!');
+                          return;
+                        }
+                        tt.game.modAction('su_do', 'ho_phap', { deTuId: dt.id, cach: 'ban_dan' });
+                        m.close();
+                        tt.ui.toast(`Đã ban Trúc Cơ Đan cho ${dt.ten}!`);
+                      },
+                    })
+                  );
+
+                  box.append(
+                    kit.button({
+                      text: '🛡️ Tự thân đúc đạo cơ (50% thành công)',
+                      kind: 'phu',
+                      onClick: () => {
+                        tt.game.modAction('su_do', 'ho_phap', { deTuId: dt.id, cach: 'tu_luc' });
+                        m.close();
+                      },
+                    })
+                  );
+                },
+              });
+            } else {
+              // === 3. ĐỘ KIẾP ĐẠI CẢNH GIỚI (CỬU THIÊN LÔI KIẾP) ===
+              const m = kit.modal({
+                title: `Hộ Pháp Độ Kiếp Cho ${dt.ten}`,
+                mount(box) {
+                  box.style.cssText = 'display: flex; flex-direction: column; gap: 8px; font-size: 13px;';
+                  const msg = document.createElement('div');
+                  msg.innerHTML = `Đệ tử <b>${dt.ten}</b> xung kích đại cảnh giới, thiên địa dị tượng cuồn cuộn, cửu thiên lôi kiếp sắp giáng xuống! Sư tôn lựa chọn phương án hộ kiếp nào?`;
+                  box.append(msg);
+
+                  box.append(
+                    kit.button({
+                      text: '⚡ Gánh lôi kiếp (100% thành công, Sư tôn chịu 1 tầng thương thế nhẹ)',
+                      kind: 'chinh',
+                      onClick: () => {
+                        tt.game.modAction('su_do', 'ho_phap', { deTuId: dt.id, cach: 'ganh_loi_kiep' });
+                        m.close();
+                        tt.ui.toast(`Đã gánh lôi kiếp hộ ${dt.ten} vượt thiên kiếp thành công!`);
+                      },
+                    })
+                  );
+
+                  box.append(
+                    kit.button({
+                      text: '💊 Ban Đan Dược Hộ Mệnh (80% thành công, 100 linh thạch)',
+                      kind: 'phu',
+                      onClick: () => {
+                        const nv = tt.state().run?.nhanVat;
+                        const coDan = (nv?.tuiDo?.['item.su_do_ho_mach_dan'] ?? 0) > 0 || (nv?.tuiDo?.['item.ket_kim_dan'] ?? 0) > 0;
+                        if (!coDan && (nv?.linhThach ?? 0) < 100) {
+                          tt.ui.toast('Sư tôn không đủ 100 linh thạch để ban đan dược hộ mệnh!');
+                          return;
+                        }
+                        tt.game.modAction('su_do', 'ho_phap', { deTuId: dt.id, cach: 'ban_dan' });
+                        m.close();
+                        tt.ui.toast('Đã ban đan dược hộ mệnh độ kiếp!');
+                      },
+                    })
+                  );
+
+                  box.append(
+                    kit.button({
+                      text: '🛡️ Tự thân vượt thiên kiếp (50% thành công)',
+                      kind: 'phu',
+                      onClick: () => {
+                        tt.game.modAction('su_do', 'ho_phap', { deTuId: dt.id, cach: 'tu_luc' });
+                        m.close();
+                      },
+                    })
+                  );
+                },
+              });
+            }
           },
         });
         btnHoPhap.classList.add('su-do-btn-wrap');
@@ -1520,3 +1723,4 @@
     }
   },
 });
+})();
