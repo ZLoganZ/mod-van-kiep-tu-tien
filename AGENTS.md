@@ -152,4 +152,38 @@ Game luôn phục vụ gói mod mẫu chính thức tại đường dẫn cố �
      - Giả lập bước nhảy thời gian qua năm (bằng `window.tuTien.core.index.passTime(ctx, years)` trong giao dịch `act`) để xác minh: đệ tử tăng tuổi theo năm, tích lũy tu vi theo hệ số tư chất, đếm lùi thời gian lịch luyện và kích hoạt các sự kiện tâm tính (hiếu thuận, đố kỵ).
   4. **Nghiệm thu tỷ lệ đạt 100%**: Chỉ được phép xác nhận tính năng sẵn sàng khi 100% bài test trong bộ kiểm thử chức năng tự động trả về `PASS`.
 
+---
+
+## 8. QUY CHUẨN BẢNG DỮ LIỆU CSV (BANG.MD & CONTENT/BANG/)
+
+Thiết kế chính thức của game hỗ trợ quản lý và chỉnh sửa chỉ số hàng loạt bằng bảng tính thay vì viết file YAML:
+
+### 1. Nguồn Dữ Liệu & Cách Lấy Bảng:
+* **Tải bảng chuẩn của game:**
+  * Trực tiếp từ web game: `https://van-kiep-tu-tien.vuhaiquan2k1.workers.dev/mod/bang.zip`.
+  * Hoặc trong game tại: **Cấu hình → Mods → "Tải bảng dữ liệu"** (xuất ra file `.zip` phản ánh chính xác trạng thái game kèm các mod đang chạy).
+* **Danh mục các file CSV chính:**
+  * `item_<loai>.csv`: Vật phẩm tách theo phân loại (`item_phap_khi`, `item_dan_duoc`, `item_nguyen_lieu`, `item_cong_phap`...).
+  * `enemy.csv`: Địch, yêu thú, boss.
+  * `chieu.csv`: Chiêu thức chiến đấu của địch.
+  * `dp.csv`: Đan phương, công thức luyện khí / luyện đan.
+  * `npc.csv`, `the_chat.csv`, `linh_can.csv`, `toc.csv`, `origin.csv`...: Các bảng thiết lập nhân vật và thế giới.
+
+### 2. Nguyên Tắc Cốt Lõi: Cây Lời Kể (YAML) vs Bảng Chỉ Số (CSV):
+* **KHÔNG CÓ bảng CSV cho Sự Kiện (`ev.`), Chuỗi Sự Kiện (`chain.`), Lore/Cốt truyện**:
+  * Các sự kiện là cây hội thoại phân nhánh với điều kiện logic, văn bản dẫn truyện và lựa chọn tương tác. **BẮT BUỘC viết bằng YAML** đặt trong `content/encounters/*.yaml` hoặc qua `mod.addContent`.
+* **Bảng CSV dành riêng cho việc sửa / thêm hàng loạt chỉ số**:
+  * Thích hợp khi điều chỉnh giá cả, thuộc tính ngũ hành, tỷ lệ rớt đồ, thêm hàng chục vật phẩm hoặc quái vật mới.
+
+### 3. Quy Cách Sử Dụng Bảng CSV Trong Mod:
+* **Thư mục đặt bảng:** Đặt file CSV vào thư mục `content/bang/` của mod (ví dụ: `su_do/content/bang/vat_pham.csv`).
+* **Quy chuẩn cấu trúc file CSV:**
+  * Dòng đầu tiên là tiêu đề cột, bắt buộc phải có cột **`id`**.
+  * **Sửa mục đã có (của game hoặc mod khác):** Chỉ điền các ô muốn sửa, ô trống giữ nguyên giá trị cũ, ô `~` để xóa trường. Cột có đuôi `+` (như `chieu+`) dùng để nối tiếp phần tử vào danh sách thay vì thay thế.
+  * **Thêm mục mới:** Bắt buộc tuân thủ tiền tố mod: `<loại>.<id_mod>_<tên>` (ví dụ: `item.su_do_ho_mach_dan`). Cần cung cấp đủ các cột trường bắt buộc tương tự như khai báo YAML.
+  * **Định dạng lưu file:** Luôn lưu bằng định dạng **CSV UTF-8 (Comma delimited)** để bảo toàn vẹn toàn dấu tiếng Việt.
+
+### 4. Đánh Giá Ảnh Hưởng Đối Với Mod:
+* Đối với các mod thiên về logic, giao diện và sự kiện phân nhánh (như `su_do`): Cốt truyện kỳ ngộ giữ vững ở `content/encounters/*.yaml`. Bảng dữ liệu CSV được dùng để tra cứu ID vật phẩm/nguyên liệu/đan phương gốc của game hoặc bổ sung/chỉnh sửa chỉ số vật phẩm hàng loạt khi cần mở rộng kho trang bị, đan dược.
+
 

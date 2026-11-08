@@ -1,7 +1,7 @@
 /**
  * Mod Sư Đồ Truyền Thừa (su_do) - Vạn Kiếp Tu Tiên
  * Tác giả: Antigravity & Tu Tiên Giả
- * Phiên bản: 1.0.7
+ * Phiên bản: 1.0.8
  * Tương thích: apiVersion 1 (Giao diện Tiên Hiệp Cổ Phong Tinh Mỹ, Ẩn Scrollbar 100%)
  */
 
@@ -180,7 +180,8 @@
 
       data.danhSachDeTu.push(ungVien);
       data.ungVien.splice(idx, 1);
-      ghiNhatKy(data, `Thu nhận đồ đệ ${ungVien.ten} (${ungVien.he.join('/')}) nhập môn.`, ctx.run.nam ?? 1);
+      const danhXung = ungVien.gioiTinh === 'nu' ? 'Đại Sư Tỷ' : 'Đại Sư Huynh';
+      ghiNhatKy(data, `Thu nhận đồ đệ ${ungVien.ten} (${ungVien.he.join('/')}) nhập môn${ungVien.vaiVe === 'dai_su_huynh' ? `, tôn làm ${danhXung}` : ''}.`, ctx.run.nam ?? 1);
       h.setData(data);
       return 'khong_tick';
     });
@@ -399,7 +400,8 @@
       dt.vaiVe = 'dai_su_huynh';
       dt.haoCam = Math.min(100, dt.haoCam + 20);
 
-      ghiNhatKy(data, `Sư tôn sắc phong ${dt.ten} làm Đại Sư Huynh, thống lĩnh đệ tử đời thứ nhất.`, ctx.run.nam ?? 1);
+      const danhXung = dt.gioiTinh === 'nu' ? 'Đại Sư Tỷ' : 'Đại Sư Huynh';
+      ghiNhatKy(data, `Sư tôn sắc phong ${dt.ten} làm ${danhXung}, thống lĩnh đệ tử đời thứ nhất.`, ctx.run.nam ?? 1);
       h.setData(data);
       return 'khong_tick';
     });
@@ -520,6 +522,16 @@
       });
 
       h.setData(data);
+    });
+
+    // Modifier: Điều chỉnh tần suất kỳ ngộ đệ tử theo cấu hình mod.yaml
+    mod.modify('encounterWeight', ({ id, value }) => {
+      if (id?.startsWith('ev.su_do_')) {
+        const opt = mod.options?.ti_le_ky_ngo ?? 'thuong';
+        const heSo = opt === 'it' ? 0.4 : opt === 'nhieu' ? 3.0 : 1.2;
+        return (value ?? 1) * heSo;
+      }
+      return value ?? 1;
     });
   },
 
@@ -687,10 +699,10 @@
           border: 1px solid var(--vien-hud);
           background: var(--nen-hud);
           border-radius: 8px;
-          padding: 8px 10px;
+          padding: 6px 8px;
           display: flex;
           flex-direction: column;
-          gap: 6px;
+          gap: 5px;
           box-shadow: 0 1px 4px rgba(0,0,0,0.04);
           transition: border-color 0.2s ease;
         }
@@ -699,11 +711,11 @@
         }
 
         .su-do-avatar {
-          width: 44px;
-          height: 44px;
+          width: 38px;
+          height: 38px;
           border-radius: 50%;
           border: 1.5px solid var(--vien-muc);
-          box-shadow: 0 0 6px rgba(0,0,0,0.1);
+          box-shadow: 0 0 5px rgba(0,0,0,0.08);
           overflow: hidden;
           background: #fff;
           display: flex;
@@ -736,7 +748,7 @@
         }
 
         .su-do-card-meta {
-          font-size: 11px;
+          font-size: 10.5px;
           color: var(--muc-nhat);
           margin-left: auto;
           white-space: nowrap;
@@ -750,13 +762,12 @@
           font-size: 11px;
           min-width: 0;
           white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
         .su-do-card-subrow span {
           white-space: nowrap;
           flex-shrink: 0;
-        }
-        .su-do-card-subrow .su-do-badge {
-          margin-left: auto;
         }
 
         .su-do-card-stats {
@@ -1298,7 +1309,8 @@
 
       const tenSpan = document.createElement('span');
       tenSpan.style.cssText = 'display: flex; align-items: center; gap: 4px; white-space: nowrap;';
-      tenSpan.innerHTML = `<b>${dt.ten}</b> ${dt.vaiVe === 'dai_su_huynh' ? '<span class="su-do-badge" style="color:var(--vang-kim); background:rgba(218,165,32,0.12); border:1px solid var(--vang-kim); font-size:9.5px; padding:0 4px;">Đại Sư Huynh</span>' : ''}`;
+      const danhXung = dt.gioiTinh === 'nu' ? 'Đại Sư Tỷ' : 'Đại Sư Huynh';
+      tenSpan.innerHTML = `<b>${dt.ten}</b> ${dt.vaiVe === 'dai_su_huynh' ? `<span class="su-do-badge" style="color:var(--vang-kim); background:rgba(218,165,32,0.12); border:1px solid var(--vang-kim); font-size:9.5px; padding:0 4px;">${danhXung}</span>` : ''}`;
       rowTop.append(tenSpan);
 
       const cgSpan = document.createElement('span');
@@ -1348,20 +1360,21 @@
       const tc = TU_CHAT_MAP[dt.tuChat] ?? { ten: dt.tuChat, color: 'inherit', bg: 'transparent', border: 'transparent' };
       const heStr = dt.he.map((h) => HE_MAP[h] ?? h).join(' · ');
       const tcStr = TINH_CACH_MAP[dt.tinhCach] ?? dt.tinhCach;
+      const danhXung = dt.gioiTinh === 'nu' ? 'Đại Sư Tỷ' : 'Đại Sư Huynh';
 
       const info = document.createElement('div');
       info.className = 'su-do-card-info';
       info.innerHTML = `
         <div class="su-do-card-name-row">
           <span class="su-do-card-name">${dt.ten}</span>
-          ${dt.vaiVe === 'dai_su_huynh' ? '<span class="su-do-badge" style="color:var(--vang-kim); background:rgba(218,165,32,0.14); border:1px solid var(--vang-kim); font-size:10px; padding:0 5px;">Đại Sư Huynh</span>' : ''}
-          <span class="su-do-card-meta">${dt.gioiTinh === 'nam' ? 'Nam' : 'Nữ'} · ${dt.tuoi}t</span>
+          ${dt.vaiVe === 'dai_su_huynh' ? `<span class="su-do-badge" style="color:var(--vang-kim); background:rgba(218,165,32,0.14); border:1px solid var(--vang-kim); font-size:10px; padding:0 5px; white-space:nowrap;">${danhXung}</span>` : ''}
+          <span class="su-do-badge" style="color:${tc.color}; background:${tc.bg}; border:1px solid ${tc.border}; font-size:10px; padding:0 5px; white-space:nowrap; margin-left:${dt.vaiVe === 'dai_su_huynh' ? '4px' : 'auto'};">${tc.ten}</span>
+          <span class="su-do-card-meta" style="margin-left:${dt.vaiVe === 'dai_su_huynh' ? 'auto' : '6px'};">${dt.gioiTinh === 'nam' ? 'Nam' : 'Nữ'} · ${dt.tuoi}t</span>
         </div>
         <div class="su-do-card-subrow">
           <span>${dinhDangCanhGioi(dt.canhGioi, dt.tieuCanhGioi)}</span>
           <span style="opacity:0.4;">·</span>
           <span>Hệ ${heStr}</span>
-          <span class="su-do-badge" style="color:${tc.color}; background:${tc.bg}; border:1px solid ${tc.border}; font-size:10px;">${tc.ten}</span>
         </div>
         <div class="su-do-card-stats">Tính cách: <i>${tcStr}</i> · Hiếu cảm: <b>${dt.haoCam}</b> · Đố kỵ: <b style="color:${dt.doKy > 50 ? 'var(--cam-do)' : 'inherit'}">${dt.doKy}</b></div>
       `;
@@ -1685,13 +1698,14 @@
       rightGroup.style.cssText = 'display: flex; gap: 4px; align-items: center;';
 
       if (dt.vaiVe !== 'dai_su_huynh') {
+        const danhXung = dt.gioiTinh === 'nu' ? 'Đại Sư Tỷ' : 'Đại Sư Huynh';
         const btnBoNhiem = kit.button({
           text: '👑',
-          tip: 'Sắc phong làm Đại Sư Huynh',
+          tip: `Sắc phong làm ${danhXung}`,
           kind: 'nho',
           onClick: () => {
             tt.game.modAction('su_do', 'bo_nhiem', { deTuId: dt.id });
-            tt.ui.toast(`Đã sắc phong ${dt.ten} làm Đại Sư Huynh!`);
+            tt.ui.toast(`Đã sắc phong ${dt.ten} làm ${danhXung}!`);
           },
         });
         btnBoNhiem.classList.add('su-do-btn-wrap');
