@@ -40,6 +40,86 @@
     can_man: 'Cần Mẫn',
   };
 
+  const NHIEM_VU_LICH_LUYEN = {
+    hai_duoc: {
+      ten: 'Hái Linh Dược',
+      icon: '🌿',
+      moTa: 'An toàn, thu linh thạch',
+      soNamMacDinh: 2,
+      tinhThuong(h) {
+        const lt = 40 + Math.floor(h.random() * 40);
+        return {
+          linhThach: lt,
+          moTa: `thu thập được nhiều thảo dược quý, quy đổi thành ${lt} linh thạch`,
+        };
+      },
+    },
+    dao_khoang: {
+      ten: 'Khai Khoáng Thạch',
+      icon: '⛏️',
+      moTa: 'Ổn định, nhận linh thạch',
+      soNamMacDinh: 2,
+      tinhThuong(h) {
+        const lt = 50 + Math.floor(h.random() * 50);
+        return {
+          linhThach: lt,
+          moTa: `đào được quặng huyền thiết, nhận ${lt} linh thạch`,
+        };
+      },
+    },
+    tru_ma: {
+      ten: 'Trừ Ma Vệ Đạo',
+      icon: '⚔️',
+      moTa: 'Cống hiến & linh thạch',
+      soNamMacDinh: 3,
+      tinhThuong(h) {
+        return {
+          congHien: 30,
+          linhThach: 60,
+          moTa: 'trảm sát yêu thú ma đạo, mang về 30 cống hiến và 60 linh thạch',
+        };
+      },
+    },
+    bi_canh: {
+      ten: 'Thám Hiểm Bí Cảnh',
+      icon: '🏰',
+      moTa: 'Mạo hiểm, Đan dược quý',
+      soNamMacDinh: 3,
+      tinhThuong(h) {
+        return {
+          linhThach: 100,
+          vatPham: 'item.su_do_ho_mach_dan',
+          soLuong: 1,
+          moTa: 'khám phá cổ di tích, dâng lên sư tôn 100 linh thạch và 1 Hộ Mạch Tụ Khí Đan!',
+        };
+      },
+    },
+  };
+
+  /**
+   * Đồng bộ tiến độ lịch luyện của đệ tử theo mốc năm hiện tại của thế giới
+   */
+  function dongBoTienDoLichLuyen(dt, namHienTai = 1) {
+    if (!dt || dt.trangThai?.loai !== 'lich_luyen') return;
+    const tt = dt.trangThai;
+    const curYear = Number(namHienTai) || 1;
+
+    // Nếu đã hoàn thành hoặc được đánh dấu namConLai === 0 (hoặc can thiệp rút ngắn)
+    if (tt.namConLai === 0 && tt.namHoanThanh != null && tt.namHoanThanh > curYear) {
+      tt.namHoanThanh = curYear;
+    }
+
+    // Tương thích ngược save cũ chỉ có namConLai
+    if (tt.namHoanThanh == null) {
+      const conLaiCu = Math.max(0, Number(tt.namConLai) || 0);
+      tt.namBatDau = curYear;
+      tt.namHoanThanh = Math.round((curYear + conLaiCu) * 100) / 100;
+    }
+
+    const conLai = Math.max(0, Math.round(((Number(tt.namHoanThanh) || 0) - curYear) * 10) / 10);
+    tt.namConLai = conLai;
+  }
+
   // ==========================================
   // 2. TIỆN ÍCH ĐỊNH DẠNG & TÍNH TOÁN AN TOÀN
   // ==========================================
@@ -111,9 +191,10 @@
     const sanSang = tuViCur >= tuViReq && !laDinhPhong;
     const laDaiCanhGioi = tcg >= 3;
     const loai = dt?.trangThai?.loai ?? 'nha_roi';
-    const namConLai = Math.ceil(Number(dt?.trangThai?.namConLai) || 0);
+    const nv = dt?.trangThai?.nhiemVu ?? '';
+    const namConLai = Math.max(0, Math.round((Number(dt?.trangThai?.namConLai) || 0) * 10) / 10);
     const vaiVe = dt?.vaiVe ?? 'de_tu';
-    return `${vaiVe}_${cg}_${tcg}_${loai}_${namConLai}_${sanSang ? 1 : 0}_${laDaiCanhGioi ? 1 : 0}`;
+    return `${vaiVe}_${cg}_${tcg}_${loai}_${nv}_${namConLai}_${sanSang ? 1 : 0}_${laDaiCanhGioi ? 1 : 0}`;
   }
 
   // ==========================================
@@ -542,7 +623,11 @@
           trangThai: {
             loai: 'nha_roi', // nha_roi, lich_luyen, trong_thuong
             nhiemVu: null,
+            soNam: 0,
+            namBatDau: null,
+            namHoanThanh: null,
             namConLai: 0,
+            daThongBao: false,
           },
         };
       }
@@ -626,7 +711,7 @@
         const data = layTrangThaiMod(h);
         const dt = data.danhSachDeTu.find((d) => d.id === args?.deTuId);
         if (!dt) return 'khong_tick';
-        if (dt.trangThai?.loai === 'lich_luyen' && (Number(dt.trangThai?.namConLai) || 0) > 0) return 'khong_tick';
+        if (dt.trangThai?.loai === 'lich_luyen') return 'khong_tick';
 
         const huong = args?.huong ?? 'chinh_dao';
         dt.khuynhHuong = huong;
@@ -650,7 +735,7 @@
         const data = layTrangThaiMod(h);
         const dt = data.danhSachDeTu.find((d) => d.id === args?.deTuId);
         if (!dt) return 'khong_tick';
-        if (dt.trangThai?.loai === 'lich_luyen' && (Number(dt.trangThai?.namConLai) || 0) > 0) return 'khong_tick';
+        if (dt.trangThai?.loai === 'lich_luyen') return 'khong_tick';
 
         const req = Math.max(1, Number(dt.tuViYeuCau) || 1);
         const curTuVi = Number(dt.tuVi) || 0;
@@ -684,7 +769,7 @@
         const data = layTrangThaiMod(h);
         const dt = data.danhSachDeTu.find((d) => d.id === args?.deTuId);
         if (!dt) return 'khong_tick';
-        if (dt.trangThai?.loai === 'lich_luyen' && (Number(dt.trangThai?.namConLai) || 0) > 0) return 'khong_tick';
+        if (dt.trangThai?.loai === 'lich_luyen') return 'khong_tick';
 
         const nv = ctx.run?.nhanVat ?? {};
         const soTien = Number(args?.soTien) || 30;
@@ -712,7 +797,7 @@
         const data = layTrangThaiMod(h);
         const dt = data.danhSachDeTu.find((d) => d.id === args?.deTuId);
         if (!dt) return 'khong_tick';
-        if (dt.trangThai?.loai === 'lich_luyen' && (Number(dt.trangThai?.namConLai) || 0) > 0) return 'khong_tick';
+        if (dt.trangThai?.loai === 'lich_luyen') return 'khong_tick';
 
         const req = Math.max(1, Number(dt.tuViYeuCau) || 1);
         dt.tuVi = Math.min(req, (Number(dt.tuVi) || 0) + 8);
@@ -728,7 +813,7 @@
         const data = layTrangThaiMod(h);
         const dt = data.danhSachDeTu.find((d) => d.id === args?.deTuId);
         if (!dt) return 'khong_tick';
-        if (dt.trangThai?.loai === 'lich_luyen' && (Number(dt.trangThai?.namConLai) || 0) > 0) return 'khong_tick';
+        if (dt.trangThai?.loai === 'lich_luyen') return 'khong_tick';
         if ((Number(dt.canhGioi) || 1) >= 5 && (Number(dt.tieuCanhGioi) || 0) >= 3) return 'khong_tick';
 
         const req = Math.max(1, Number(dt.tuViYeuCau) || 1);
@@ -855,25 +940,25 @@
         const data = layTrangThaiMod(h);
         const dt = data.danhSachDeTu.find((d) => d.id === args?.deTuId);
         if (!dt) return 'khong_tick';
-        if (dt.trangThai?.loai === 'lich_luyen' && (Number(dt.trangThai?.namConLai) || 0) > 0) return 'khong_tick';
+        if (dt.trangThai?.loai === 'lich_luyen') return 'khong_tick';
 
-        const nhiemVu = args?.nhiemVu ?? 'hai_duoc';
-        const soNam = Math.max(1, Math.min(5, Number(args?.soNam) || 2));
+        const nhiemVu = args?.nhiemVu && NHIEM_VU_LICH_LUYEN[args.nhiemVu] ? args.nhiemVu : 'hai_duoc';
+        const nvDef = NHIEM_VU_LICH_LUYEN[nhiemVu];
+        const soNam = Math.max(1, Math.min(5, Number(args?.soNam) || nvDef.soNamMacDinh || 2));
+        const namHienTai = Number(ctx.run?.nam) || 1;
+        const namHoanThanh = Math.round((namHienTai + soNam) * 100) / 100;
 
         dt.trangThai = {
           loai: 'lich_luyen',
           nhiemVu,
+          soNam,
+          namBatDau: namHienTai,
+          namHoanThanh,
           namConLai: soNam,
+          daThongBao: false,
         };
 
-        const tenNv = {
-          hai_duoc: 'Hái Linh Dược',
-          dao_khoang: 'Khai Khoáng Thạch',
-          tru_ma: 'Trừ Ma Vệ Đạo',
-          bi_canh: 'Thám Hiểm Bí Cảnh',
-        }[nhiemVu] ?? 'Lịch luyện';
-
-        ghiNhatKy(data, `Phái ${dt.ten} hạ sơn làm nhiệm vụ "${tenNv}" trong ${soNam} năm.`, ctx.run?.nam ?? 1);
+        ghiNhatKy(data, `Phái ${dt.ten} hạ sơn làm nhiệm vụ "${nvDef.ten}" trong ${soNam} năm.`, namHienTai);
         h.setData(data);
         return 'khong_tick';
       });
@@ -884,37 +969,45 @@
         const dt = data.danhSachDeTu.find((d) => d.id === args?.deTuId);
         if (!dt) return 'khong_tick';
 
-        if (dt.trangThai?.loai !== 'lich_luyen' || (Number(dt.trangThai?.namConLai) || 0) > 0) {
+        if (dt.trangThai?.loai !== 'lich_luyen') {
+          return 'khong_tick';
+        }
+
+        const namHienTai = Number(ctx.run?.nam) || 1;
+        dongBoTienDoLichLuyen(dt, namHienTai);
+        if ((Number(dt.trangThai?.namConLai) || 0) > 0) {
           return 'khong_tick';
         }
 
         const nv = ctx.run?.nhanVat ?? {};
         const loai = dt.trangThai.nhiemVu;
-        let thuong = '';
+        const nvDef = NHIEM_VU_LICH_LUYEN[loai] ?? NHIEM_VU_LICH_LUYEN.hai_duoc;
+        const thuong = nvDef.tinhThuong(h);
 
-        if (loai === 'hai_duoc') {
-          const lt = 40 + Math.floor(h.random() * 40);
-          nv.linhThach = (Number(nv.linhThach) || 0) + lt;
-          thuong = `thu thập được nhiều thảo dược quý, quy đổi thành ${lt} linh thạch`;
-        } else if (loai === 'dao_khoang') {
-          const lt = 50 + Math.floor(h.random() * 50);
-          nv.linhThach = (Number(nv.linhThach) || 0) + lt;
-          thuong = `đào được quặng huyền thiết, nhận ${lt} linh thạch`;
-        } else if (loai === 'tru_ma') {
-          nv.congHien = (Number(nv.congHien) || 0) + 30;
-          nv.linhThach = (Number(nv.linhThach) || 0) + 60;
-          thuong = 'trảm sát yêu thú ma đạo, mang về 30 cống hiến và 60 linh thạch';
-        } else {
-          nv.linhThach = (Number(nv.linhThach) || 0) + 100;
+        if (thuong.linhThach) {
+          nv.linhThach = (Number(nv.linhThach) || 0) + thuong.linhThach;
+        }
+        if (thuong.congHien) {
+          nv.congHien = (Number(nv.congHien) || 0) + thuong.congHien;
+        }
+        if (thuong.vatPham) {
           nv.tuiDo ??= {};
-          nv.tuiDo['item.su_do_ho_mach_dan'] = (Number(nv.tuiDo['item.su_do_ho_mach_dan']) || 0) + 1;
-          thuong = 'khám phá cổ di tích, dâng lên sư tôn 100 linh thạch và 1 Hộ Mạch Tụ Khí Đan!';
+          nv.tuiDo[thuong.vatPham] = (Number(nv.tuiDo[thuong.vatPham]) || 0) + (thuong.soLuong ?? 1);
         }
 
         const req = Math.max(1, Number(dt.tuViYeuCau) || 1);
         dt.tuVi = Math.min(req, (Number(dt.tuVi) || 0) + 15);
-        dt.trangThai = { loai: 'nha_roi', nhiemVu: null, namConLai: 0 };
-        ghiNhatKy(data, `Đệ tử ${dt.ten} lịch luyện trở về, ${thuong}.`, ctx.run?.nam ?? 1);
+        dt.trangThai = {
+          loai: 'nha_roi',
+          nhiemVu: null,
+          soNam: 0,
+          namBatDau: null,
+          namHoanThanh: null,
+          namConLai: 0,
+          daThongBao: false,
+        };
+
+        ghiNhatKy(data, `Đệ tử ${dt.ten} lịch luyện trở về, ${thuong.moTa}.`, namHienTai);
         h.setData(data);
         return 'khong_tick';
       });
@@ -957,8 +1050,9 @@
           dt.tuVi = Math.min(req, (Number(dt.tuVi) || 0) + tuViTang);
 
           if (dt.trangThai?.loai === 'lich_luyen') {
-            dt.trangThai.namConLai = Math.max(0, (Number(dt.trangThai.namConLai) || 0) - years);
-            if (dt.trangThai.namConLai === 0) {
+            dongBoTienDoLichLuyen(dt, nam);
+            if ((Number(dt.trangThai.namConLai) || 0) <= 0 && !dt.trangThai.daThongBao) {
+              dt.trangThai.daThongBao = true;
               ghiNhatKy(data, `Đệ tử ${dt.ten} đã hoàn thành lịch luyện, đang chờ sư tôn thu nhận kết quả.`, nam);
             }
           }
@@ -1265,6 +1359,14 @@
           <div class="su-do-card-name-row" style="display: flex; align-items: center; gap: 5px; min-width: 0; line-height: 1.2;">
             <span class="su-do-card-name" style="font-weight: bold; font-size: 13px; white-space: nowrap;">${dt.ten}</span>
             ${dt.vaiVe === 'dai_su_huynh' ? `<span class="su-do-badge" style="color:var(--vang-kim); background:rgba(218,165,32,0.14); border:1px solid var(--vang-kim); font-size:9.5px; padding:0 4px; white-space:nowrap;">${danhXung}</span>` : ''}
+            ${(() => {
+              if (dt.trangThai?.loai !== 'lich_luyen') return '';
+              const conLai = Number(dt.trangThai?.namConLai) || 0;
+              if (conLai > 0) {
+                return `<span class="su-do-badge" style="color:#10b981; background:rgba(16,185,129,0.12); border:1px solid #10b981; font-size:9.5px; padding:0 4px; white-space:nowrap;">Lịch luyện (${conLai}n)</span>`;
+              }
+              return `<span class="su-do-badge" style="color:#f59e0b; background:rgba(245,158,11,0.15); border:1px solid #f59e0b; font-size:9.5px; padding:0 4px; white-space:nowrap;">🎁 Chờ thu nhận</span>`;
+            })()}
             <span class="su-do-badge" style="color:${tc.color}; background:${tc.bg}; border:1px solid ${tc.border}; font-size:9.5px; padding:0 4px; white-space:nowrap; margin-left: auto;">${tc.ten}</span>
           </div>
           <div class="su-do-card-subrow" style="display: flex; align-items: center; justify-content: space-between; gap: 4px; font-size: 11px; white-space: nowrap; margin-top: 2px;">
@@ -1272,7 +1374,6 @@
               <span>${dinhDangCanhGioi(dt.canhGioi, dt.tieuCanhGioi)}</span>
               <span style="opacity:0.4;">·</span>
               <span>${heStr}</span>
-              ${dt.trangThai?.loai === 'lich_luyen' && (Number(dt.trangThai?.namConLai) || 0) > 0 ? `<span class="su-do-badge" style="color:#10b981; background:rgba(16,185,129,0.12); border:1px solid #10b981; font-size:9.5px; padding:0 4px;">Lịch luyện (${Math.ceil(dt.trangThai.namConLai)}n)</span>` : ''}
             </div>
             <span class="hud-phu su-do-card-age" style="font-size: 11px; white-space: nowrap; flex-shrink: 0;">${dt.gioiTinh === 'nam' ? 'Nam' : 'Nữ'} · ${Math.floor(Number(dt.tuoi) || 14)}t</span>
           </div>
@@ -1314,8 +1415,13 @@
           text: '🗣️ Đàm Tâm',
           kind: 'nho',
           onClick: () => {
-            if (currentDt.trangThai?.loai === 'lich_luyen' && (Number(currentDt.trangThai?.namConLai) || 0) > 0) {
-              ttInstance.ui.toast(`Đệ tử ${currentDt.ten} đang xuất sơn lịch luyện (${currentDt.trangThai.namConLai} năm nữa mới về)!`);
+            if (currentDt.trangThai?.loai === 'lich_luyen') {
+              const conLai = Number(currentDt.trangThai?.namConLai) || 0;
+              if (conLai > 0) {
+                ttInstance.ui.toast(`Đệ tử ${currentDt.ten} đang xuất sơn lịch luyện (${conLai} năm nữa mới về)!`);
+              } else {
+                ttInstance.ui.toast(`Đệ tử ${currentDt.ten} đã hoàn thành lịch luyện, hãy vào tab Lịch Luyện để thu nhận!`);
+              }
               return;
             }
             const m = kitInstance.modal({
@@ -1373,8 +1479,13 @@
           text: '📖 Truyền Công',
           kind: 'nho',
           onClick: () => {
-            if (currentDt.trangThai?.loai === 'lich_luyen' && (Number(currentDt.trangThai?.namConLai) || 0) > 0) {
-              ttInstance.ui.toast(`Đệ tử ${currentDt.ten} đang xuất sơn lịch luyện!`);
+            if (currentDt.trangThai?.loai === 'lich_luyen') {
+              const conLai = Number(currentDt.trangThai?.namConLai) || 0;
+              if (conLai > 0) {
+                ttInstance.ui.toast(`Đệ tử ${currentDt.ten} đang xuất sơn lịch luyện (${conLai} năm nữa mới về)!`);
+              } else {
+                ttInstance.ui.toast(`Đệ tử ${currentDt.ten} đã hoàn thành lịch luyện, hãy vào tab Lịch Luyện để thu nhận!`);
+              }
               return;
             }
             const curReq = Math.max(1, Number(currentDt?.tuViYeuCau) || 1);
@@ -1404,8 +1515,13 @@
           text: '⚔️ Luận Bàn',
           kind: 'nho',
           onClick: () => {
-            if (currentDt.trangThai?.loai === 'lich_luyen' && (Number(currentDt.trangThai?.namConLai) || 0) > 0) {
-              ttInstance.ui.toast(`Đệ tử ${currentDt.ten} đang xuất sơn lịch luyện!`);
+            if (currentDt.trangThai?.loai === 'lich_luyen') {
+              const conLai = Number(currentDt.trangThai?.namConLai) || 0;
+              if (conLai > 0) {
+                ttInstance.ui.toast(`Đệ tử ${currentDt.ten} đang xuất sơn lịch luyện (${conLai} năm nữa mới về)!`);
+              } else {
+                ttInstance.ui.toast(`Đệ tử ${currentDt.ten} đã hoàn thành lịch luyện, hãy vào tab Lịch Luyện để thu nhận!`);
+              }
               return;
             }
             ttInstance.game.modAction('su_do', 'dau_phap', { deTuId: currentDt.id });
@@ -1425,8 +1541,13 @@
           text: '🎁 Ban Thưởng (30 LT)',
           kind: 'nho',
           onClick: () => {
-            if (currentDt.trangThai?.loai === 'lich_luyen' && (Number(currentDt.trangThai?.namConLai) || 0) > 0) {
-              ttInstance.ui.toast(`Đệ tử ${currentDt.ten} đang xuất sơn lịch luyện!`);
+            if (currentDt.trangThai?.loai === 'lich_luyen') {
+              const conLai = Number(currentDt.trangThai?.namConLai) || 0;
+              if (conLai > 0) {
+                ttInstance.ui.toast(`Đệ tử ${currentDt.ten} đang xuất sơn lịch luyện (${conLai} năm nữa mới về)!`);
+              } else {
+                ttInstance.ui.toast(`Đệ tử ${currentDt.ten} đã hoàn thành lịch luyện, hãy vào tab Lịch Luyện để thu nhận!`);
+              }
               return;
             }
             const s = ttInstance.state();
@@ -1462,8 +1583,13 @@
             text: nutText,
             kind: 'chinh',
             onClick: () => {
-              if (currentDt.trangThai?.loai === 'lich_luyen' && (Number(currentDt.trangThai?.namConLai) || 0) > 0) {
-                ttInstance.ui.toast(`Đệ tử ${currentDt.ten} đang xuất sơn lịch luyện, chưa có mặt tại đạo tràng!`);
+              if (currentDt.trangThai?.loai === 'lich_luyen') {
+                const conLai = Number(currentDt.trangThai?.namConLai) || 0;
+                if (conLai > 0) {
+                  ttInstance.ui.toast(`Đệ tử ${currentDt.ten} đang xuất sơn lịch luyện, chưa có mặt tại đạo tràng!`);
+                } else {
+                  ttInstance.ui.toast(`Đệ tử ${currentDt.ten} đã hoàn thành lịch luyện, hãy vào tab Lịch Luyện để thu nhận trước khi đột phá!`);
+                }
                 return;
               }
               if (!laDaiCanhGioi) {
@@ -1866,11 +1992,14 @@
       /**
        * Cập nhật tab lịch luyện (Chỉ vẽ lại khi có biến động năm còn lại hoặc phân bổ nhân sự)
        */
-      function capNhatLichLuyen(danhSach, box) {
-        const dangLichLuyen = danhSach.filter((d) => d.trangThai?.loai === 'lich_luyen');
-        const ranhRoi = danhSach.filter((d) => d.trangThai?.loai === 'nha_roi');
+      function capNhatLichLuyen(danhSach, box, namHienTai = 1) {
+        // Đồng bộ tiến độ lịch luyện theo năm game hiện tại
+        danhSach.forEach((dt) => dongBoTienDoLichLuyen(dt, namHienTai));
 
-        const sig = dangLichLuyen.map((d) => `${d.id}_${d.trangThai?.namConLai}`).join(';') + '||' + ranhRoi.map((d) => `${d.id}_${d.canhGioi}_${d.tieuCanhGioi}`).join(';');
+        const dangLichLuyen = danhSach.filter((d) => d.trangThai?.loai === 'lich_luyen');
+        const ranhRoi = danhSach.filter((d) => d.trangThai?.loai !== 'lich_luyen');
+
+        const sig = dangLichLuyen.map((d) => `${d.id}_${d.trangThai?.nhiemVu}_${d.trangThai?.namConLai}`).join(';') + '||' + ranhRoi.map((d) => `${d.id}_${d.canhGioi}_${d.tieuCanhGioi}`).join(';');
         if (box._sig === sig) return;
         box._sig = sig;
 
@@ -1888,13 +2017,14 @@
             const info = document.createElement('div');
             info.style.cssText = 'font-size: 11.5px; display: flex; flex-direction: column; gap: 2px; white-space: nowrap;';
             const conLai = Number(dt.trangThai?.namConLai) || 0;
+            const nvDef = NHIEM_VU_LICH_LUYEN[dt.trangThai?.nhiemVu] ?? { icon: '🎒', ten: dt.trangThai?.nhiemVu ?? 'Lịch luyện' };
             info.innerHTML = `
-              <div><b>${dt.ten}</b> · <i style="color:var(--chu-do);">${dt.trangThai?.nhiemVu}</i></div>
-              <div class="hud-phu" style="font-size: 11px;">${conLai > 0 ? `⏳ Còn <b>${Math.ceil(conLai)} năm</b> nữa trở về` : '✅ Đã hoàn thành, chờ thu nhận!'}</div>
+              <div><b>${dt.ten}</b> · <span style="color:var(--vang); font-weight:600;">${nvDef.icon} ${nvDef.ten}</span></div>
+              <div class="hud-phu" style="font-size: 11px;">${conLai > 0 ? `⏳ Còn <b>${conLai} năm</b> nữa trở về` : '✅ <b style="color:#10b981;">Đã hoàn thành, chờ thu nhận!</b>'}</div>
             `;
             row.append(info);
 
-            if (conLai === 0) {
+            if (conLai <= 0) {
               const btnThu = kit.button({
                 text: '🎁 Thu Hoạch',
                 kind: 'chinh',
@@ -1912,7 +2042,9 @@
         }
 
         box.append(kit.section({ title: `Đệ tử rảnh rỗi (${ranhRoi.length})` }));
-        if (ranhRoi.length > 0) {
+        if (ranhRoi.length === 0) {
+          box.append(kit.empty({ text: 'Tất cả đệ tử đều đang xuất môn lịch luyện' }));
+        } else {
           ranhRoi.forEach((dt) => {
             const row = document.createElement('div');
             row.className = 'su-do-card';
@@ -1928,6 +2060,9 @@
               text: 'Phái Đi',
               kind: 'phu',
               onClick: async () => {
+                let selectedNv = 'hai_duoc';
+                let selectedSoNam = NHIEM_VU_LICH_LUYEN.hai_duoc.soNamMacDinh;
+
                 const m = kit.modal({
                   title: `Phái ${dt.ten} Đi Lịch Luyện`,
                   mount(modalBox) {
@@ -1937,19 +2072,25 @@
                     msg.innerHTML = 'Chọn phương hướng lịch luyện cho đồ đệ:';
                     modalBox.append(msg);
 
+                    const timeInfo = document.createElement('div');
+                    timeInfo.innerHTML = `Thời gian lịch luyện: <b>${selectedSoNam} năm</b>`;
+
                     const selNv = kit.select({
-                      options: [
-                        { value: 'hai_duoc', label: '🌿 Hái Linh Dược (An toàn, thu linh thạch)' },
-                        { value: 'dao_khoang', label: '⛏️ Khai Khoáng Thạch (Ổn định, khoáng thạch)' },
-                        { value: 'tru_ma', label: '⚔️ Trừ Ma Vệ Đạo (Cống hiến & linh thạch)' },
-                        { value: 'bi_canh', label: '🏰 Thám Hiểm Bí Cảnh (Mạo hiểm, Đan dược quý)' },
-                      ],
-                      value: 'hai_duoc',
+                      options: Object.entries(NHIEM_VU_LICH_LUYEN).map(([k, v]) => ({
+                        value: k,
+                        label: `${v.icon} ${v.ten} (${v.moTa})`,
+                      })),
+                      value: selectedNv,
+                      onChange: (val) => {
+                        selectedNv = val;
+                        const def = NHIEM_VU_LICH_LUYEN[val];
+                        if (def) {
+                          selectedSoNam = def.soNamMacDinh;
+                          timeInfo.innerHTML = `Thời gian lịch luyện: <b>${selectedSoNam} năm</b>`;
+                        }
+                      },
                     });
                     modalBox.append(selNv);
-
-                    const timeInfo = document.createElement('div');
-                    timeInfo.innerHTML = 'Thời gian lịch luyện: <b>2 năm</b>';
                     modalBox.append(timeInfo);
 
                     const btnXacNhan = kit.button({
@@ -1958,11 +2099,12 @@
                       onClick: () => {
                         tt.game.modAction('su_do', 'phai_lich_luyen', {
                           deTuId: dt.id,
-                          nhiemVu: selNv.value ?? 'hai_duoc',
-                          soNam: 2,
+                          nhiemVu: selectedNv,
+                          soNam: selectedSoNam,
                         });
                         m.close();
-                        tt.ui.toast(`Đã phái ${dt.ten} xuất sơn lịch luyện!`);
+                        const def = NHIEM_VU_LICH_LUYEN[selectedNv] ?? NHIEM_VU_LICH_LUYEN.hai_duoc;
+                        tt.ui.toast(`Đã phái ${dt.ten} xuất sơn "${def.ten}" trong ${selectedSoNam} năm!`);
                       },
                     });
                     modalBox.append(btnXacNhan);
@@ -2150,6 +2292,8 @@
                   box.append(discipleContainer);
 
                   tabUpdaters.tab_de_tu = (data, s, nv, maxDt) => {
+                    const namHienTai = s?.run?.nam ?? 1;
+                    data.danhSachDeTu.forEach((dt) => dongBoTienDoLichLuyen(dt, namHienTai));
                     desc.innerHTML = `Đệ tử: <b>${data.danhSachDeTu.length}/${maxDt}</b>`;
                     capNhatUngVien(data.ungVien, uvBox);
                     capNhatDanhSachDeTu(data.danhSachDeTu, discipleContainer);
@@ -2194,13 +2338,13 @@
                 mount(box) {
                   box.style.cssText = 'display: flex; flex-direction: column; gap: 8px; margin-top: 6px;';
 
-                  tabUpdaters.tab_lich_luyen = (data) => {
-                    capNhatLichLuyen(data.danhSachDeTu, box);
+                  tabUpdaters.tab_lich_luyen = (data, s) => {
+                    capNhatLichLuyen(data.danhSachDeTu, box, s?.run?.nam ?? 1);
                   };
 
                   const curS = tt.state();
                   const curData = layModData(curS);
-                  tabUpdaters.tab_lich_luyen(curData);
+                  tabUpdaters.tab_lich_luyen(curData, curS);
 
                   return () => {
                     delete tabUpdaters.tab_lich_luyen;
