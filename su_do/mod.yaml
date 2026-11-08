@@ -1,13 +1,16 @@
 id: su_do
 name: Sư Đồ Truyền Thừa
-version: 1.0.14
+version: 1.1.0
 api_version: 1
 author: Antigravity & Tu Tiên Giả
 description: |
-  Khai tông lập phái, thu nhận và dạy dỗ đệ tử, bồi dưỡng truyền thừa y bát.
-  Tương tác đa tầng: Luận đạo vấn tâm, truyền thụ công pháp, luận bàn đấu pháp,
-  hộ pháp gánh lôi kiếp, bổ nhiệm Đại sư huynh, phái đồ đệ lịch luyện tầm bảo,
-  hóa giải ân oán thế lực và kiếp sau tương phùng với đệ tử cũ!
+  Đại tu toàn diện tông môn & hệ thống sư đồ sống động:
+  - Kiến thiết Đạo Tràng: Tụ Linh Trận tăng tu vi, Dược Điền gieo cấy thảo dược, Luyện Đan Các tự động luyện đan.
+  - Ban thưởng & Truyền thụ: Ban tặng Pháp khí, Phòng cụ, Đan dược và truyền thụ Công pháp từ túi đồ của Sư Tôn.
+  - Tâm tính & Biến cố: Đố kỵ bùng phát, Nghịch đồ ma hóa phản môn, Cảm hóa hoặc Trừ ma vệ đạo.
+  - Nội Môn Luận Kiếm: Tỉ thí võ học giữa các đệ tử, chiến báo kịch tính, sắc phong đệ tử xuất sắc nhất.
+  - Sư Đồ Đồng Lòng: Đệ tử hộ thể tăng sát thương, giảm sát thương và kết trận tăng tỷ lệ đột phá cho Sư Tôn!
+  - HUD Mini-Dock: Tiện ích nổi kiểm tra nhanh tình hình Đạo Tràng và thông báo sư môn cấp tốc.
 
 options:
   - key: ti_le_ky_ngo

@@ -34,3 +34,78 @@
   dung:
     - time: 0.01
     - log: 'Đốt phù truyền âm, một đạo kim quang xé rách hư không gửi thần niệm về sư môn.'
+
+- id: item.su_do_tu_linh_tran_ky
+  ten: Tụ Linh Trận Kỳ
+  loai: phap_khi
+  pham_cap: 3
+  canh_gioi: 2
+  he: [loi, quang]
+  gia: 180
+  mo_ta: >
+    Trận kỳ thượng phẩm hội tụ linh khí thiên địa về đạo tràng, giúp các đệ tử đẩy nhanh tốc độ ngưng tụ chân nguyên.
+
+- id: item.su_do_duoc_dien_linh_thoc
+  ten: Thượng Cổ Linh Thao Thao
+  loai: tap_vat
+  pham_cap: 2
+  canh_gioi: 1
+  he: [moc]
+  gia: 75
+  mo_ta: >
+    Hạt giống linh thảo thượng cổ gieo vào Dược Điền tông môn, sản sinh ra các loại kỳ hoa dị thảo quý hiếm ngàn năm.
+
+- id: item.su_do_chan_truyen_phap_bao
+  ten: Trấn Môn Thanh Phong Kiếm
+  loai: phap_khi
+  pham_cap: 3
+  canh_gioi: 2
+  he: [kim, phong]
+  gia: 260
+  chieu: chieu.chem
+  mo_ta: >
+    Bảo kiếm gia truyền phong hiệu của chưởng môn, chỉ ban thưởng cho Đại Sư Huynh / Đại Sư Tỷ trấn giữ tông môn.
+
+- id: item.su_do_ho_menh_ngoc_bai
+  ten: Ngọc Bài Hộ Mệnh
+  loai: phap_khi
+  pham_cap: 2
+  canh_gioi: 1
+  he: [tho]
+  gia: 120
+  mo_ta: >
+    Bội ngọc phong ấn một đạo kiếm ý của Sư Tôn, đệ tử đeo bên mình khi đi lịch luyện sẽ miễn trừ mọi họa sát thân.
+
+- id: item.su_do_huyen_thien_tam_phap
+  ten: Huyền Thiên Tâm Pháp
+  loai: cong_phap
+  pham_cap: 3
+  canh_gioi: 2
+  he: [vo_sac]
+  gia: 350
+  linh_luc: 1.5
+  mo_ta: >
+    Chí cao tâm pháp do chưởng môn sáng chế, truyền dạy cho đệ tử tu dưỡng chân khí, bồi căn cố bản.
+
+- id: item.su_do_tuyet_lien_tra
+  ten: Tuyết Liên Linh Trà
+  loai: dan_duoc
+  pham_cap: 2
+  canh_gioi: 1
+  gia: 60
+  mo_ta: >
+    Trà thơm tinh khiết nấu từ tuyết liên ngàn năm, giúp Sư Tôn thanh lọc kinh mạch, chữa lành thương thế.
+  dung:
+    - time: 0.01
+    - tu_vi: 1.0
+    - log: 'Uống một ngụm Tuyết Liên Linh Trà, tâm thần thanh tĩnh, nội thương liền dịu bớt.'
+
+- id: item.su_do_nghich_do_ma_hoan
+  ten: Nghịch Đồ Ma Hoán
+  loai: tap_vat
+  pham_cap: 3
+  canh_gioi: 2
+  he: [am]
+  gia: 150
+  mo_ta: >
+    Tín vật ma đạo thu hồi khi trừ diệt hoặc cảm hóa đồ đệ ma hóa phản tông, minh chứng cho công tích bảo vệ môn quy.

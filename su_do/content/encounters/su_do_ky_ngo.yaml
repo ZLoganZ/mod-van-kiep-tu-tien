@@ -61,3 +61,99 @@
         - tu_vi: 5.0
         - add_item: item.su_do_ho_mach_dan
         - log: 'Đệ tử kiếp trước quỳ lạy dâng lên đan dược và linh vật năm xưa ngươi để lại, nghẹn ngào hộ vệ sư tôn ở kiếp mới!'
+
+- id: ev.su_do_thien_tai_bai_su
+  kind: su_kien
+  ten: Thiên tài dị cốt cầu đạo
+  tags:
+    noi: [phuong_thi, tong_mon, thanh, bi_canh]
+    canh_gioi: [2, 3, 4, 5]
+    tinh_chat: [co_duyen]
+  weight: 2
+  text: >
+    Giữa chốn {dia_danh}, một thiếu niên khí vũ phi phàm, toàn thân lượn lờ dị sắc linh quang đang khoanh tay nhìn trời.
+    Vừa thấy bóng dáng ngươi ngự phong lướt qua, thiếu niên hai mắt sáng rực, tiến đến bái phục:
+    "Đệ tử từ nhỏ mang dị thể, tìm kiếm danh sư khắp cửu châu. Nay chiêm ngưỡng phong thái Sư Tôn, nguyện bái nhập môn đình!"
+  choices:
+    - text: Nhận làm thân truyền đệ tử, ban tặng ngọc bài hộ mệnh
+      effects:
+        - time: 0.05
+        - tu_vi: 2.0
+        - add_item: item.su_do_ho_menh_ngoc_bai
+        - log: 'Ngươi xoa đầu thiếu niên, ban phong hiệu thân truyền. Cả môn phái bừng sáng khí vận thiên tài!'
+    - text: Ban tặng linh thạch khích lệ rồi rời đi
+      effects:
+        - time: 0.02
+        - log: 'Ngươi mỉm cười gật đầu: "Tư chất ngươi bất phàm, tự có cơ duyên lớn nơi phương xa, hãy vững tâm tu luyện."'
+
+- id: ev.su_do_de_tu_cau_cuu
+  kind: su_kien
+  ten: Đệ tử phát phù cầu cứu
+  tags:
+    noi: [hoang_da, bi_canh, cam_dia]
+    canh_gioi: [1, 2, 3, 4]
+    tinh_chat: [hiem_hoa]
+  weight: 2
+  text: >
+    Trong lúc tĩnh tu, Vạn Lý Truyền Âm Phù trên người ngươi bỗng nhiên rực cháy!
+    Âm thanh gấp gáp của đệ tử vang vọng trong thần thức:
+    "Sư Tôn cứu mạng! Đệ tử bị mấy tên tà tu vây khốn tại {dia_danh}, trận pháp sắp vỡ rồi!"
+  choices:
+    - text: Ngự kiếm phá không, giáng lâm trảm sát tà tu cứu đồ đệ
+      effects:
+        - time: 0.05
+        - tu_vi: 1.5
+        - add_item: item.su_do_nghich_do_ma_hoan
+        - log: 'Kiếm quang xé rách mây mù, ngươi trảm sát toàn bộ tà tu! Đệ tử quỳ rạp ôm chân ngươi cảm kích khóc ròng.'
+    - text: Cấp tốc kích hoạt trận phù từ xa hộ tống đồ đệ trốn thoát
+      effects:
+        - time: 0.03
+        - log: 'Ngươi từ xa kích phát bí phù, tạo sương mù dẫn đệ tử phá vây thoát nạn bình an trở về sư môn.'
+
+- id: ev.su_do_tang_bao
+  kind: su_kien
+  ten: Đệ tử dâng hiến kỳ trân
+  tags:
+    noi: [tong_mon, dong_phu, thanh]
+    canh_gioi: [1, 2, 3, 4]
+    tinh_chat: [co_duyen]
+  weight: 2
+  text: >
+    Vừa trở về {dia_danh}, đệ tử tông môn đã hớn hở chạy ra nghênh đón, hai tay dâng lên một chiếc hộp ngọc cổ xưa:
+    "Khởi bẩm Sư Tôn, đợt viễn du vừa rồi đệ tử may mắn tìm được cổ di tích động phủ tiền bối, xin dâng bảo vật này để Sư Tôn gia tăng tu vi!"
+  choices:
+    - text: Nhận bảo vật và xoa đầu khen ngợi
+      effects:
+        - time: 0.02
+        - tu_vi: 3.5
+        - add_item: item.su_do_duoc_dien_linh_thoc
+        - log: 'Ngươi mỉm cười nhận lễ vật, ban lời khen ngợi. Đệ tử vô cùng tự hào và càng thêm gắn bó với bổn môn!'
+    - text: Chỉ nhận một nửa, để lại cho đệ tử bồi bổ căn cơ
+      effects:
+        - time: 0.02
+        - tu_vi: 1.5
+        - log: 'Ngươi khuyên bảo đệ tử tự mình bồi dưỡng đạo cơ. Đệ tử cảm phục đức độ vô lượng của Sư Tôn.'
+
+- id: ev.su_do_luan_dao_dinh_cao
+  kind: su_kien
+  ten: Sư đồ luận đạo thăng hoa
+  tags:
+    noi: [tong_mon, dong_phu, dinh_nui]
+    canh_gioi: [2, 3, 4, 5]
+    tinh_chat: [co_duyen]
+  weight: 1
+  text: >
+    Dưới trăng sáng nơi {dia_danh}, đệ tử xuất sắc nhất của ngươi pha một ấm Tuyết Liên Linh Trà,
+    thành kính thỉnh giáo huyền cơ thiên địa. Lời qua ý lại, đạo tắc cộng hưởng khiến mây trời biến ảo!
+  choices:
+    - text: Cùng đệ tử đốn ngộ suốt bảy ngày đêm
+      effects:
+        - time: 0.1
+        - tu_vi: 6.0
+        - add_item: item.su_do_tuyet_lien_tra
+        - log: 'Một trận đốn ngộ kinh thiên động địa! Đạo tâm của ngươi cùng đệ tử đại thăng tiến, chân nguyên tinh thuần thêm một bậc.'
+    - text: Điểm hóa cốt lõi rồi để đệ tử tự mình ngẫm nghĩ
+      effects:
+        - time: 0.02
+        - tu_vi: 2.0
+        - log: 'Ngươi lưu lại một đạo thần niệm chỉ điểm, đệ tử bừng tỉnh đại ngộ, lập tức lui về bế quan củng cố đạo cảnh.'
