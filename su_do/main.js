@@ -1,7 +1,7 @@
 /**
  * Mod Sư Đồ Truyền Thừa (su_do) - Vạn Kiếp Tu Tiên
  * Tác giả: Antigravity & Tu Tiên Giả
- * Phiên bản: 1.0.8
+ * Phiên bản: 1.0.9
  * Tương thích: apiVersion 1 (Giao diện Tiên Hiệp Cổ Phong Tinh Mỹ, Ẩn Scrollbar 100%)
  */
 
@@ -191,11 +191,12 @@
       const data = layTrangThaiMod(h);
       const dt = data.danhSachDeTu.find((d) => d.id === args?.deTuId);
       if (!dt) return 'khong_tick';
+      if (dt.trangThai?.loai === 'lich_luyen' && (dt.trangThai?.namConLai ?? 0) > 0) return 'khong_tick';
 
       const huong = args?.huong ?? 'chinh_dao';
       dt.khuynhHuong = huong;
       dt.haoCam = Math.min(100, dt.haoCam + 15);
-      dt.tuVi += 5;
+      dt.tuVi = Math.min(dt.tuViYeuCau, dt.tuVi + 5);
 
       const loiGiai = huong === 'chinh_dao'
         ? 'lấy trừ ma vệ đạo, thủ hộ sinh linh làm gốc'
@@ -213,6 +214,8 @@
       const data = layTrangThaiMod(h);
       const dt = data.danhSachDeTu.find((d) => d.id === args?.deTuId);
       if (!dt) return 'khong_tick';
+      if (dt.trangThai?.loai === 'lich_luyen' && (dt.trangThai?.namConLai ?? 0) > 0) return 'khong_tick';
+      if (dt.tuVi >= dt.tuViYeuCau) return 'khong_tick';
 
       const nv = ctx.run.nhanVat;
       if (nv.tuVi < 1) {
@@ -222,7 +225,7 @@
       nv.tuVi = Math.max(0, nv.tuVi - 0.5);
 
       const tang = 15;
-      dt.tuVi += tang;
+      dt.tuVi = Math.min(dt.tuViYeuCau, dt.tuVi + tang);
       dt.haoCam = Math.min(100, dt.haoCam + 10);
       dt.doKy = Math.max(0, dt.doKy - 10);
 
@@ -242,6 +245,7 @@
       const data = layTrangThaiMod(h);
       const dt = data.danhSachDeTu.find((d) => d.id === args?.deTuId);
       if (!dt) return 'khong_tick';
+      if (dt.trangThai?.loai === 'lich_luyen' && (dt.trangThai?.namConLai ?? 0) > 0) return 'khong_tick';
 
       const nv = ctx.run.nhanVat;
       const soTien = args?.soTien ?? 30;
@@ -269,8 +273,9 @@
       const data = layTrangThaiMod(h);
       const dt = data.danhSachDeTu.find((d) => d.id === args?.deTuId);
       if (!dt) return 'khong_tick';
+      if (dt.trangThai?.loai === 'lich_luyen' && (dt.trangThai?.namConLai ?? 0) > 0) return 'khong_tick';
 
-      dt.tuVi += 8;
+      dt.tuVi = Math.min(dt.tuViYeuCau, dt.tuVi + 8);
       dt.haoCam = Math.min(100, dt.haoCam + 5);
 
       ghiNhatKy(data, `Sư tôn áp chế tu vi luận bàn đấu pháp cùng ${dt.ten}. Đệ tử ngộ ra nhiều chiêu thức thực chiến.`, ctx.run.nam ?? 1);
@@ -283,6 +288,8 @@
       const data = layTrangThaiMod(h);
       const dt = data.danhSachDeTu.find((d) => d.id === args?.deTuId);
       if (!dt) return 'khong_tick';
+      if (dt.trangThai?.loai === 'lich_luyen' && (dt.trangThai?.namConLai ?? 0) > 0) return 'khong_tick';
+      if (dt.canhGioi >= 5 && dt.tieuCanhGioi >= 3) return 'khong_tick';
 
       if (dt.tuVi < dt.tuViYeuCau) {
         return 'khong_tick';
@@ -411,6 +418,7 @@
       const data = layTrangThaiMod(h);
       const dt = data.danhSachDeTu.find((d) => d.id === args?.deTuId);
       if (!dt) return 'khong_tick';
+      if (dt.trangThai?.loai === 'lich_luyen' && (dt.trangThai?.namConLai ?? 0) > 0) return 'khong_tick';
 
       const nhiemVu = args?.nhiemVu ?? 'hai_duoc';
       const soNam = Math.max(1, Math.min(5, args?.soNam ?? 2));
@@ -480,7 +488,14 @@
       if (idx === -1) return 'khong_tick';
 
       const dt = data.danhSachDeTu[idx];
+      const biTrucXuatLaDaiDeTu = dt.vaiVe === 'dai_su_huynh';
       data.danhSachDeTu.splice(idx, 1);
+
+      if (biTrucXuatLaDaiDeTu && data.danhSachDeTu.length > 0) {
+        data.danhSachDeTu[0].vaiVe = 'dai_su_huynh';
+        const keNhiemXung = data.danhSachDeTu[0].gioiTinh === 'nu' ? 'Đại Sư Tỷ' : 'Đại Sư Huynh';
+        ghiNhatKy(data, `${data.danhSachDeTu[0].ten} được tôn lên kế nhiệm làm ${keNhiemXung}.`, ctx.run.nam ?? 1);
+      }
 
       ghiNhatKy(data, `Sư tôn trục xuất đồ đệ ${dt.ten} khỏi môn phái, đoạn tuyệt duyên phận sư đồ.`, ctx.run.nam ?? 1);
       h.setData(data);
@@ -499,7 +514,7 @@
 
         const heSoTuChat = { pho_thong: 1.5, kha: 2.5, thien_tai: 4.0, yeu_nghiet: 6.5 }[dt.tuChat] ?? 2.0;
         const tuViTang = Math.round(years * heSoTuChat);
-        dt.tuVi += tuViTang;
+        dt.tuVi = Math.min(dt.tuViYeuCau, dt.tuVi + tuViTang);
 
         if (dt.trangThai?.loai === 'lich_luyen') {
           dt.trangThai.namConLai = Math.max(0, (dt.trangThai.namConLai ?? 0) - years);
@@ -508,7 +523,7 @@
           }
         }
 
-        if (dt.tinhCach === 'hieu_thuan' && dt.haoCam >= 80 && h.random() > 0.6) {
+        if (dt.trangThai?.loai !== 'lich_luyen' && dt.tinhCach === 'hieu_thuan' && dt.haoCam >= 80 && h.random() > 0.6) {
           const nv = ctx.run.nhanVat;
           if ((nv.thuongThe ?? 0) > 0) {
             nv.thuongThe = Math.max(0, nv.thuongThe - 1);
@@ -1375,6 +1390,7 @@
           <span>${dinhDangCanhGioi(dt.canhGioi, dt.tieuCanhGioi)}</span>
           <span style="opacity:0.4;">·</span>
           <span>Hệ ${heStr}</span>
+          ${dt.trangThai?.loai === 'lich_luyen' && (dt.trangThai?.namConLai ?? 0) > 0 ? `<span class="su-do-badge" style="color:#10b981; background:rgba(16,185,129,0.12); border:1px solid #10b981; font-size:9.5px; padding:0 4px; margin-left:auto;">Lịch luyện (${dt.trangThai.namConLai}n)</span>` : ''}
         </div>
         <div class="su-do-card-stats">Tính cách: <i>${tcStr}</i> · Hiếu cảm: <b>${dt.haoCam}</b> · Đố kỵ: <b style="color:${dt.doKy > 50 ? 'var(--cam-do)' : 'inherit'}">${dt.doKy}</b></div>
       `;
@@ -1406,12 +1422,16 @@
         text: '🗣️ Đàm Tâm',
         kind: 'nho',
         onClick: () => {
+          if (dt.trangThai?.loai === 'lich_luyen' && (dt.trangThai?.namConLai ?? 0) > 0) {
+            tt.ui.toast(`Đệ tử ${dt.ten} đang xuất sơn lịch luyện (${dt.trangThai.namConLai} năm nữa mới về)!`);
+            return;
+          }
           const m = kit.modal({
             title: `Vấn Đạo Cùng ${dt.ten}`,
             mount(box) {
               box.style.cssText = 'display: flex; flex-direction: column; gap: 8px; font-size: 13px;';
               const ask = document.createElement('div');
-              ask.innerHTML = `Đệ tử ${dt.ten} chắp tay thưa: <i>"Bạch sư tôn, giữa nhân gian hiểm ác, đệ tử tu tiên nên lấy điều gì làm trọng tâm?"</i>`;
+              ask.innerHTML = `Đệ tử ${dt.ten} chắp tay cung kính thưa: <i>"Khởi bẩm Sư tôn, giữa nhân gian hiểm ác, đệ tử tu tiên nên lấy điều gì làm trọng tâm?"</i>`;
               box.append(ask);
 
               box.append(
@@ -1461,6 +1481,19 @@
         text: '📖 Truyền Công',
         kind: 'nho',
         onClick: () => {
+          if (dt.trangThai?.loai === 'lich_luyen' && (dt.trangThai?.namConLai ?? 0) > 0) {
+            tt.ui.toast(`Đệ tử ${dt.ten} đang xuất sơn lịch luyện!`);
+            return;
+          }
+          if ((dt.tuVi ?? 0) >= (dt.tuViYeuCau || 1)) {
+            tt.ui.toast(`Đệ tử ${dt.ten} đã đạt bình cảnh tu vi (100%), cần hộ pháp đột phá trước!`);
+            return;
+          }
+          const s = tt.state();
+          if ((s.run?.nhanVat?.tuVi ?? 0) < 1) {
+            tt.ui.toast('Sư tôn không đủ chân nguyên tu vi để truyền công (cần ít nhất 1.0 tu vi)!');
+            return;
+          }
           try {
             tt.game.modAction('su_do', 'truyen_cong', { deTuId: dt.id });
             tt.ui.toast(`Đã quán đảnh truyền công cho ${dt.ten}!`);
@@ -1477,6 +1510,10 @@
         text: '⚔️ Luận Bàn',
         kind: 'nho',
         onClick: () => {
+          if (dt.trangThai?.loai === 'lich_luyen' && (dt.trangThai?.namConLai ?? 0) > 0) {
+            tt.ui.toast(`Đệ tử ${dt.ten} đang xuất sơn lịch luyện!`);
+            return;
+          }
           tt.game.modAction('su_do', 'dau_phap', { deTuId: dt.id });
           tt.ui.toast(`Đã luận bàn đấu pháp cùng ${dt.ten}!`);
         },
@@ -1494,6 +1531,15 @@
         text: '🎁 Ban Thưởng (30 LT)',
         kind: 'nho',
         onClick: () => {
+          if (dt.trangThai?.loai === 'lich_luyen' && (dt.trangThai?.namConLai ?? 0) > 0) {
+            tt.ui.toast(`Đệ tử ${dt.ten} đang xuất sơn lịch luyện!`);
+            return;
+          }
+          const s = tt.state();
+          if ((s.run?.nhanVat?.linhThach ?? 0) < 30) {
+            tt.ui.toast('Sư tôn không đủ 30 linh thạch để ban thưởng!');
+            return;
+          }
           try {
             tt.game.modAction('su_do', 'ban_thuong', { deTuId: dt.id, soTien: 30 });
             tt.ui.toast(`Đã ban thưởng 30 linh thạch cho ${dt.ten}!`);
@@ -1506,7 +1552,8 @@
       subRow.append(btnBanThuong);
 
       // Nút Hộ trì đột phá / Độ kiếp nếu đủ tu vi
-      if (dt.tuVi >= dt.tuViYeuCau) {
+      const laDinhPhong = dt.canhGioi >= 5 && dt.tieuCanhGioi >= 3;
+      if (dt.tuVi >= dt.tuViYeuCau && !laDinhPhong) {
         const laDaiCanhGioi = dt.tieuCanhGioi >= 3;
         const tuLuyenKhiLenTrucCo = dt.canhGioi === 1 && laDaiCanhGioi;
         const doKiepThucSu = dt.canhGioi >= 2 && laDaiCanhGioi;
@@ -1521,6 +1568,10 @@
           text: nutText,
           kind: 'chinh',
           onClick: () => {
+            if (dt.trangThai?.loai === 'lich_luyen' && (dt.trangThai?.namConLai ?? 0) > 0) {
+              tt.ui.toast(`Đệ tử ${dt.ten} đang xuất sơn lịch luyện, chưa có mặt tại đạo tràng!`);
+              return;
+            }
             if (!laDaiCanhGioi) {
               // === 1. ĐỘT PHÁ TIỂU CẢNH GIỚI ===
               const m = kit.modal({
