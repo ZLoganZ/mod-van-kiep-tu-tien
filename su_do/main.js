@@ -1,7 +1,7 @@
 /**
  * Mod Sư Đồ Truyền Thừa (su_do) - Vạn Kiếp Tu Tiên
  * Tác giả: Antigravity & Tu Tiên Giả
- * Phiên bản: 1.0.1
+ * Phiên bản: 1.0.3
  * Tương thích: apiVersion 1 (Hỗ trợ UI Kit: progress, badge, empty, toggle)
  */
 

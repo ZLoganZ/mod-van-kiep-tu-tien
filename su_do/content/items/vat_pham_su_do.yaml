@@ -1,6 +1,6 @@
 - id: item.su_do_tin_vat
   ten: Lệnh Bài Sư Môn
-  loai: bao_vat
+  loai: lenh_bai
   pham_cap: 2
   canh_gioi: 1
   he: [kim]
@@ -18,6 +18,10 @@
   mo_ta: >
     Linh đan do sư phụ dày công luyện chế, dùng khi hộ pháp cho đồ đệ xung kích cảnh giới,
     bảo vệ kinh mạch khỏi bị lôi kiếp xé rách.
+  dung:
+    - time: 0.01
+    - tu_vi: 2.0
+    - log: 'Nuốt Hộ Mạch Tụ Khí Đan, một luồng ấm áp lan tỏa khắp đan điền, củng cố kinh mạch.'
 
 - id: item.su_do_truyen_am_phu
   ten: Vạn Lý Truyền Âm Phù
@@ -27,4 +31,6 @@
   gia: 20
   mo_ta: >
     Bùa chú liên lạc thần thức giữa sư phụ và đệ tử, dùng để truyền tin tức tốc khi đệ tử lịch luyện gặp nguy nan.
-
+  dung:
+    - time: 0.01
+    - log: 'Đốt phù truyền âm, một đạo kim quang xé rách hư không gửi thần niệm về sư môn.'

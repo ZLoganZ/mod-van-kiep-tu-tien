@@ -1,9 +1,10 @@
 - id: ev.su_do_gap_co_nhi
-  kind: ky_ngo
+  kind: su_kien
   ten: Cô nhi có linh căn
   tags:
-    noi: [hoang_da, thon_xom, phuong_thi]
+    noi: [hoang_da, thon, phuong_thi]
     canh_gioi: [1, 2, 3, 4]
+    tinh_chat: [co_duyen]
   weight: 2
   text: >
     Trên đường đi qua {dia_danh}, ngươi bắt gặp một thiếu niên quần áo rách rưới đang ngồi thiền dưới bóng cây cổ thụ.
@@ -12,19 +13,20 @@
     - text: Tiếp cận và ngỏ ý thu làm đồ đệ
       effects:
         - time: 0.05
-        - log: Ngươi bước tới xoa đầu thiếu niên, dò xét linh căn. Cậu bé mừng rỡ sụp lạy, bái ngươi làm sư tôn!
+        - log: 'Ngươi bước tới xoa đầu thiếu niên, dò xét linh căn. Cậu bé mừng rỡ sụp lạy, bái ngươi làm sư tôn!'
         - add_item: item.su_do_tin_vat
     - text: Để lại chút lương thực rồi rời đi
       effects:
         - time: 0.01
-        - log: Con đường tu tiên đầy trắc trở, ngươi khẽ thở dài, để lại mười lượng bạc rồi quay lưng bước tiếp.
+        - log: 'Con đường tu tiên đầy trắc trở, ngươi khẽ thở dài, để lại mười lượng bạc rồi quay lưng bước tiếp.'
 
 - id: ev.su_do_tan_tu_cau_dao
-  kind: ky_ngo
+  kind: su_kien
   ten: Tán tu xin bái sư
   tags:
-    noi: [phuong_thi, son_mon, thanh_tran]
+    noi: [phuong_thi, tong_mon, thanh]
     canh_gioi: [1, 2, 3, 4]
+    tinh_chat: [co_duyen]
   weight: 2
   text: >
     Tại {dia_danh}, một vị tán tu trẻ tuổi nghe danh tiếng và phong thái tiên phong đạo cốt của ngươi,
@@ -34,18 +36,19 @@
       effects:
         - time: 0.08
         - tu_vi: 0.5
-        - log: Ngươi đỡ người ấy dậy, ban một lời chỉ điểm sơ cơ. Người ấy cảm kích rơi lệ, nguyện làm trâu làm ngựa báo đáp sư môn.
+        - log: 'Ngươi đỡ người ấy dậy, ban một lời chỉ điểm sơ cơ. Người ấy cảm kích rơi lệ, nguyện làm trâu làm ngựa báo đáp sư môn.'
     - text: Lắc đầu từ chối, duyên phận chưa tới
       effects:
         - time: 0.01
-        - log: Ngươi phất tay áo nhẹ nhàng rời đi: "Đạo pháp tùy duyên, ngươi hãy tự mình tìm kiếm cơ duyên khác đi."
+        - log: 'Ngươi phất tay áo nhẹ nhàng rời đi: "Đạo pháp tùy duyên, ngươi hãy tự mình tìm kiếm cơ duyên khác đi."'
 
 - id: ev.su_do_kiep_sau_tuong_phung
-  kind: ky_ngo
+  kind: su_kien
   ten: Tiền duyên chưa dứt
   tags:
-    noi: [son_mon, phuong_thi, bi_canh]
+    noi: [tong_mon, phuong_thi, bi_canh]
     canh_gioi: [0, 1, 2]
+    tinh_chat: [co_duyen]
   weight: 1
   text: >
     Ngươi chợt thấy một vị lão giả tiên phong đạo cốt đứng ngắm nhìn ngươi thật lâu.
@@ -57,5 +60,4 @@
         - time: 0.05
         - tu_vi: 5.0
         - add_item: item.su_do_ho_mach_dan
-        - log: Đệ tử kiếp trước quỳ lạy dâng lên đan dược và linh vật năm xưa ngươi để lại, nghẹn ngào hộ vệ sư tôn ở kiếp mới!
-
+        - log: 'Đệ tử kiếp trước quỳ lạy dâng lên đan dược và linh vật năm xưa ngươi để lại, nghẹn ngào hộ vệ sư tôn ở kiếp mới!'
