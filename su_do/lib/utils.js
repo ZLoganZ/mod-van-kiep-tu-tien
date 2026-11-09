@@ -2,21 +2,21 @@
  * Mod Sư Đồ Truyền Thừa (su_do) - Utility Functions
  */
 
-import {
-  CANH_GIOI_TEN,
-  TIEU_CANH_GIOI_TEN,
-  HE_MAP,
-} from './constants.js';
+import { CANH_GIOI_TEN, TIEU_CANH_GIOI_TEN, HE_MAP } from "./constants.js";
 
 /**
  * Đồng bộ tiến độ lịch luyện của đệ tử theo mốc năm hiện tại của thế giới
  */
 export function dongBoTienDoLichLuyen(dt, namHienTai = 1) {
-  if (!dt || dt.trangThai?.loai !== 'lich_luyen') return;
+  if (!dt || dt.trangThai?.loai !== "lich_luyen") return;
   const tt = dt.trangThai;
   const curYear = Number(namHienTai) || 1;
 
-  if (tt.namConLai === 0 && tt.namHoanThanh != null && tt.namHoanThanh > curYear) {
+  if (
+    tt.namConLai === 0 &&
+    tt.namHoanThanh != null &&
+    tt.namHoanThanh > curYear
+  ) {
     tt.namHoanThanh = curYear;
   }
 
@@ -26,13 +26,16 @@ export function dongBoTienDoLichLuyen(dt, namHienTai = 1) {
     tt.namHoanThanh = Math.round((curYear + conLaiCu) * 100) / 100;
   }
 
-  const conLai = Math.max(0, Math.round(((Number(tt.namHoanThanh) || 0) - curYear) * 10) / 10);
+  const conLai = Math.max(
+    0,
+    Math.round(((Number(tt.namHoanThanh) || 0) - curYear) * 10) / 10,
+  );
   tt.namConLai = conLai;
 }
 
 export function dinhDangThoiGianNam(nam) {
   const n = Number(nam);
-  if (!Number.isFinite(n)) return 'Năm 1 · Tháng 1';
+  if (!Number.isFinite(n)) return "Năm 1 · Tháng 1";
   const namInt = Math.floor(n);
   const frac = n - namInt;
   const thang = Math.min(12, Math.max(1, Math.floor(frac * 12 + 1e-4) + 1));
@@ -40,14 +43,17 @@ export function dinhDangThoiGianNam(nam) {
 }
 
 export function dinhDangCanhGioi(cg, tieu = 0) {
-  if (typeof window !== 'undefined' && window.tuTien?.core?.index?.tenCanhGioi) {
+  if (
+    typeof window !== "undefined" &&
+    window.tuTien?.core?.index?.tenCanhGioi
+  ) {
     return window.tuTien.core.index.tenCanhGioi(cg, tieu);
   }
   const c = Number(cg) || 0;
   const t = Number(tieu) || 0;
-  if (c <= 0) return 'Phàm Nhân';
-  const cName = CANH_GIOI_TEN[c] ?? 'Hóa Thần';
-  const tName = TIEU_CANH_GIOI_TEN[t] ?? 'Sơ kỳ';
+  if (c <= 0) return "Phàm Nhân";
+  const cName = CANH_GIOI_TEN[c] ?? "Hóa Thần";
+  const tName = TIEU_CANH_GIOI_TEN[t] ?? "Sơ kỳ";
   return `${cName} ${tName}`;
 }
 
@@ -59,16 +65,16 @@ export function tuViYeuCauChoCanhGioi(cg, tieu = 0) {
 
 export function sucChuaDeTu(canhGioiNguoiChoi) {
   const cg = Number(canhGioiNguoiChoi) || 0;
-  if (cg <= 1) return 2;  // Phàm Nhân / Luyện Khí: 2
+  if (cg <= 1) return 2; // Phàm Nhân / Luyện Khí: 2
   if (cg === 2) return 4; // Trúc Cơ: 4
   if (cg === 3) return 6; // Kết Đan: 6
   if (cg === 4) return 9; // Nguyên Anh: 9
-  return 12;             // Hóa Thần trở lên: 12
+  return 12; // Hóa Thần trở lên: 12
 }
 
 export function dinhDangHe(heList) {
-  if (!Array.isArray(heList) || heList.length === 0) return 'Vô thuộc tính';
-  const tenHe = heList.map((h) => HE_MAP[h] ?? h).join(' · ');
+  if (!Array.isArray(heList) || heList.length === 0) return "Vô thuộc tính";
+  const tenHe = heList.map((h) => HE_MAP[h] ?? h).join(" · ");
   return `Hệ ${tenHe}`;
 }
 
@@ -79,13 +85,18 @@ export function layModData(s) {
   const suDo = s?.run?.modData?.su_do;
   return {
     version: Number(suDo?.version) || 2,
-    daoTrangTen: typeof suDo?.daoTrangTen === 'string' && suDo.daoTrangTen.trim() ? suDo.daoTrangTen : 'Thanh Khê Đạo Tràng',
+    daoTrangTen:
+      typeof suDo?.daoTrangTen === "string" && suDo.daoTrangTen.trim()
+        ? suDo.daoTrangTen
+        : "Thanh Khê Đạo Tràng",
     danhSachDeTu: Array.isArray(suDo?.danhSachDeTu) ? suDo.danhSachDeTu : [],
     ungVien: Array.isArray(suDo?.ungVien) ? suDo.ungVien : [],
     nhatKy: Array.isArray(suDo?.nhatKy) ? suDo.nhatKy : [],
     daoTrang: {
       kienThiet: {
-        tuLinhTran: { cap: Number(suDo?.daoTrang?.kienThiet?.tuLinhTran?.cap) || 0 },
+        tuLinhTran: {
+          cap: Number(suDo?.daoTrang?.kienThiet?.tuLinhTran?.cap) || 0,
+        },
         duocDien: {
           cap: Number(suDo?.daoTrang?.kienThiet?.duocDien?.cap) || 0,
           duocDongId: suDo?.daoTrang?.kienThiet?.duocDien?.duocDongId ?? null,
@@ -93,12 +104,14 @@ export function layModData(s) {
         },
         luyenDanPhong: {
           cap: Number(suDo?.daoTrang?.kienThiet?.luyenDanPhong?.cap) || 0,
-          danDongId: suDo?.daoTrang?.kienThiet?.luyenDanPhong?.danDongId ?? null,
+          danDongId:
+            suDo?.daoTrang?.kienThiet?.luyenDanPhong?.danDongId ?? null,
           tienDo: Number(suDo?.daoTrang?.kienThiet?.luyenDanPhong?.tienDo) || 0,
         },
         hoTongDaiTran: {
           cap: Number(suDo?.daoTrang?.kienThiet?.hoTongDaiTran?.cap) || 0,
-          tranDongId: suDo?.daoTrang?.kienThiet?.hoTongDaiTran?.tranDongId ?? null,
+          tranDongId:
+            suDo?.daoTrang?.kienThiet?.hoTongDaiTran?.tranDongId ?? null,
         },
       },
       chienBaoMoiNhat: suDo?.daoTrang?.chienBaoMoiNhat ?? null,
@@ -117,12 +130,15 @@ export function layChuKyCauTrucDeTu(dt) {
   const tuViCur = Math.max(0, Number(dt?.tuVi) || 0);
   const sanSang = tuViCur >= tuViReq && !laDinhPhong;
   const laDaiCanhGioi = tcg >= 3;
-  const loai = dt?.trangThai?.loai ?? 'nha_roi';
-  const nv = dt?.trangThai?.nhiemVu ?? '';
-  const namConLai = Math.max(0, Math.round((Number(dt?.trangThai?.namConLai) || 0) * 10) / 10);
-  const vaiVe = dt?.vaiVe ?? 'de_tu';
-  const cpId = dt?.congPhap?.id ?? '';
-  const pbId = dt?.phapBao?.id ?? '';
+  const loai = dt?.trangThai?.loai ?? "nha_roi";
+  const nv = dt?.trangThai?.nhiemVu ?? "";
+  const namConLai = Math.max(
+    0,
+    Math.round((Number(dt?.trangThai?.namConLai) || 0) * 10) / 10,
+  );
+  const vaiVe = dt?.vaiVe ?? "de_tu";
+  const cpId = dt?.congPhap?.id ?? "";
+  const pbId = dt?.phapBao?.id ?? "";
   return `${vaiVe}_${cg}_${tcg}_${loai}_${nv}_${namConLai}_${sanSang ? 1 : 0}_${laDaiCanhGioi ? 1 : 0}_${cpId}_${pbId}`;
 }
 
@@ -132,19 +148,101 @@ export function taoDeTuNgauNhien(seed = 1, canhGioiNguoiChoi = 1) {
     return seed / 233280;
   };
 
-  const HO_POOL = ['Lâm', 'Diệp', 'Tiêu', 'Sở', 'Vương', 'Lý', 'Bạch', 'Vũ', 'Trần', 'Hoàng', 'Dương', 'Phan', 'Hàn', 'Cố', 'Thẩm'];
-  const DEM_NAM = ['Thanh', 'Văn', 'Nhật', 'Đình', 'Bảo', 'Minh', 'Thiên', 'Tuấn', 'Hải', 'Trọng', 'Bá', 'Vĩnh', 'Quốc'];
-  const TEN_NAM = ['Phong', 'Hạo', 'Vũ', 'Hiên', 'Phàm', 'Dương', 'Nham', 'Kình', 'Vân', 'Lôi', 'Long', 'Châu', 'Đạt', 'Kiệt', 'Bân', 'Bình'];
-  const DEM_NU = ['Thanh', 'Như', 'Ngọc', 'Tuyết', 'Bích', 'Tiểu', 'Diệu', 'Mộng', 'Tố', 'Linh', 'Thục', 'Nhã'];
-  const TEN_NU = ['Vy', 'Dao', 'Nguyệt', 'Sương', 'Huyên', 'Nhi', 'Hân', 'Chi', 'Tâm', 'Liên', 'Yến', 'Trinh', 'Uyên', 'Thư', 'Châu'];
+  const HO_POOL = [
+    "Lâm",
+    "Diệp",
+    "Tiêu",
+    "Sở",
+    "Vương",
+    "Lý",
+    "Bạch",
+    "Vũ",
+    "Trần",
+    "Hoàng",
+    "Dương",
+    "Phan",
+    "Hàn",
+    "Cố",
+    "Thẩm",
+  ];
+  const DEM_NAM = [
+    "Thanh",
+    "Văn",
+    "Nhật",
+    "Đình",
+    "Bảo",
+    "Minh",
+    "Thiên",
+    "Tuấn",
+    "Hải",
+    "Trọng",
+    "Bá",
+    "Vĩnh",
+    "Quốc",
+  ];
+  const TEN_NAM = [
+    "Phong",
+    "Hạo",
+    "Vũ",
+    "Hiên",
+    "Phàm",
+    "Dương",
+    "Nham",
+    "Kình",
+    "Vân",
+    "Lôi",
+    "Long",
+    "Châu",
+    "Đạt",
+    "Kiệt",
+    "Bân",
+    "Bình",
+  ];
+  const DEM_NU = [
+    "Thanh",
+    "Như",
+    "Ngọc",
+    "Tuyết",
+    "Bích",
+    "Tiểu",
+    "Diệu",
+    "Mộng",
+    "Tố",
+    "Linh",
+    "Thục",
+    "Nhã",
+  ];
+  const TEN_NU = [
+    "Vy",
+    "Dao",
+    "Nguyệt",
+    "Sương",
+    "Huyên",
+    "Nhi",
+    "Hân",
+    "Chi",
+    "Tâm",
+    "Liên",
+    "Yến",
+    "Trinh",
+    "Uyên",
+    "Thư",
+    "Châu",
+  ];
 
-  const gioiTinh = rng() > 0.5 ? 'nam' : 'nu';
+  const gioiTinh = rng() > 0.5 ? "nam" : "nu";
   const ho = HO_POOL[Math.floor(rng() * HO_POOL.length)];
-  const dem = gioiTinh === 'nam' ? DEM_NAM[Math.floor(rng() * DEM_NAM.length)] : DEM_NU[Math.floor(rng() * DEM_NU.length)];
-  const tenGoc = gioiTinh === 'nam' ? TEN_NAM[Math.floor(rng() * TEN_NAM.length)] : TEN_NU[Math.floor(rng() * TEN_NU.length)];
+  const dem =
+    gioiTinh === "nam"
+      ? DEM_NAM[Math.floor(rng() * DEM_NAM.length)]
+      : DEM_NU[Math.floor(rng() * DEM_NU.length)];
+  const tenGoc =
+    gioiTinh === "nam"
+      ? TEN_NAM[Math.floor(rng() * TEN_NAM.length)]
+      : TEN_NU[Math.floor(rng() * TEN_NU.length)];
   const ten = `${ho} ${dem} ${tenGoc}`;
 
-  const HE_POOL = ['kim', 'moc', 'thuy', 'hoa', 'tho', 'loi', 'phong', 'bang'];
+  const HE_POOL = ["kim", "moc", "thuy", "hoa", "tho", "loi", "phong", "bang"];
   const heCount = rng() > 0.7 ? 2 : 1;
   const he = [];
   for (let i = 0; i < heCount; i++) {
@@ -153,10 +251,10 @@ export function taoDeTuNgauNhien(seed = 1, canhGioiNguoiChoi = 1) {
   }
 
   const TU_CHAT_LIST = [
-    { id: 'pho_thong', tile: 0.5 },
-    { id: 'kha', tile: 0.3 },
-    { id: 'thien_tai', tile: 0.15 },
-    { id: 'yeu_nghiet', tile: 0.05 },
+    { id: "pho_thong", tile: 0.5 },
+    { id: "kha", tile: 0.3 },
+    { id: "thien_tai", tile: 0.15 },
+    { id: "yeu_nghiet", tile: 0.05 },
   ];
   const rTc = rng();
   let tuChat = TU_CHAT_LIST[0];
@@ -170,10 +268,10 @@ export function taoDeTuNgauNhien(seed = 1, canhGioiNguoiChoi = 1) {
   }
 
   const TINH_CACH_LIST = [
-    { id: 'hieu_thuan', tile: 0.35 },
-    { id: 'kien_dinh', tile: 0.35 },
-    { id: 'kieu_ngao', tile: 0.15 },
-    { id: 'can_man', tile: 0.15 },
+    { id: "hieu_thuan", tile: 0.35 },
+    { id: "kien_dinh", tile: 0.35 },
+    { id: "kieu_ngao", tile: 0.15 },
+    { id: "can_man", tile: 0.15 },
   ];
   const rTch = rng();
   let tinhCach = TINH_CACH_LIST[0];
@@ -198,18 +296,18 @@ export function taoDeTuNgauNhien(seed = 1, canhGioiNguoiChoi = 1) {
     he,
     tuChat: tuChat.id,
     tinhCach: tinhCach.id,
-    khuynhHuong: 'chinh_dao',
+    khuynhHuong: "chinh_dao",
     canhGioi,
     tieuCanhGioi,
     tuVi: 0,
     tuViYeuCau: tuViYeuCauChoCanhGioi(canhGioi, tieuCanhGioi),
     haoCam: 60,
     doKy: 0,
-    vaiVe: 'de_tu',
+    vaiVe: "de_tu",
     congPhap: null,
     phapBao: null,
     trangThai: {
-      loai: 'nha_roi',
+      loai: "nha_roi",
       nhiemVu: null,
       soNam: 0,
       namBatDau: null,
@@ -223,22 +321,24 @@ export function taoDeTuNgauNhien(seed = 1, canhGioiNguoiChoi = 1) {
 export function dongBoNpcDeTu(ctx, dt, data) {
   if (!ctx?.run || !dt) return;
   ctx.run.npc ??= {};
-  const isDead = dt.trangThai?.loai === 'da_khuat' || dt.song === false;
-  const isMaHoa = dt.trangThai?.loai === 'ma_hoa';
-  const isDaiSu = dt.vaiVe === 'dai_su_huynh';
+  const isDead = dt.trangThai?.loai === "da_khuat" || dt.song === false;
+  const isMaHoa = dt.trangThai?.loai === "ma_hoa";
+  const isDaiSu = dt.vaiVe === "dai_su_huynh";
 
-  let danhPhan = 'quen_biet';
+  let danhPhan = "quen_biet";
   if (isMaHoa) {
-    danhPhan = 'phan_boi';
+    danhPhan = "phan_boi";
   } else if (isDaiSu || (Number(dt.haoCam) || 0) >= 60) {
-    danhPhan = 'tri_ky';
+    danhPhan = "tri_ky";
   } else if ((Number(dt.haoCam) || 0) >= 30) {
-    danhPhan = 'bang_huu';
+    danhPhan = "bang_huu";
   }
 
   const goc = isDaiSu
-    ? (dt.gioiTinh === 'nu' ? 'npc.su_do_dai_su_ty' : 'npc.su_do_dai_su_huynh')
-    : 'npc.su_do_de_tu';
+    ? dt.gioiTinh === "nu"
+      ? "npc.su_do_dai_su_ty"
+      : "npc.su_do_dai_su_huynh"
+    : "npc.su_do_de_tu";
 
   const existing = ctx.run.npc[dt.id] ?? {};
   const currentYear = Math.floor(Number(ctx.run.nam) || 1);
@@ -251,28 +351,36 @@ export function dongBoNpcDeTu(ctx, dt, data) {
     ...existing,
     ten: dt.ten,
     goc,
-    gioiTinh: dt.gioiTinh ?? 'nam',
-    namSinh: existing.namSinh ?? Math.floor(currentYear - (Number(dt.tuoi) || 16)),
+    gioiTinh: dt.gioiTinh ?? "nam",
+    namSinh:
+      existing.namSinh ?? Math.floor(currentYear - (Number(dt.tuoi) || 16)),
     canhGioi: dtRealm,
     tieuCanhGioi: Number(dt.tieuCanhGioi) || 0,
     tuVi: Number(dt.tuVi) || 0,
-    phamChat: dt.tuChat === 'yeu_nghiet' ? 3 : dt.tuChat === 'thien_tai' ? 2 : 1,
+    phamChat:
+      dt.tuChat === "yeu_nghiet" ? 3 : dt.tuChat === "thien_tai" ? 2 : 1,
     haoCam: Number(dt.haoCam) || 0,
     danhPhan,
     namDanhPhan: existing.namDanhPhan ?? currentYear,
-    tamTinh: dt.tinhCach === 'hieu_thuan' ? { trong_nghia: 4 } : dt.tinhCach === 'kieu_ngao' ? { trong_danh: 3 } : { trong_nghia: 2 },
-    theLuc: ctx.run.nhanVat?.theLuc ?? (data?.daoTrangTen || 'Thanh Khê Đạo Tràng'),
-    noiGap: existing.noiGap ?? ctx.run.viTri ?? 'thanh_khe',
-    que: existing.que ?? ctx.run.viTri ?? 'thanh_khe',
+    tamTinh:
+      dt.tinhCach === "hieu_thuan"
+        ? { trong_nghia: 4 }
+        : dt.tinhCach === "kieu_ngao"
+          ? { trong_danh: 3 }
+          : { trong_nghia: 2 },
+    theLuc:
+      ctx.run.nhanVat?.theLuc ?? (data?.daoTrangTen || "Thanh Khê Đạo Tràng"),
+    noiGap: existing.noiGap ?? ctx.run.viTri ?? "thanh_khe",
+    que: existing.que ?? ctx.run.viTri ?? "thanh_khe",
     namGap: existing.namGap ?? currentYear,
     namGapCuoi: currentYear,
     namCapNhat: currentYear,
     seen: {
       year: currentYear,
-      slot: existing.noiGap ?? ctx.run.viTri ?? 'thanh_khe',
+      slot: existing.noiGap ?? ctx.run.viTri ?? "thanh_khe",
       canhGioi: perceivedRealm,
       tieuCanhGioi: Number(dt.tieuCanhGioi) || 0,
-      via: 'gap',
+      via: "gap",
     },
     song: !isDead,
     namMat: isDead ? currentYear : undefined,
@@ -282,7 +390,10 @@ export function dongBoNpcDeTu(ctx, dt, data) {
 export function layTrangThaiMod(h) {
   const data = h.data() ?? {};
   data.version = Number(data.version) || 2;
-  data.daoTrangTen = typeof data.daoTrangTen === 'string' && data.daoTrangTen.trim() ? data.daoTrangTen : 'Thanh Khê Đạo Tràng';
+  data.daoTrangTen =
+    typeof data.daoTrangTen === "string" && data.daoTrangTen.trim()
+      ? data.daoTrangTen
+      : "Thanh Khê Đạo Tràng";
   data.danhSachDeTu = Array.isArray(data.danhSachDeTu) ? data.danhSachDeTu : [];
   data.ungVien = Array.isArray(data.ungVien) ? data.ungVien : [];
   data.nhatKy = Array.isArray(data.nhatKy) ? data.nhatKy : [];
@@ -290,7 +401,11 @@ export function layTrangThaiMod(h) {
   data.daoTrang.kienThiet ??= {};
   data.daoTrang.kienThiet.tuLinhTran ??= { cap: 0 };
   data.daoTrang.kienThiet.duocDien ??= { cap: 0, duocDongId: null, tienDo: 0 };
-  data.daoTrang.kienThiet.luyenDanPhong ??= { cap: 0, danDongId: null, tienDo: 0 };
+  data.daoTrang.kienThiet.luyenDanPhong ??= {
+    cap: 0,
+    danDongId: null,
+    tienDo: 0,
+  };
   data.daoTrang.kienThiet.hoTongDaiTran ??= { cap: 0, tranDongId: null };
   data.daoTrang.chienBaoMoiNhat ??= null;
   return data;

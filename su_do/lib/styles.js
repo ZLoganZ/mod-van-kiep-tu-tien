@@ -2,15 +2,15 @@
  * Mod Sư Đồ Truyền Thừa (su_do) - Master Styles
  */
 
-export const STYLE_ID = 'mod-su-do-master-css';
+export const STYLE_ID = "mod-su-do-master-css";
 
 export function injectMasterStyles() {
-    if (typeof document === 'undefined') return;
-    if (document.getElementById(STYLE_ID)) return;
+  if (typeof document === "undefined") return;
+  if (document.getElementById(STYLE_ID)) return;
 
-    const style = document.createElement('style');
-    style.id = STYLE_ID;
-    style.textContent = `
+  const style = document.createElement("style");
+  style.id = STYLE_ID;
+  style.textContent = `
       .su-do-panel,
       .su-do-panel * {
         scrollbar-width: none !important;
@@ -291,5 +291,5 @@ export function injectMasterStyles() {
         line-height: 1.3;
       }
     `;
-    document.head.append(style);
-  }
+  document.head.append(style);
+}
