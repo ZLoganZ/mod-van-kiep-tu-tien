@@ -39,17 +39,19 @@
   ten: Tụ Linh Trận Kỳ
   loai: phap_khi
   pham_cap: 3
-  canh_gioi: 2
+  canh_gioi: 1
   he: [loi, quang]
+  hinh: ["AB"]
   gia: 180
+  bi_dong: { toc_do: 0.1, chi_so: { than_thuc: 2 } }
   mo_ta: >
     Trận kỳ thượng phẩm hội tụ linh khí thiên địa về đạo tràng, giúp các đệ tử đẩy nhanh tốc độ ngưng tụ chân nguyên.
 
 - id: item.su_do_duoc_dien_linh_thoc
   ten: Thượng Cổ Linh Thao Thao
-  loai: tap_vat
+  loai: linh_duoc
   pham_cap: 2
-  canh_gioi: 1
+  canh_gioi: 0
   he: [moc]
   gia: 75
   mo_ta: >
@@ -59,10 +61,12 @@
   ten: Trấn Môn Thanh Phong Kiếm
   loai: phap_khi
   pham_cap: 3
-  canh_gioi: 2
+  canh_gioi: 1
   he: [kim, phong]
+  hinh: ["AB"]
   gia: 260
-  chieu: chieu.chem
+  chieu: { ten: Thanh Phong Kiếm Khí, phi: 2, hoi: 0, uy: 0.9, dang: cong }
+  bi_dong: { ho_the: 0.04, chi_so: { than_phap: 2 } }
   mo_ta: >
     Bảo kiếm gia truyền phong hiệu của chưởng môn, chỉ ban thưởng cho Đại Sư Huynh / Đại Sư Tỷ trấn giữ tông môn.
 
@@ -70,9 +74,11 @@
   ten: Ngọc Bài Hộ Mệnh
   loai: phap_khi
   pham_cap: 2
-  canh_gioi: 1
+  canh_gioi: 0
   he: [tho]
+  hinh: ["X"]
   gia: 120
+  bi_dong: { ho_the: 0.02, khi_huyet: 0.02 }
   mo_ta: >
     Bội ngọc phong ấn một đạo kiếm ý của Sư Tôn, đệ tử đeo bên mình khi đi lịch luyện sẽ miễn trừ mọi họa sát thân.
 
@@ -80,10 +86,12 @@
   ten: Huyền Thiên Tâm Pháp
   loai: cong_phap
   pham_cap: 3
-  canh_gioi: 2
+  canh_gioi: 1
   he: [vo_sac]
+  hinh: ["XX"]
   gia: 350
-  linh_luc: 1.5
+  linh_luc: 1.75
+  bi_dong: { toc_do: 0.21 }
   mo_ta: >
     Chí cao tâm pháp do chưởng môn sáng chế, truyền dạy cho đệ tử tu dưỡng chân khí, bồi căn cố bản.
 
@@ -91,7 +99,7 @@
   ten: Tuyết Liên Linh Trà
   loai: dan_duoc
   pham_cap: 2
-  canh_gioi: 1
+  canh_gioi: 0
   gia: 60
   mo_ta: >
     Trà thơm tinh khiết nấu từ tuyết liên ngàn năm, giúp Sư Tôn thanh lọc kinh mạch, chữa lành thương thế.
@@ -102,9 +110,9 @@
 
 - id: item.su_do_nghich_do_ma_hoan
   ten: Nghịch Đồ Ma Hoán
-  loai: tap_vat
+  loai: khac
   pham_cap: 3
-  canh_gioi: 2
+  canh_gioi: 1
   he: [am]
   gia: 150
   mo_ta: >
@@ -114,9 +122,11 @@
   ten: Trận Bàn Hộ Tông
   loai: phap_khi
   pham_cap: 3
-  canh_gioi: 2
+  canh_gioi: 1
   he: [tho, kim]
+  hinh: ["AB"]
   gia: 300
+  bi_dong: { ho_the: 0.04, khi_huyet: 0.03 }
   mo_ta: >
     Trận bàn trấn phái phong ấn địa mạch linh khí, dùng để kích hoạt và gia cố Hộ Tông Đại Trận che chở toàn bộ đạo tràng.
 
@@ -124,9 +134,11 @@
   ten: Chân Truyền Ngọc Giản
   loai: cong_phap
   pham_cap: 3
-  canh_gioi: 2
+  canh_gioi: 1
   he: [vo_sac]
+  hinh: ["XX"]
   gia: 380
-  linh_luc: 2.0
+  linh_luc: 1.75
+  bi_dong: { toc_do: 0.21 }
   mo_ta: >
     Ngọc giản lưu truyền tâm đắc tu đạo của các đời chưởng môn, giúp đệ tử đốn ngộ thông suốt kinh mạch và tăng mạnh tu vi.

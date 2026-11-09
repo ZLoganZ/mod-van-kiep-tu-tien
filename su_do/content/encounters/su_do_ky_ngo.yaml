@@ -90,7 +90,7 @@
   kind: su_kien
   ten: Đệ tử phát phù cầu cứu
   tags:
-    noi: [hoang_da, bi_canh, cam_dia]
+    noi: [hoang_da, bi_canh, di_tich]
     canh_gioi: [1, 2, 3, 4]
     tinh_chat: [hiem_hoa]
   weight: 2
@@ -138,7 +138,7 @@
   kind: su_kien
   ten: Sư đồ luận đạo thăng hoa
   tags:
-    noi: [tong_mon, dong_phu, dinh_nui]
+    noi: [tong_mon, dong_phu, son_thuy]
     canh_gioi: [2, 3, 4, 5]
     tinh_chat: [co_duyen]
   weight: 1
@@ -162,7 +162,7 @@
   kind: su_kien
   ten: Ma đồ phục kích sơn môn
   tags:
-    noi: [tong_mon, dinh_nui]
+    noi: [tong_mon, son_thuy]
     canh_gioi: [2, 3, 4, 5]
     tinh_chat: [hiem_hoa]
   weight: 1

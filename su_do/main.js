@@ -1,7 +1,7 @@
 /**
  * Mod Sư Đồ Truyền Thừa (su_do) - Vạn Kiếp Tu Tiên
  * Tác giả: Antigravity & Tu Tiên Giả
- * Phiên bản: 1.3.0
+ * Phiên bản: 1.3.2
  * Tương thích: apiVersion 1 (Đại Tu Toàn Diện Tông Môn, Kiến Thiết Đạo Tràng, Luận Kiếm, Ma Hóa, HUD Dock)
  */
 
@@ -9,6 +9,7 @@
   // ==========================================
   // 1. CÁC HẰNG SỐ & BẢNG TRA CỨU TIÊN HIỆP
   // ==========================================
+  const MOD_VERSION = '1.3.2';
   const CANH_GIOI_TEN = ['Phàm Nhân', 'Luyện Khí', 'Trúc Cơ', 'Kết Đan', 'Nguyên Anh', 'Hóa Thần'];
   const TIEU_CANH_GIOI_TEN = ['Sơ kỳ', 'Trung kỳ', 'Hậu kỳ', 'Đại viên mãn'];
   const TEN_CANH_GIOI_HUD = ['Luyện Khí', 'Trúc Cơ', 'Kim Đan', 'Nguyên Anh', 'Hóa Thần', 'Luyện Hư', 'Hợp Thể', 'Đại Thừa', 'Độ Kiếp'];
@@ -581,56 +582,7 @@
     // PHA 1: BOOT (Đăng ký Modifier, Hành động, TickHook)
     // ========================================================
     boot(tt, mod) {
-      mod.log('Mod Sư Đồ Truyền Thừa đang khởi động (Pha boot v1.3.1)');
-
-      // Đăng ký các khuôn NPC môn hạ chính thức vào kho content
-      try {
-        mod.addContent({
-          'npc/de_tu.yaml': [
-            {
-              id: 'npc.su_do_de_tu',
-              loai: 'qua_duong',
-              goi: 'đồ đệ môn hạ',
-              tuoi: [14, 30],
-              canh_gioi: [1, 5],
-              pham_chat: 'kha',
-              dich: 'enemy.de_tu_noi_mon',
-              tinh: 'Đệ tử chân truyền của ngươi, ngày đêm dốc lòng tu hành, gánh vác thanh danh sư môn.',
-              muon: 'Đột phá cảnh giới, vấn đỉnh trường sinh, phụng dưỡng sư tôn.',
-              bi_mat: 'Từng trải qua trắc trở phàm trần trước khi may mắn được Sư tôn thu nhận.',
-              loi_gap: 'Đệ tử kính bái Sư tôn! Cầu Sư tôn chỉ điểm bến mê.',
-            },
-            {
-              id: 'npc.su_do_dai_su_huynh',
-              loai: 'qua_duong',
-              goi: 'đại sư huynh môn hạ',
-              tuoi: [16, 35],
-              canh_gioi: [1, 5],
-              pham_chat: 'thien_tai',
-              dich: 'enemy.de_tu_noi_mon',
-              tinh: 'Thủ tịch đại đệ tử môn hạ, thay Sư tôn đốc thúc chư vị sư đệ sư muội tu hành.',
-              muon: 'Gánh vác sư môn, bảo bọc các sư đệ sư muội.',
-              bi_mat: 'Luôn nơm nớp lo sợ phụ lòng kỳ vọng của Sư tôn.',
-              loi_gap: 'Bẩm Sư tôn, mọi việc trong sư môn đã được đệ tử an bài thỏa đáng.',
-            },
-            {
-              id: 'npc.su_do_dai_su_ty',
-              loai: 'qua_duong',
-              goi: 'đại sư tỷ môn hạ',
-              tuoi: [16, 35],
-              canh_gioi: [1, 5],
-              pham_chat: 'thien_tai',
-              dich: 'enemy.de_tu_noi_mon',
-              tinh: 'Thủ tịch nữ đệ tử môn hạ, tâm tư cẩn mật, chu đáo chăm nom đồng môn.',
-              muon: 'Tu vi viên mãn, che chở sư môn và báo đáp ân sư.',
-              bi_mat: 'Luôn nỗ lực tu hành gấp bội để làm gương cho chư vị đồng môn.',
-              loi_gap: 'Bẩm Sư tôn, đệ tử nguyện vì sư môn cúc cung tận tụy.',
-            },
-          ],
-        });
-      } catch (err) {
-        mod.log(`Bỏ qua addContent: ${err.message}`);
-      }
+      mod.log(`Mod Sư Đồ Truyền Thừa đang khởi động (Pha boot v${MOD_VERSION})`);
 
       // Tiện ích sinh đệ tử ngẫu nhiên
       function taoDeTuNgauNhien(seed = 1, canhGioiNguoiChoi = 1) {
@@ -1748,7 +1700,7 @@
     // ========================================================
     ready(tt, mod) {
       window.__suDoModUi = mod.ui;
-      mod.log('Mod Sư Đồ Truyền Thừa đã sẵn sàng (Pha ready v1.2.0)');
+      mod.log(`Mod Sư Đồ Truyền Thừa đã sẵn sàng (Pha ready v${MOD_VERSION})`);
       const kit = tt.ui.kit;
 
       injectMasterStyles();
