@@ -219,16 +219,18 @@ export function dangKyUI(tt, mod, particleSystem, cinematic) {
       secAmbient.appendChild(kit.row({ label: "Chất lượng", children: [qualitySelect] }));
 
       const toggleAmbient = kit.toggle({
+        label: "Bật/Tắt",
         checked: opts.bat_tat_linh_khi,
         onChange: (v) => mod.setOption("bat_tat_linh_khi", v)
       });
-      secAmbient.appendChild(kit.row({ label: "Bật/Tắt", children: [toggleAmbient] }));
+      secAmbient.appendChild(toggleAmbient);
 
       const toggleAutoQuality = kit.toggle({
+        label: "Tự giảm quality khi lag",
         checked: opts.giam_toc_do_nguyen,
         onChange: (v) => mod.setOption("giam_toc_do_nguyen", v)
       });
-      secAmbient.appendChild(kit.row({ label: "Tự giảm quality khi lag", children: [toggleAutoQuality] }));
+      secAmbient.appendChild(toggleAutoQuality);
 
       el.appendChild(secAmbient);
 
@@ -238,16 +240,18 @@ export function dangKyUI(tt, mod, particleSystem, cinematic) {
       secCinematic.innerHTML = `<div class="tdlk-panel-title">⚡ Thiên Kiếp Cinematic</div>`;
 
       const toggleCinematic = kit.toggle({
+        label: "Bật/Tắt",
         checked: opts.bat_tat_thien_kiep,
         onChange: (v) => mod.setOption("bat_tat_thien_kiep", v)
       });
-      secCinematic.appendChild(kit.row({ label: "Bật/Tắt", children: [toggleCinematic] }));
+      secCinematic.appendChild(toggleCinematic);
 
       const toggleSound = kit.toggle({
+        label: "Âm thanh (cần tương tác trước)",
         checked: opts.am_thanh,
         onChange: (v) => mod.setOption("am_thanh", v)
       });
-      secCinematic.appendChild(kit.row({ label: "Âm thanh (cần tương tác trước)", children: [toggleSound] }));
+      secCinematic.appendChild(toggleSound);
 
       // Test buttons
       const testRow = document.createElement("div");
@@ -269,10 +273,11 @@ export function dangKyUI(tt, mod, particleSystem, cinematic) {
       secAvatar.innerHTML = `<div class="tdlk-panel-title">✨ Avatar State Visual</div>`;
 
       const toggleAvatar = kit.toggle({
+        label: "Bật/Tắt Glow Ring & Badge",
         checked: opts.bat_tat_avatar_fx,
         onChange: (v) => mod.setOption("bat_tat_avatar_fx", v)
       });
-      secAvatar.appendChild(kit.row({ label: "Bật/Tắt Glow Ring & Badge", children: [toggleAvatar] }));
+      secAvatar.appendChild(toggleAvatar);
 
       // Realm color preview
       const realmPreview = document.createElement("div");
