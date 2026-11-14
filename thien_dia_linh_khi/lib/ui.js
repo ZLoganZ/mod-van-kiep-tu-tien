@@ -203,22 +203,23 @@ export function dangKyUI(tt, mod, particleSystem, cinematic) {
     title: "⚙️ Thiên Địa Linh Khí",
     icon: "sparkles",
     mount(el) {
-      // Use mod from outer scope directly in callbacks to avoid stale closure
-      const modRef = mod;
-      if (!modRef?.setOption) {
-        modRef?.log?.("[UI] Panel mount: modRef missing setOption", modRef);
+      // mod from dangKyUI closure is the REAL mod instance with methods
+      // Panel system may pass a plain object, so use closure reference
+      const realMod = mod;
+      if (!realMod?.setOption) {
+        console.error("[TDLK] Panel mount: realMod missing setOption", realMod);
         el.innerHTML = '<div style="padding:16px;color:#ef4444;">Lỗi: mod object không hợp lệ</div>';
         return;
       }
       el.innerHTML = "";
-      const opts = modRef.options;
+      const opts = realMod.options;
 
-      // Helper to safely call setOption
+      // Helper to safely call setOption on real mod instance
       const setOpt = (key, value) => {
         try {
-          modRef.setOption(key, value);
+          realMod.setOption(key, value);
         } catch (e) {
-          modRef.log?.("[UI] setOption error:", key, e);
+          realMod.log?.("[UI] setOption error:", key, e);
         }
       };
 
