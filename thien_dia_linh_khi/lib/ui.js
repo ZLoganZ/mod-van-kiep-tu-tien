@@ -301,7 +301,7 @@ export function dangKyUI(tt, mod, particleSystem, cinematic) {
       secUpdate.innerHTML = `<div class="tdlk-panel-title">🔄 Tự động cập nhật</div>`;
 
       import("./update.js").then(({ createUpdateCheckUI }) => {
-        const updateUI = createUpdateCheckUI(mod, particleSystem);
+        const updateUI = createUpdateCheckUI(mod, tt);
         if (updateUI) secUpdate.appendChild(updateUI);
       });
 

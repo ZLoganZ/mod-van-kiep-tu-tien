@@ -111,8 +111,8 @@ export async function autoUpdate(mod, updateInfo) {
 }
 
 /** UI Component cho update check trong panel */
-export function createUpdateCheckUI(mod, particleSystem) {
-  const kit = mod.tt?.ui?.kit;
+export function createUpdateCheckUI(mod, tt) {
+  const kit = tt?.ui?.kit;
   if (!kit) return null;
 
   const container = document.createElement("div");
