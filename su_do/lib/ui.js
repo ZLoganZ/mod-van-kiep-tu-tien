@@ -15,6 +15,8 @@ import {
   capNhatTienDuyen,
 } from "./ui_tabs.js";
 
+import { createUpdateCheckUI } from "./update.js";
+
 let unsubLifeEndListener = null;
 
 // ==========================================
@@ -528,7 +530,17 @@ export function dangKySlotsVaDocks(tt, mod) {
       container.className = "su-do-panel";
       container.style.cssText = "min-height: 440px; width: 100%;";
       el.append(container);
-      return taoSuMonDashboard(container, tt, kit, { isCharacterTab: false });
+      const cleanup = taoSuMonDashboard(container, tt, kit, { isCharacterTab: false });
+
+      // Thêm section cập nhật
+      const updateSection = document.createElement("div");
+      updateSection.style.cssText = "margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--vien-trong);";
+      el.appendChild(updateSection);
+
+      const updateUI = createUpdateCheckUI(mod, tt);
+      if (updateUI) updateSection.appendChild(updateUI);
+
+      return cleanup;
     },
   });
 }

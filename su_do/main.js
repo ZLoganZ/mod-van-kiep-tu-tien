@@ -6,6 +6,7 @@ import { injectMasterStyles } from "./lib/styles.js";
 import { dangKyModActions } from "./lib/actions.js";
 import { dangKyHooks } from "./lib/hooks.js";
 import { dangKySlotsVaDocks } from "./lib/ui.js";
+import { startPeriodicUpdateCheck } from "./lib/update.js";
 
 (window.tuTienMods ??= []).push({
   id: "su_do",
@@ -19,5 +20,6 @@ import { dangKySlotsVaDocks } from "./lib/ui.js";
     mod.log(`Mod Sư Đồ Truyền Thừa đã sẵn sàng (Pha ready v${MOD_VERSION})`);
     injectMasterStyles();
     dangKySlotsVaDocks(tt, mod);
+    startPeriodicUpdateCheck(mod, 24);
   },
 });

@@ -1,0 +1,98 @@
+name: Release su_do Mod
+
+on:
+  push:
+    tags:
+      - 'su_do/v*'
+    paths:
+      - 'su_do/**'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 1.3.3)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Read mod version from mod.yaml
+        id: mod_version
+        run: |
+          VERSION=$(grep '^version:' su_do/mod.yaml | awk '{print $2}')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Create mod zip
+        run: |
+          cd su_do
+          zip -r ../su_do_v${{ steps.mod_version.outputs.version }}.zip . -x "*.git*" "node_modules/*"
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: su_do/v${{ steps.mod_version.outputs.version }}
+          name: "Sư Đồ Truyền Thừa v${{ steps.mod_version.outputs.version }}"
+          body: |
+            ## Sư Đồ Truyền Thừa v${{ steps.mod_version.outputs.version }}
+
+            Hòa nhập tự nhiên vào thế giới tu tiên với hệ thống Sư Đồ & Nhân Mạch chính tông:
+            - Tích hợp toàn diện vào Bảng Nhân Vật (Tab Sư Môn) & Khung Nơi Chốn
+            - Kết nối sâu Nhân Mạch (N): Đồ đệ hiển thị sống động trong mạng lưới quan hệ
+            - Đạo Tràng & Sư Đồ Đồng Lòng: Phân công chức sự đệ tử (Tụ linh, Dược viên, Đan phòng, Hộ tông kiếm trận)
+            - Xuất Sơn Lịch Luyện & Bí Cảnh: Đệ tử chu du hồng trần, gửi thư báo sự vụ
+            - Nội Môn Luận Kiếm & Đạo Tâm: Tỉ thí võ học tranh đoạt vị trí Đại Sư Huynh / Đại Sư Tỷ
+            - HUD Mini-Dock: Tiện ích nổi theo dõi tình hình sư môn
+
+            ### Cài đặt
+            1. Tải file `su_do_v${{ steps.mod_version.outputs.version }}.zip`
+            2. Giải nén vào thư mục `mods/` của game
+            3. Reload game
+          files: |
+            su_do_v${{ steps.mod_version.outputs.version }}.zip
+          draft: false
+          prerelease: false
+
+      - name: Generate auto-update manifest
+        run: |
+          cat > update_manifest_su_do.json <<EOF
+          {
+            "id": "su_do",
+            "name": "Sư Đồ Truyền Thừa",
+            "version": "${{ steps.mod_version.outputs.version }}",
+            "download_url": "https://github.com/${{ github.repository }}/releases/download/su_do/v${{ steps.mod_version.outputs.version }}/su_do_v${{ steps.mod_version.outputs.version }}.zip",
+            "changelog": "See release notes"
+          }
+          EOF
+
+      - name: Upload update manifest as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: update-manifest-su-do
+          path: update_manifest_su_do.json
+          retention-days: 30
+
+  auto-update-check:
+    needs: build-and-release
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/su_do/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify auto-update endpoint (if configured)
+        run: |
+          echo "Auto-update notification would be sent here for su_do"
