@@ -121,17 +121,19 @@ export function dangKyUI(tt, mod, particleSystem, cinematic) {
       el.appendChild(box);
 
       const update = () => {
-        const s = tt.state();
-        const nv = s?.run?.nhanVat;
-        const opts = mod.options;
+        try {
+          const s = tt.state();
+          const nv = s?.run?.nhanVat;
+          const opts = mod.options;
 
-        const ambientStatus = particleSystem.running ? "🟢 Đang chạy" : "🔴 Đã tắt";
-        const quality = QUALITY_PRESETS[opts.chat_luong]?.label || opts.chat_luong;
-        const fps = particleSystem.fps || 0;
-        const biome = particleSystem.currentBiome || "default";
-        const particleCount = particleSystem.particles?.filter(p => p.type === "ambient").length || 0;
+          const ambientStatus = particleSystem?.running ? "🟢 Đang chạy" : "🔴 Đã tắt";
+          const quality = QUALITY_PRESETS?.[opts?.chat_luong]?.label || opts?.chat_luong || "trung_binh";
+          const fps = particleSystem?.fps || 0;
+          const biome = particleSystem?.currentBiome || "default";
+          const particles = particleSystem?.particles || [];
+          const particleCount = particles.filter(p => p?.type === "ambient").length;
 
-        box.innerHTML = `
+          box.innerHTML = `
           <div class="tdlk-dock-row">
             <span class="tdlk-dock-label">Linh Khí Diện</span>
             <span class="tdlk-dock-value">${ambientStatus}</span>
@@ -182,7 +184,11 @@ export function dangKyUI(tt, mod, particleSystem, cinematic) {
         });
         btnRow.append(btnToggle, btnTest, btnPanel);
         box.appendChild(btnRow);
-      };
+      } catch (e) {
+        mod.log("[UI] Dock update error:", e);
+        box.innerHTML = `<div style="padding:8px;color:#ef4444;">Lỗi hiển thị dock: ${e.message}</div>`;
+      }
+    };
 
       update();
       return tt.subscribe(update);
@@ -322,38 +328,43 @@ export function dangKyUI(tt, mod, particleSystem, cinematic) {
       el.appendChild(box);
 
       const update = () => {
-        if (!mod.options.bat_tat_avatar_fx) {
-          box.innerHTML = `<div class="hud-phu" style="text-align:center;padding:20px;">Avatar FX đã tắt. Bật trong dock hoặc panel.</div>`;
-          return;
-        }
+        try {
+          if (!mod.options?.bat_tat_avatar_fx) {
+            box.innerHTML = `<div class="hud-phu" style="text-align:center;padding:20px;">Avatar FX đã tắt. Bật trong dock hoặc panel.</div>`;
+            return;
+          }
 
-        const s = tt.state();
-        const nv = s?.run?.nhanVat;
-        if (!nv) return;
+          const s = tt.state();
+          const nv = s?.run?.nhanVat;
+          if (!nv) return;
 
-        const visual = particleSystem.getVisualForRealm(Number(nv.canhGioi ?? 0));
-        const tuVi = Number(nv.tuVi ?? 0);
-        const tuViYeuCau = Number(nv.tuViYeuCau ?? 1);
-        const canBreakthrough = tuVi >= tuViYeuCau && tuViYeuCau > 0;
+          const visual = particleSystem?.getVisualForRealm?.(Number(nv.canhGioi ?? 0)) || { ten: "Phàm Nhân", mau: "#888", glow: "rgba(136,136,136,0.4)" };
+          const tuVi = Number(nv.tuVi ?? 0);
+          const tuViYeuCau = Number(nv.tuViYeuCau ?? 1);
+          const canBreakthrough = tuVi >= tuViYeuCau && tuViYeuCau > 0;
 
-        box.innerHTML = `
-          <div style="display:flex;align-items:center;gap:12px;padding:12px;background:linear-gradient(135deg,${visual.mau}20,transparent);border-radius:12px;border:1px solid ${visual.mau}40;">
-            <div style="width:60px;height:60px;border-radius:50%;background:conic-gradient(from 0deg,${visual.mau},${visual.mau}80%,transparent);display:flex;align-items:center;justify-content:center;position:relative;">
-              <div style="width:52px;height:52px;border-radius:50%;background:var(--nen-hud);display:flex;align-items:center;justify-content:center;font-size:24px;">
-                ${visual.ten.charAt(0)}
+          box.innerHTML = `
+            <div style="display:flex;align-items:center;gap:12px;padding:12px;background:linear-gradient(135deg,${visual.mau}20,transparent);border-radius:12px;border:1px solid ${visual.mau}40;">
+              <div style="width:60px;height:60px;border-radius:50%;background:conic-gradient(from 0deg,${visual.mau},${visual.mau}80%,transparent);display:flex;align-items:center;justify-content:center;position:relative;">
+                <div style="width:52px;height:52px;border-radius:50%;background:var(--nen-hud);display:flex;align-items:center;justify-content:center;font-size:24px;">
+                  ${visual.ten.charAt(0)}
+                </div>
+                <div class="tdlk-avatar-ring tdlk-breakthrough-ready" style="border-color:${visual.mau};box-shadow:0 0 15px ${visual.glow};"></div>
               </div>
-              <div class="tdlk-avatar-ring tdlk-breakthrough-ready" style="border-color:${visual.mau};box-shadow:0 0 15px ${visual.glow};"></div>
+              <div style="flex:1;">
+                <div style="font-weight:600;font-size:14px;color:var(--chu-do);">${visual.ten}</div>
+                <div style="font-size:12px;color:var(--muc);">Tu vi: ${tuVi}/${tuViYeuCau} ${canBreakthrough ? '⚡ <b style="color:#f59e0b">SẴN SÀNG ĐỘT PHÁ</b>' : ''}</div>
+                <div style="font-size:11px;color:var(--muc-nhat);margin-top:4px;">Cảnh giới: ${visual.ten} • Linh thạch: ${nv.linhThach ?? 0}</div>
+              </div>
             </div>
-            <div style="flex:1;">
-              <div style="font-weight:600;font-size:14px;color:var(--chu-do);">${visual.ten}</div>
-              <div style="font-size:12px;color:var(--muc);">Tu vi: ${tuVi}/${tuViYeuCau} ${canBreakthrough ? '⚡ <b style="color:#f59e0b">SẴN SÀNG ĐỘT PHÁ</b>' : ''}</div>
-              <div style="font-size:11px;color:var(--muc-nhat);margin-top:4px;">Cảnh giới: ${visual.ten} • Linh thạch: ${nv.linhThach ?? 0}</div>
+            <div style="font-size:11px;color:var(--muc-nhat);">
+              <b>Hiệu ứng:</b> Glow ring theo cảnh giới • Badge trạng thái (⚡ đột phá, 🗺️ lịch luyện, 👿 ma hóa, 👑 đại sư huynh/tỷ) • Cinematic khi đột phá
             </div>
-          </div>
-          <div style="font-size:11px;color:var(--muc-nhat);">
-            <b>Hiệu ứng:</b> Glow ring theo cảnh giới • Badge trạng thái (⚡ đột phá, 🗺️ lịch luyện, 👿 ma hóa, 👑 đại sư huynh/tỷ) • Cinematic khi đột phá
-          </div>
-        `;
+          `;
+        } catch (e) {
+          mod.log("[UI] CharacterTab update error:", e);
+          box.innerHTML = `<div style="padding:8px;color:#ef4444;">Lỗi hiển thị: ${e.message}</div>`;
+        }
       };
 
       update();
@@ -374,35 +385,40 @@ export function dangKyUI(tt, mod, particleSystem, cinematic) {
       el.appendChild(box);
 
       const update = () => {
-        const s = tt.state();
-        const nv = s?.run?.nhanVat;
-        const place = s?.run?.noiChon;
-        if (!place) {
-          box.textContent = "Chưa có nơi chốn";
-          return;
+        try {
+          const s = tt.state();
+          const nv = s?.run?.nhanVat;
+          const place = s?.run?.noiChon;
+          if (!place) {
+            box.textContent = "Chưa có nơi chốn";
+            return;
+          }
+
+          // Infer biome from place type/faction
+          let biome = "default";
+          if (place.loai?.includes("nui")) biome = "nui";
+          else if (place.loai?.includes("bien") || place.loai?.includes("ha")) biome = "bien";
+          else if (place.loai?.includes("rung")) biome = "rung";
+          else if (place.phe === "ta") biome = "ta_phai";
+          else if (place.phe === "chinh") biome = "chinh_phai";
+          else if (place.loai?.includes("dong_phu") || place.loai?.includes("bi_canh")) biome = "bich_canh";
+
+          particleSystem?.setBiome?.(biome);
+
+          const biomeNames = {
+            default: "Bình thường", nui: "Núi rừng", bien: "Biển/Hồ",
+            rung: "Rừng già", sa_moc: "Sa mạc", bich_canh: "Bí cảnh",
+            ta_phai: "Tà phái", chinh_phai: "Chính phái", thien_kiep: "Thiên Kiếp"
+          };
+
+          box.innerHTML = `
+            <span style="color:var(--chu-do);">${place.ten || "Vô danh"}</span>
+            <span class="hud-phu" style="margin-left:8px;">🌿 ${biomeNames[biome] || biome}</span>
+          `;
+        } catch (e) {
+          mod.log("[UI] PlaceInfo update error:", e);
+          box.textContent = "Lỗi biome";
         }
-
-        // Infer biome from place type/faction
-        let biome = "default";
-        if (place.loai?.includes("nui")) biome = "nui";
-        else if (place.loai?.includes("bien") || place.loai?.includes("ha")) biome = "bien";
-        else if (place.loai?.includes("rung")) biome = "rung";
-        else if (place.phe === "ta") biome = "ta_phai";
-        else if (place.phe === "chinh") biome = "chinh_phai";
-        else if (place.loai?.includes("dong_phu") || place.loai?.includes("bi_canh")) biome = "bich_canh";
-
-        particleSystem.setBiome(biome);
-
-        const biomeNames = {
-          default: "Bình thường", nui: "Núi rừng", bien: "Biển/Hồ",
-          rung: "Rừng già", sa_moc: "Sa mạc", bich_canh: "Bí cảnh",
-          ta_phai: "Tà phái", chinh_phai: "Chính phái", thien_kiep: "Thiên Kiếp"
-        };
-
-        box.innerHTML = `
-          <span style="color:var(--chu-do);">${place.ten || "Vô danh"}</span>
-          <span class="hud-phu" style="margin-left:8px;">🌿 ${biomeNames[biome] || biome}</span>
-        `;
       };
 
       update();
