@@ -1,0 +1,76 @@
+name: Auto Release on Version Change
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'su_do/mod.yaml'
+      - 'thien_dia_linh_khi/mod.yaml'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Detect version changes
+        id: changes
+        run: |
+          for mod in su_do thien_dia_linh_khi; do
+            # Check if version line changed in this push
+            if git diff HEAD~1 HEAD -- "$mod/mod.yaml" 2>/dev/null | grep -q '^+version:'; then
+              VERSION=$(grep '^version:' "$mod/mod.yaml" | awk '{print $2}')
+              echo "$mod=$VERSION" >> $GITHUB_OUTPUT
+              echo "Detected $mod version change: $VERSION"
+            fi
+          done
+
+      - name: Build su_do zip
+        if: steps.changes.outputs.su_do != ''
+        run: |
+          cd su_do
+          zip -r ../su_do_v${{ steps.changes.outputs.su_do }}.zip . -x "*.git*" "node_modules/*"
+
+      - name: Build thien_dia_linh_khi zip
+        if: steps.changes.outputs.thien_dia_linh_khi != ''
+        run: |
+          cd thien_dia_linh_khi
+          zip -r ../thien_dia_linh_khi_v${{ steps.changes.outputs.thien_dia_linh_khi }}.zip . -x "*.git*" "node_modules/*"
+
+      - name: Create su_do Release
+        if: steps.changes.outputs.su_do != ''
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: su_do/v${{ steps.changes.outputs.su_do }}
+          name: "Sư Đồ Truyền Thừa v${{ steps.changes.outputs.su_do }}"
+          generate_release_notes: true
+          files: |
+            su_do_v${{ steps.changes.outputs.su_do }}.zip
+          draft: false
+          prerelease: false
+
+      - name: Create thien_dia_linh_khi Release
+        if: steps.changes.outputs.thien_dia_linh_khi != ''
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: thien_dia_linh_khi/v${{ steps.changes.outputs.thien_dia_linh_khi }}
+          name: "Thiên Địa Linh Khí v${{ steps.changes.outputs.thien_dia_linh_khi }}"
+          generate_release_notes: true
+          files: |
+            thien_dia_linh_khi_v${{ steps.changes.outputs.thien_dia_linh_khi }}.zip
+          draft: false
+          prerelease: false
