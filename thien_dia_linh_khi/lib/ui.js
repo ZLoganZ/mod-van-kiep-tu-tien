@@ -202,7 +202,7 @@ export function dangKyUI(tt, mod, particleSystem, cinematic) {
     id: "tdlk_panel",
     title: "⚙️ Thiên Địa Linh Khí",
     icon: "sparkles",
-    mount(el, tt) {
+    mount(el) {
       el.innerHTML = "";
       const opts = mod.options;
 
