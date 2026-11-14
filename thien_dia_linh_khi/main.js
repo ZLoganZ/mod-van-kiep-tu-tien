@@ -16,13 +16,13 @@ function boot(tt, mod) {
   // Register balance overrides nếu cần
   // mod.setBalance("cultivation.TU_VI_MOI_NAM", 1.05);
 
-  // Add custom effects/conditions cho cinematic
-  mod.addEffect("tdlk_thien_kiep_active", {
+  // Add custom effects/conditions cho cinematic (naming: eff.<mod_id>_<name>, cond.<mod_id>_<name>)
+  mod.addEffect("eff.thien_dia_linh_khi_thien_kiep_active", {
     description: "Đang trải nghiệm Thiên Kiếp cinematic",
     duration: 0 // permanent until removed
   });
 
-  mod.addCondition("tdlk_can_trigger_cinematic", (ctx) => {
+  mod.addCondition("cond.thien_dia_linh_khi_can_trigger_cinematic", (ctx) => {
     const opts = mod.options;
     return opts.bat_tat_thien_kiep && !ctx.flags?.tdlk_cinematic_playing;
   });
