@@ -124,7 +124,8 @@ export function createUpdateCheckUI(mod, tt) {
     onClick: async () => {
       checkBtn.disabled = true;
       checkBtn.textContent = "⏳ Đang kiểm tra...";
-      const update = await checkForUpdate(mod, { silent: false, githubRepo: "ZLoganZ/mod-van-kiep-tu-tien" });
+      // Force check bypassing throttle
+      const update = await checkForUpdate(mod, { silent: false, githubRepo: "ZLoganZ/mod-van-kiep-tu-tien", checkIntervalHours: 0 });
       checkBtn.disabled = false;
       checkBtn.textContent = "🔍 Kiểm tra cập nhật";
 
@@ -135,6 +136,9 @@ export function createUpdateCheckUI(mod, tt) {
           onClick: () => autoUpdate(mod, update)
         });
         container.appendChild(updateBtn);
+      } else {
+        // Show result even if no update
+        mod.ui?.toast?.("Đã kiểm tra: không có bản mới", { duration: 3000 });
       }
     }
   });

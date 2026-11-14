@@ -203,8 +203,24 @@ export function dangKyUI(tt, mod, particleSystem, cinematic) {
     title: "⚙️ Thiên Địa Linh Khí",
     icon: "sparkles",
     mount(el) {
+      // Use mod from outer scope directly in callbacks to avoid stale closure
+      const modRef = mod;
+      if (!modRef?.setOption) {
+        modRef?.log?.("[UI] Panel mount: modRef missing setOption", modRef);
+        el.innerHTML = '<div style="padding:16px;color:#ef4444;">Lỗi: mod object không hợp lệ</div>';
+        return;
+      }
       el.innerHTML = "";
-      const opts = mod.options;
+      const opts = modRef.options;
+
+      // Helper to safely call setOption
+      const setOpt = (key, value) => {
+        try {
+          modRef.setOption(key, value);
+        } catch (e) {
+          modRef.log?.("[UI] setOption error:", key, e);
+        }
+      };
 
       // Section: Ambient
       const secAmbient = document.createElement("div");
@@ -214,21 +230,21 @@ export function dangKyUI(tt, mod, particleSystem, cinematic) {
       const qualitySelect = kit.select({
         options: Object.entries(QUALITY_PRESETS).map(([k, v]) => ({ value: k, label: v.label })),
         value: opts.chat_luong,
-        onChange: (v) => mod.setOption("chat_luong", v)
+        onChange: (v) => setOpt("chat_luong", v)
       });
       secAmbient.appendChild(kit.row({ label: "Chất lượng", children: [qualitySelect] }));
 
       const toggleAmbient = kit.toggle({
         label: "Bật/Tắt",
         checked: opts.bat_tat_linh_khi,
-        onChange: (v) => mod.setOption("bat_tat_linh_khi", v)
+        onChange: (v) => setOpt("bat_tat_linh_khi", v)
       });
       secAmbient.appendChild(toggleAmbient);
 
       const toggleAutoQuality = kit.toggle({
         label: "Tự giảm quality khi lag",
         checked: opts.giam_toc_do_nguyen,
-        onChange: (v) => mod.setOption("giam_toc_do_nguyen", v)
+        onChange: (v) => setOpt("giam_toc_do_nguyen", v)
       });
       secAmbient.appendChild(toggleAutoQuality);
 
@@ -242,14 +258,14 @@ export function dangKyUI(tt, mod, particleSystem, cinematic) {
       const toggleCinematic = kit.toggle({
         label: "Bật/Tắt",
         checked: opts.bat_tat_thien_kiep,
-        onChange: (v) => mod.setOption("bat_tat_thien_kiep", v)
+        onChange: (v) => setOpt("bat_tat_thien_kiep", v)
       });
       secCinematic.appendChild(toggleCinematic);
 
       const toggleSound = kit.toggle({
         label: "Âm thanh (cần tương tác trước)",
         checked: opts.am_thanh,
-        onChange: (v) => mod.setOption("am_thanh", v)
+        onChange: (v) => setOpt("am_thanh", v)
       });
       secCinematic.appendChild(toggleSound);
 
@@ -275,7 +291,7 @@ export function dangKyUI(tt, mod, particleSystem, cinematic) {
       const toggleAvatar = kit.toggle({
         label: "Bật/Tắt Glow Ring & Badge",
         checked: opts.bat_tat_avatar_fx,
-        onChange: (v) => mod.setOption("bat_tat_avatar_fx", v)
+        onChange: (v) => setOpt("bat_tat_avatar_fx", v)
       });
       secAvatar.appendChild(toggleAvatar);
 
