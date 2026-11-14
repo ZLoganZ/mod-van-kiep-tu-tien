@@ -1,0 +1,100 @@
+name: Release Mod
+
+on:
+  push:
+    tags:
+      - 'thien_dia_linh_khi/v*'
+    paths:
+      - 'thien_dia_linh_khi/**'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 1.0.1)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Read mod version from mod.yaml
+        id: mod_version
+        run: |
+          VERSION=$(grep '^version:' thien_dia_linh_khi/mod.yaml | awk '{print $2}')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Create mod zip
+        run: |
+          cd thien_dia_linh_khi
+          zip -r ../thien_dia_linh_khi_v${{ steps.mod_version.outputs.version }}.zip . -x "*.git*" "node_modules/*"
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: thien_dia_linh_khi/v${{ steps.mod_version.outputs.version }}
+          name: "Thiên Địa Linh Khí v${{ steps.mod_version.outputs.version }}"
+          body: |
+            ## Thiên Địa Linh Khí v${{ steps.mod_version.outputs.version }}
+
+            Hệ thống hiệu ứng không gian tu tiên toàn diện:
+            - **Linh Khí Diện**: Nền động toàn game (particles, thời tiết, biome-aware)
+            - **Thiên Kiếp Cinematic**: Đột phá cảnh giới = điện ảnh full-screen (Lôi/Hỏa/Tâm Ma Kiếp)
+            - **Tu Vi Hiện Hình**: Avatar glow ring, badge trạng thái theo cảnh giới/tu vi
+
+            ### Cài đặt
+            1. Tải file `thien_dia_linh_khi_v${{ steps.mod_version.outputs.version }}.zip`
+            2. Giải nén vào thư mục `mods/` của game
+            3. Reload game
+          files: |
+            thien_dia_linh_khi_v${{ steps.mod_version.outputs.version }}.zip
+          draft: false
+          prerelease: false
+
+      - name: Generate auto-update manifest
+        run: |
+          cat > update_manifest.json <<EOF
+          {
+            "id": "thien_dia_linh_khi",
+            "name": "Thiên Địa Linh Khí",
+            "version": "${{ steps.mod_version.outputs.version }}",
+            "download_url": "https://github.com/${{ github.repository }}/releases/download/thien_dia_linh_khi/v${{ steps.mod_version.outputs.version }}/thien_dia_linh_khi_v${{ steps.mod_version.outputs.version }}.zip",
+            "changelog": "See release notes"
+          }
+          EOF
+
+      - name: Upload update manifest as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: update-manifest
+          path: update_manifest.json
+          retention-days: 30
+
+  # Auto-update check workflow (runs on schedule)
+  auto-update-check:
+    needs: build-and-release
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/thien_dia_linh_khi/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify auto-update endpoint (if configured)
+        run: |
+          # This would call your game's mod update API if it exists
+          # curl -X POST "https://your-game-api.com/mods/update-check" \
+          #   -H "Content-Type: application/json" \
+          #   -d '{"mod_id": "thien_dia_linh_khi", "version": "${{ needs.build-and-release.outputs.version }}"}'
+          echo "Auto-update notification would be sent here"

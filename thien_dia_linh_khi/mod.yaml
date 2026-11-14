@@ -1,0 +1,51 @@
+id: thien_dia_linh_khi
+name: Thiên Địa Linh Khí
+version: 1.0.0
+api_version: 1
+author: Modder
+description: |
+  Hệ thống hiệu ứng không gian tu tiên toàn diện:
+  - **Linh Khí Diện**: Nền động toàn game (particles, thời tiết, biome-aware)
+  - **Thiên Kiếp Cinematic**: Đột phá cảnh giới = điện ảnh full-screen (Lôi/Hỏa/Tâm Ma Kiếp)
+  - **Tu Vi Hiện Hình**: Avatar glow ring, badge trạng thái theo cảnh giới/tu vi
+  - Tích hợp sâu: cùng particle system, cấu hình thống nhất, tối ưu hiệu năng
+
+options:
+  - key: chat_luong
+    label: Chất lượng hiệu ứng
+    hint: � hưởng hưởng số lượng particle, shader, FPS cap
+    type: choice
+    default: cao
+    choices:
+      - { value: thap, label: "Thấp (tiết kiệm, ~30 particles)" }
+      - { value: trung_binh, label: "Trung bình (~100 particles)" }
+      - { value: cao, label: "Cao (~200 particles, shader đầy đủ)" }
+
+  - key: bat_tat_linh_khi
+    label: Bật Linh Khí Diện nền
+    type: bool
+    default: true
+
+  - key: bat_tat_thien_kiep
+    label: Bật Thiên Kiếp Cinematic
+    type: bool
+    default: true
+
+  - key: bat_tat_avatar_fx
+    label: Bật Avatar State Visual (glow ring, badge)
+    type: bool
+    default: true
+
+  - key: am_thanh
+    label: Âm thanh Thiên Kiếp
+    hint: Cần tương tác người dùng trước (policy trình duyệt)
+    type: bool
+    default: false
+
+  - key: giam_toc_do_nguyen
+    label: Giảm tốc độ khi yếu
+    hint: Tự động giảm quality khi FPS < 30
+    type: bool
+    default: true
+
+script: main.js
