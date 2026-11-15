@@ -17,7 +17,7 @@ export function injectMasterStyles() {
   top: 0; left: 0; width: 100vw; height: 100vh;
   pointer-events: none;
   z-index: 1; /* dưới UI game, trên background */
-  opacity: 0.14;
+  opacity: 0.36;
   transition: opacity 0.5s ease;
 }
 .tdlk-ambient-canvas.tdlk-hidden { opacity: 0; display: none; }

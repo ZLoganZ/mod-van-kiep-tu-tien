@@ -2,6 +2,13 @@
 
 import { QUALITY_PRESETS, BIOME_CONFIG, CANH_GIOI_VISUAL } from "./constants.js";
 
+const CINEMATIC_CONFIG = {
+  loi_kiep: { hue: 210, saturation: 0.28, speed: 1.1 },
+  hoa_kiep: { hue: 28, saturation: 0.48, speed: 1.35 },
+  tam_ma_kiep: { hue: 272, saturation: 0.28, speed: 0.8 },
+  thien_kiep_toi_thuong: { hue: 42, saturation: 0.38, speed: 0.95 }
+};
+
 /** Simple Perlin noise cho flow field */
 class PerlinNoise {
   constructor(seed = Math.random()) {
@@ -67,10 +74,11 @@ class Particle {
   }
   update(dt, flowField, config, intensity = 1) {
     this.age += dt;
-    const angle = flowField.getAngle(this.x, this.y) + Math.sin(this.age * 0.6 + this.phase) * 0.08;
+    const angle = flowField.getAngle(this.x, this.y) + Math.sin(this.age * 0.6 + this.phase) * 0.12;
     const speed = config.speed * intensity * this.drift;
-    this.vx = Math.cos(angle) * speed;
-    this.vy = Math.sin(angle) * speed;
+    const response = 1 - Math.exp(-dt * 1.8);
+    this.vx += (Math.cos(angle) * speed - this.vx) * response;
+    this.vy += (Math.sin(angle) * speed - this.vy) * response;
     this.x += this.vx * dt * 60;
     this.y += this.vy * dt * 60;
 
@@ -90,26 +98,29 @@ class Particle {
   }
   draw(ctx, config) {
     if (!Number.isFinite(this.life) || this.life <= 0) return;
-    if (this.type === "cinematic" || this.type === "breakthrough") {
-      // Draw trail first
-      ctx.beginPath();
+    if (this.maxTrail > 0) {
       for (let i = 0; i < this.trail.length; i++) {
         const t = this.trail[i];
-        const alpha = t.opacity * (i / this.trail.length) * 0.5;
-        const size = this.size * (i / this.trail.length);
+        const progress = (i + 1) / this.trail.length;
+        const trailOpacity = this.type === "ambient" ? 0.2 : 0.34;
+        const alpha = t.opacity * progress * trailOpacity;
+        const size = this.size * progress * (this.type === "ambient" ? 1.25 : 1.8);
         ctx.globalAlpha = alpha;
-        ctx.fillStyle = `hsl(${this.baseHue}, ${this.saturation * 100}%, 60%)`;
+        ctx.fillStyle = `hsl(${this.baseHue}, ${this.saturation * 100}%, 52%)`;
         ctx.beginPath();
-        ctx.arc(t.x, t.y, size, 0, Math.PI * 2);
+        const angle = Math.atan2(this.vy, this.vx);
+        ctx.ellipse(t.x, t.y, size * 1.8, size * 0.42, angle, 0, Math.PI * 2);
         ctx.fill();
       }
     }
-    // Main particle
-    ctx.globalAlpha = this.opacity * this.life;
+    const lifeFade = this.type === "ambient" ? Math.min(1, this.age * 0.35) : Math.min(1, this.life * 1.5);
+    ctx.globalAlpha = this.opacity * lifeFade;
     const hueShift = this.type === "breakthrough" ? (Date.now() / 50) % 60 : 0;
-    ctx.fillStyle = `hsl(${(this.baseHue + hueShift) % 360}, ${this.saturation * 100}%, 65%)`;
+    ctx.fillStyle = `hsl(${(this.baseHue + hueShift) % 360}, ${this.saturation * 100}%, ${this.type === "ambient" ? 43 : 56}%)`;
     ctx.beginPath();
-    ctx.arc(this.x, this.y, this.size * this.life, 0, Math.PI * 2);
+    const stretch = this.type === "ambient" ? 1.5 : 2;
+    const size = this.size * (this.type === "ambient" ? 1 : Math.max(0.35, this.life));
+    ctx.ellipse(this.x, this.y, size * stretch, size * 0.55, Math.atan2(this.vy, this.vx), 0, Math.PI * 2);
     ctx.fill();
     ctx.globalAlpha = 1;
   }
@@ -142,10 +153,20 @@ class FlowField {
     }
   }
   getAngle(x, y) {
-    const col = Math.floor(x / this.resolution);
-    const row = Math.floor(y / this.resolution);
-    if (col < 0 || col >= this.cols || row < 0 || row >= this.rows) return 0;
-    return this.field[row * this.cols + col];
+    const gridX = Math.max(0, Math.min(this.cols - 1, x / this.resolution));
+    const gridY = Math.max(0, Math.min(this.rows - 1, y / this.resolution));
+    const x0 = Math.floor(gridX), y0 = Math.floor(gridY);
+    const x1 = Math.min(this.cols - 1, x0 + 1), y1 = Math.min(this.rows - 1, y0 + 1);
+    const tx = gridX - x0, ty = gridY - y0;
+    const angle00 = this.field[y0 * this.cols + x0];
+    const angle10 = this.field[y0 * this.cols + x1];
+    const angle01 = this.field[y1 * this.cols + x0];
+    const angle11 = this.field[y1 * this.cols + x1];
+    const vx0 = Math.cos(angle00) * (1 - tx) + Math.cos(angle10) * tx;
+    const vy0 = Math.sin(angle00) * (1 - tx) + Math.sin(angle10) * tx;
+    const vx1 = Math.cos(angle01) * (1 - tx) + Math.cos(angle11) * tx;
+    const vy1 = Math.sin(angle01) * (1 - tx) + Math.sin(angle11) * tx;
+    return Math.atan2(vy0 * (1 - ty) + vy1 * ty, vx0 * (1 - ty) + vx1 * ty);
   }
   resize(width, height) {
     this.width = width; this.height = height;
@@ -176,6 +197,7 @@ export class ParticleSystem {
     this.cinematicResolve = null;
     this.cinematicFinishTimer = null;
     this.cinematicWatchdogTimer = null;
+    this.cinematicEmitRemainder = 0;
     this.intensity = 1;
     this.ambientEnabled = mod.options?.bat_tat_linh_khi !== false;
     this.autoQualityEnabled = mod.options?.giam_toc_do_nguyen !== false;
@@ -315,6 +337,7 @@ export class ParticleSystem {
     this.cinematicOverlay = overlay;
 
     this._spawnCinematicParticles(type, width, height);
+    const cinematicParticleLimit = Math.min(this.cinematicMaxParticles || 72, 72);
     const duration = Math.max(1000, data.duration || 5000);
     const startTime = performance.now();
     let lastFrameTime = startTime;
@@ -357,16 +380,32 @@ export class ParticleSystem {
         const dt = Math.min((now - lastFrameTime) / 1000, 0.05);
         lastFrameTime = now;
         const progress = Math.min(elapsed / duration, 1);
+        const flow = {
+          getAngle: (x, y) => this._cinematicParticleAngle(type, x, y, width, height, elapsed / 1000)
+        };
+        const emitRate = type === "hoa_kiep" ? 22 : type === "loi_kiep" ? 18 : 15;
+        if (this.cinematicParticles.length < cinematicParticleLimit) {
+          this.cinematicEmitRemainder = Math.min(
+            1,
+            this.cinematicEmitRemainder + dt * emitRate * (progress > 0.82 ? 0.35 : 1)
+          );
+        } else {
+          this.cinematicEmitRemainder = 0;
+        }
+        while (this.cinematicEmitRemainder >= 1 && this.cinematicParticles.length < cinematicParticleLimit) {
+          this._spawnOneCinematicParticle(type, width, height);
+          this.cinematicEmitRemainder -= 1;
+        }
 
         cinematicCtx.clearRect(0, 0, width, height);
         for (const particle of this.cinematicParticles) {
-          particle.update(dt, { getAngle: () => 0 }, BIOME_CONFIG.thien_kiep);
+          particle.update(dt, flow, particle.config);
         }
         this.cinematicParticles = this.cinematicParticles.filter(p => p.life > 0);
         for (const particle of this.cinematicParticles) {
-          particle.draw(cinematicCtx, BIOME_CONFIG.thien_kiep);
+          particle.draw(cinematicCtx, particle.config);
         }
-        this._drawCinematicEffects(cinematicCtx, type, progress, width, height);
+        this._drawCinematicEffects(cinematicCtx, type, progress, width, height, elapsed / 1000);
 
         if (progress < 1) this.cinematicFrameId = requestAnimationFrame(animateCinematic);
         else finish();
@@ -389,43 +428,93 @@ export class ParticleSystem {
   }
 
   /** Vẽ hiệu ứng đặc biệt theo loại kiếp */
-  _drawCinematicEffects(ctx, type, progress, w, h) {
+  _cinematicParticleAngle(type, x, y, w, h, time) {
+    const dx = x - w / 2;
+    const dy = y - h / 2;
+    const radial = Math.atan2(dy, dx);
+    switch (type) {
+      case "hoa_kiep":
+        return -Math.PI / 2 + Math.sin(x * 0.012 + time * 1.8) * 0.62;
+      case "loi_kiep":
+        return Math.PI / 2 + Math.sin(x * 0.018 + time * 4) * 0.42;
+      case "tam_ma_kiep":
+        return radial + Math.PI / 2 - Math.sin(radial * 3 + time) * 0.15;
+      default:
+        return radial + Math.PI / 2 + Math.sin(radial * 2 - time * 0.8) * 0.22;
+    }
+  }
+
+  _drawCinematicEffects(ctx, type, progress, w, h, time) {
     const centerX = w / 2, centerY = h / 2;
 
     switch (type) {
       case "loi_kiep":
-        if (progress > 0.2 && progress < 0.8 && Math.random() < 0.3) {
-          this._drawLightning(ctx, centerX, 0, centerX + (Math.random() - 1) * 160, h, "#728294");
+        if (progress > 0.12 && progress < 0.88) {
+          const strike = (time * 0.9) % 1;
+          if (strike < 0.2) {
+            const x = w * (0.25 + 0.5 * (0.5 + 0.5 * Math.sin(time * 0.7)));
+            const y = h * 0.28;
+            const color = "#75879a";
+            ctx.globalAlpha = 0.58 * (1 - strike / 0.2);
+            this._drawLightning(ctx, x, 0, x + Math.sin(time * 6) * w * 0.12, y, color);
+            this._drawLightning(ctx, x + Math.sin(time * 6) * w * 0.12, y, centerX, h * 0.55, color);
+            this._drawLightning(ctx, centerX, h * 0.55, centerX + Math.sin(time * 4) * w * 0.18, h * 0.76, color);
+            ctx.globalAlpha = 1;
+          }
         }
         break;
       case "hoa_kiep":
-        const ringCount = 3;
-        for (let i = 0; i < ringCount; i++) {
-          const ringProgress = (progress * ringCount - i) / ringCount;
-          if (ringProgress > 0 && ringProgress < 1) {
-            const r = ringProgress * Math.max(w, h) * 0.48;
-            ctx.strokeStyle = `hsla(27, 48%, 43%, ${0.24 * (1 - ringProgress)})`;
-            ctx.lineWidth = 1.5 * (1 - ringProgress);
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, r, 0, Math.PI * 2);
-            ctx.stroke();
-          }
+        ctx.lineCap = "round";
+        for (let i = 0; i < 6; i++) {
+          const phase = i * 1.73;
+          const wave = Math.sin(time * 1.7 + phase);
+          const gust = Math.sin(time * 0.8 + phase * 1.4);
+          const x = centerX + (i - 2.5) * w * 0.095 + gust * w * 0.025;
+          const sway = wave * w * 0.06;
+          const rise = h * (0.2 + 0.3 * (0.5 + 0.5 * Math.sin(time * 0.9 + phase)));
+          const width = 1.2 + 1.8 * (0.5 + 0.5 * Math.sin(time * 1.2 + phase));
+          const flame = ctx.createLinearGradient(x, h, x + sway, h - rise);
+          flame.addColorStop(0, "rgba(151, 77, 42, 0.015)");
+          flame.addColorStop(0.45, "rgba(151, 77, 42, 0.34)");
+          flame.addColorStop(1, "rgba(151, 77, 42, 0.01)");
+          ctx.strokeStyle = flame;
+          ctx.lineWidth = width;
+          ctx.beginPath();
+          ctx.moveTo(x, h + 8);
+          ctx.bezierCurveTo(x - sway * 0.3, h - rise * 0.25, x + sway * 1.2, h - rise * 0.62, x + sway, h - rise);
+          ctx.stroke();
         }
+        ctx.lineCap = "butt";
         break;
       case "tam_ma_kiep":
-        for (let i = 0; i < 5; i++) {
-          const waveProgress = (progress * 5 - i) / 5;
-          if (waveProgress > 0 && waveProgress < 1) {
-            ctx.strokeStyle = `hsla(270, 24%, 48%, ${0.16 * (1 - waveProgress)})`;
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            for (let x = 0; x < w; x += 16) {
-              const y = centerY + Math.sin(x * 0.02 + waveProgress * 10) * 26 * waveProgress * (1 - waveProgress);
-              if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-            }
-            ctx.stroke();
+        for (let ribbon = 0; ribbon < 2; ribbon++) {
+          ctx.beginPath();
+          for (let step = 0; step <= 100; step++) {
+            const t = step / 100;
+            const angle = t * Math.PI * 5 + time * (ribbon ? -0.7 : 0.8) + ribbon * Math.PI;
+            const radius = 8 + t * Math.min(w, h) * 0.34;
+            const x = centerX + Math.cos(angle) * radius;
+            const y = centerY + Math.sin(angle) * radius * 0.6;
+            if (step === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
           }
+          ctx.strokeStyle = `rgba(97, 77, 105, ${0.12 * Math.sin(Math.PI * progress)})`;
+          ctx.lineWidth = ribbon ? 1 : 1.5;
+          ctx.stroke();
         }
+        break;
+      case "thien_kiep_toi_thuong":
+        ctx.beginPath();
+        for (let step = 0; step <= 90; step++) {
+          const t = step / 90;
+          const angle = t * Math.PI * 4 + time * 0.55;
+          const radius = 12 + t * Math.min(w, h) * 0.32;
+          const x = centerX + Math.cos(angle) * radius;
+          const y = centerY + Math.sin(angle) * radius * 0.72;
+          if (step === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.strokeStyle = `rgba(136, 112, 61, ${0.2 * Math.sin(Math.PI * progress)})`;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
         break;
     }
   }
@@ -614,40 +703,54 @@ export class ParticleSystem {
     const p = new Particle(x, y, config);
     p.type = "ambient";
     p.life = 1; p.maxLife = 1;
-    p.size = 0.9 + Math.random() * 1.5;
-    p.opacity = 0.2 + Math.random() * 0.22;
+    p.size = 1.5 + Math.random() * 2;
+    p.opacity = 0.48 + Math.random() * 0.3;
+    p.maxTrail = 8;
     this.particles.push(p);
   }
 
   _spawnCinematicParticles(type, w, h) {
-    const count = Math.min(this.cinematicMaxParticles || 72, 72);
-    const colors = {
-      loi_kiep: { hue: 210, saturation: 0.28 },
-      hoa_kiep: { hue: 28, saturation: 0.48 },
-      tam_ma_kiep: { hue: 272, saturation: 0.28 },
-      thien_kiep_toi_thuong: { hue: 42, saturation: 0.38 }
-    };
-    const config = { ...BIOME_CONFIG.thien_kiep, ...colors[type] };
+    this.cinematicParticles = [];
+    this.cinematicEmitRemainder = 0;
+    const count = Math.min(Math.ceil(Math.min(this.cinematicMaxParticles || 72, 72) * 0.55), 42);
     for (let i = 0; i < count; i++) {
-      const angle = Math.random() * Math.PI * 2;
-      const r = Math.random() * Math.max(w, h) * 0.5;
-      const x = w / 2 + Math.cos(angle) * r;
-      const y = h / 2 + Math.sin(angle) * r;
-      const p = new Particle(x, y, config);
-      p.type = "cinematic";
-      p.life = 1 + Math.random() * 2;
-      p.maxLife = p.life;
-      p.size = 1.2 + Math.random() * 2.4;
-      p.opacity = 0.24 + Math.random() * 0.26;
-      p.maxTrail = 4;
-      this.cinematicParticles.push(p);
+      this._spawnOneCinematicParticle(type, w, h, Math.random() * 2);
     }
+  }
+
+  _spawnOneCinematicParticle(type, w, h, age = 0) {
+    const config = { ...BIOME_CONFIG.thien_kiep, ...CINEMATIC_CONFIG[type] };
+    const angle = Math.random() * Math.PI * 2;
+    const radius = Math.random() * Math.min(w, h) * 0.4;
+    let x = w / 2 + Math.cos(angle) * radius;
+    let y = h / 2 + Math.sin(angle) * radius;
+    if (type === "hoa_kiep") {
+      x = Math.random() * w;
+      y = h + Math.random() * h * 0.15;
+    } else if (type === "loi_kiep") {
+      x = Math.random() * w;
+      y = -Math.random() * h * 0.2;
+    } else if (type === "tam_ma_kiep") {
+      const side = Math.random() < 0.5 ? -1 : 1;
+      x = w / 2 + side * (w * 0.35 + Math.random() * w * 0.2);
+      y = Math.random() * h;
+    }
+    const p = new Particle(x, y, config);
+    p.config = config;
+    p.type = "cinematic";
+    p.life = 2.2 + Math.random() * 1.8 - age;
+    p.maxLife = p.life + age;
+    p.age = age;
+    p.size = 2 + Math.random() * 3;
+    p.opacity = 0.4 + Math.random() * 0.32;
+    p.maxTrail = 8;
+    this.cinematicParticles.push(p);
   }
 
   _updateBiome() {
     const config = BIOME_CONFIG[this.currentBiome] || BIOME_CONFIG.default;
     if (this.canvas) {
-      this.canvas.style.opacity = config.weather === "none" ? "0.14" : "0.18";
+      this.canvas.style.opacity = config.weather === "none" ? "0.36" : "0.4";
     }
   }
 

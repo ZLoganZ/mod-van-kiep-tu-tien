@@ -15,7 +15,7 @@ export const CANH_GIOI_VISUAL = {
 
 /** Biome → particle config */
 export const BIOME_CONFIG = {
-  default: { hue: 36, saturation: 0.35, speed: 0.5, density: 0.8, weather: "none" },
+  default: { hue: 36, saturation: 0.35, speed: 0.8, density: 0.8, weather: "none" },
   nui: { hue: 100, saturation: 0.5, speed: 0.8, density: 1.2, weather: "mist" },
   bien: { hue: 200, saturation: 0.7, speed: 1.2, density: 1.0, weather: "mist" },
   rung: { hue: 130, saturation: 0.6, speed: 0.9, density: 1.1, weather: "rain" },
@@ -35,7 +35,7 @@ export const QUALITY_PRESETS = {
 
 /** Mod metadata */
 export const MOD_ID = "thien_dia_linh_khi";
-export const MOD_VERSION = "1.1.1";
+export const MOD_VERSION = "1.2.0";
 
 /** Cinematic type labels */
 export const KIEP_LABELS = {

@@ -220,7 +220,7 @@ Trước khi release:
 | Mod ID | Name | Version | Description |
 |--------|------|---------|-------------|
 | `su_do` | Sư Đồ Truyền Thừa | 1.3.2 | Hệ thống Sư Môn, Đạo Tràng, Đồ Đệ, Nhân Mạch |
-| `thien_dia_linh_khi` | Thiên Địa Linh Khí | 1.1.1 | Hiệu ứng giấy mực dịu hơn + cinematic tự dọn dẹp + Avatar Visual |
+| `thien_dia_linh_khi` | Thiên Địa Linh Khí | 1.2.0 | Luồng linh khí tự nhiên + cinematic chuyển động theo từng loại kiếp |
 
 ---
 
