@@ -61,11 +61,14 @@ class Particle {
     this.type = "ambient";
     this.trail = [];
     this.maxTrail = 0;
+    this.drift = 0.7 + Math.random() * 0.6;
+    this.phase = Math.random() * Math.PI * 2;
+    this.age = 0;
   }
   update(dt, flowField, config, intensity = 1) {
-    // Flow field velocity
-    const angle = flowField.getAngle(this.x, this.y) + (Math.random() - 0.5) * 0.3;
-    const speed = config.speed * intensity * (0.5 + Math.random() * 0.5);
+    this.age += dt;
+    const angle = flowField.getAngle(this.x, this.y) + Math.sin(this.age * 0.6 + this.phase) * 0.08;
+    const speed = config.speed * intensity * this.drift;
     this.vx = Math.cos(angle) * speed;
     this.vy = Math.sin(angle) * speed;
     this.x += this.vx * dt * 60;
@@ -86,6 +89,7 @@ class Particle {
     if (this.type !== "ambient") this.life -= dt;
   }
   draw(ctx, config) {
+    if (!Number.isFinite(this.life) || this.life <= 0) return;
     if (this.type === "cinematic" || this.type === "breakthrough") {
       // Draw trail first
       ctx.beginPath();
@@ -171,6 +175,7 @@ export class ParticleSystem {
     this.cinematicOverlay = null;
     this.cinematicResolve = null;
     this.cinematicFinishTimer = null;
+    this.cinematicWatchdogTimer = null;
     this.intensity = 1;
     this.ambientEnabled = mod.options?.bat_tat_linh_khi !== false;
     this.autoQualityEnabled = mod.options?.giam_toc_do_nguyen !== false;
@@ -303,7 +308,7 @@ export class ParticleSystem {
     cinematicCanvas.height = height * dpr;
     cinematicCanvas.style.width = `${width}px`;
     cinematicCanvas.style.height = `${height}px`;
-    cinematicCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    cinematicCtx?.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     overlay.offsetHeight;
     overlay.classList.add("tdlk-active");
@@ -315,12 +320,18 @@ export class ParticleSystem {
     let lastFrameTime = startTime;
     const completion = new Promise(resolve => { this.cinematicResolve = resolve; });
     this.cinematicPromise = completion;
+    let finishing = false;
     const finish = () => {
+      if (finishing) return;
+      finishing = true;
+      if (this.cinematicFrameId) cancelAnimationFrame(this.cinematicFrameId);
+      if (this.cinematicWatchdogTimer) clearTimeout(this.cinematicWatchdogTimer);
+      this.cinematicFrameId = null;
+      this.cinematicWatchdogTimer = null;
       overlay.classList.remove("tdlk-active");
       this.cinematicFinishTimer = setTimeout(() => {
         overlay.remove();
         if (this.cinematicOverlay === overlay) this.cinematicOverlay = null;
-        this.cinematicFrameId = null;
         this.cinematicFinishTimer = null;
         this.cinematicRunning = false;
         this.cinematicParticles = [];
@@ -329,23 +340,40 @@ export class ParticleSystem {
         this.cinematicPromise = null;
       }, 400);
     };
+    this.cinematicWatchdogTimer = setTimeout(() => {
+      this.mod.log("[TDLK] Cinematic timed out; cleaning up overlay");
+      finish();
+    }, duration + 2000);
     const animateCinematic = now => {
-      if (!this.cinematicRunning || !cinematicCtx) return;
-      const elapsed = now - startTime;
-      const dt = Math.min((now - lastFrameTime) / 1000, 0.05);
-      lastFrameTime = now;
-      const progress = Math.min(elapsed / duration, 1);
-
-      cinematicCtx.clearRect(0, 0, width, height);
-      for (const particle of this.cinematicParticles) {
-        particle.update(dt, { getAngle: () => 0 }, BIOME_CONFIG.thien_kiep);
-        particle.draw(cinematicCtx, BIOME_CONFIG.thien_kiep);
+      if (!this.cinematicRunning || finishing) return;
+      if (!cinematicCtx) {
+        this.mod.log("[TDLK] Cinematic canvas context unavailable");
+        finish();
+        return;
       }
-      this.cinematicParticles = this.cinematicParticles.filter(p => p.life > 0);
-      this._drawCinematicEffects(cinematicCtx, type, progress, width, height);
 
-      if (progress < 1) this.cinematicFrameId = requestAnimationFrame(animateCinematic);
-      else finish();
+      try {
+        const elapsed = now - startTime;
+        const dt = Math.min((now - lastFrameTime) / 1000, 0.05);
+        lastFrameTime = now;
+        const progress = Math.min(elapsed / duration, 1);
+
+        cinematicCtx.clearRect(0, 0, width, height);
+        for (const particle of this.cinematicParticles) {
+          particle.update(dt, { getAngle: () => 0 }, BIOME_CONFIG.thien_kiep);
+        }
+        this.cinematicParticles = this.cinematicParticles.filter(p => p.life > 0);
+        for (const particle of this.cinematicParticles) {
+          particle.draw(cinematicCtx, BIOME_CONFIG.thien_kiep);
+        }
+        this._drawCinematicEffects(cinematicCtx, type, progress, width, height);
+
+        if (progress < 1) this.cinematicFrameId = requestAnimationFrame(animateCinematic);
+        else finish();
+      } catch (error) {
+        this.mod.log("[TDLK] Cinematic render failed:", error);
+        finish();
+      }
     };
     this.cinematicFrameId = requestAnimationFrame(animateCinematic);
     return completion;
@@ -366,20 +394,18 @@ export class ParticleSystem {
 
     switch (type) {
       case "loi_kiep":
-        // Lightning bolts
         if (progress > 0.2 && progress < 0.8 && Math.random() < 0.3) {
-          this._drawLightning(ctx, centerX, 0, centerX + (Math.random() - 1) * 200, h, "#60a5fa");
+          this._drawLightning(ctx, centerX, 0, centerX + (Math.random() - 1) * 160, h, "#728294");
         }
         break;
       case "hoa_kiep":
-        // Fire rings expanding
         const ringCount = 3;
         for (let i = 0; i < ringCount; i++) {
           const ringProgress = (progress * ringCount - i) / ringCount;
           if (ringProgress > 0 && ringProgress < 1) {
-            const r = ringProgress * Math.max(w, h) * 0.8;
-            ctx.strokeStyle = `hsla(20, 100%, 60%, ${1 - ringProgress})`;
-            ctx.lineWidth = 3 * (1 - ringProgress);
+            const r = ringProgress * Math.max(w, h) * 0.48;
+            ctx.strokeStyle = `hsla(27, 48%, 43%, ${0.24 * (1 - ringProgress)})`;
+            ctx.lineWidth = 1.5 * (1 - ringProgress);
             ctx.beginPath();
             ctx.arc(centerX, centerY, r, 0, Math.PI * 2);
             ctx.stroke();
@@ -387,15 +413,14 @@ export class ParticleSystem {
         }
         break;
       case "tam_ma_kiep":
-        // Distortion waves
         for (let i = 0; i < 5; i++) {
           const waveProgress = (progress * 5 - i) / 5;
           if (waveProgress > 0 && waveProgress < 1) {
-            ctx.strokeStyle = `hsla(270, 80%, 70%, ${0.3 * (1 - waveProgress)})`;
-            ctx.lineWidth = 2;
+            ctx.strokeStyle = `hsla(270, 24%, 48%, ${0.16 * (1 - waveProgress)})`;
+            ctx.lineWidth = 1;
             ctx.beginPath();
-            for (let x = 0; x < w; x += 10) {
-              const y = centerY + Math.sin(x * 0.02 + waveProgress * 10) * 50 * waveProgress * (1 - waveProgress);
+            for (let x = 0; x < w; x += 16) {
+              const y = centerY + Math.sin(x * 0.02 + waveProgress * 10) * 26 * waveProgress * (1 - waveProgress);
               if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
             }
             ctx.stroke();
@@ -420,9 +445,8 @@ export class ParticleSystem {
       ctx.lineTo(nx, ny);
     }
     ctx.stroke();
-    // Glow
     ctx.strokeStyle = color + "80";
-    ctx.lineWidth = 6;
+    ctx.lineWidth = 4;
     ctx.stroke();
   }
 
@@ -585,17 +609,25 @@ export class ParticleSystem {
 
   _spawnOneAmbient() {
     const config = BIOME_CONFIG[this.currentBiome] || BIOME_CONFIG.default;
-    const x = Math.random() * (this.canvas?.width || 800);
-    const y = Math.random() * (this.canvas?.height || 600);
+    const x = Math.random() * window.innerWidth;
+    const y = Math.random() * window.innerHeight;
     const p = new Particle(x, y, config);
     p.type = "ambient";
     p.life = 1; p.maxLife = 1;
+    p.size = 0.9 + Math.random() * 1.5;
+    p.opacity = 0.2 + Math.random() * 0.22;
     this.particles.push(p);
   }
 
   _spawnCinematicParticles(type, w, h) {
-    const count = this.cinematicMaxParticles || 200;
-    const config = BIOME_CONFIG.thien_kiep;
+    const count = Math.min(this.cinematicMaxParticles || 72, 72);
+    const colors = {
+      loi_kiep: { hue: 210, saturation: 0.28 },
+      hoa_kiep: { hue: 28, saturation: 0.48 },
+      tam_ma_kiep: { hue: 272, saturation: 0.28 },
+      thien_kiep_toi_thuong: { hue: 42, saturation: 0.38 }
+    };
+    const config = { ...BIOME_CONFIG.thien_kiep, ...colors[type] };
     for (let i = 0; i < count; i++) {
       const angle = Math.random() * Math.PI * 2;
       const r = Math.random() * Math.max(w, h) * 0.5;
@@ -605,9 +637,9 @@ export class ParticleSystem {
       p.type = "cinematic";
       p.life = 1 + Math.random() * 2;
       p.maxLife = p.life;
-      p.size = 3 + Math.random() * 5;
-      p.opacity = 0.5 + Math.random() * 0.5;
-      p.maxTrail = 10;
+      p.size = 1.2 + Math.random() * 2.4;
+      p.opacity = 0.24 + Math.random() * 0.26;
+      p.maxTrail = 4;
       this.cinematicParticles.push(p);
     }
   }
@@ -615,7 +647,7 @@ export class ParticleSystem {
   _updateBiome() {
     const config = BIOME_CONFIG[this.currentBiome] || BIOME_CONFIG.default;
     if (this.canvas) {
-      this.canvas.style.opacity = config.weather === "none" ? "0.24" : "0.34";
+      this.canvas.style.opacity = config.weather === "none" ? "0.14" : "0.18";
     }
   }
 
@@ -659,10 +691,12 @@ export class ParticleSystem {
   cancelCinematic() {
     if (this.cinematicFrameId) cancelAnimationFrame(this.cinematicFrameId);
     if (this.cinematicFinishTimer) clearTimeout(this.cinematicFinishTimer);
+    if (this.cinematicWatchdogTimer) clearTimeout(this.cinematicWatchdogTimer);
     this.cinematicOverlay?.remove();
     this.cinematicOverlay = null;
     this.cinematicFrameId = null;
     this.cinematicFinishTimer = null;
+    this.cinematicWatchdogTimer = null;
     this.cinematicRunning = false;
     this.cinematicParticles = [];
     this.cinematicResolve?.();

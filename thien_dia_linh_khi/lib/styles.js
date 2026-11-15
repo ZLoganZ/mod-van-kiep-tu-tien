@@ -17,11 +17,11 @@ export function injectMasterStyles() {
   top: 0; left: 0; width: 100vw; height: 100vh;
   pointer-events: none;
   z-index: 1; /* dưới UI game, trên background */
-  opacity: 0.24;
+  opacity: 0.14;
   transition: opacity 0.5s ease;
 }
 .tdlk-ambient-canvas.tdlk-hidden { opacity: 0; display: none; }
-.tdlk-ambient-canvas.tdlk-intense { opacity: 0.9; }
+.tdlk-ambient-canvas.tdlk-intense { opacity: 0.3; }
 
 /* ==========================================
    CINEMATIC OVERLAY (full-screen)
@@ -34,6 +34,7 @@ export function injectMasterStyles() {
   display: flex;
   align-items: center;
   justify-content: center;
+  background: rgba(57, 48, 36, 0.06);
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.3s ease, visibility 0.3s ease;
@@ -52,23 +53,32 @@ export function injectMasterStyles() {
   position: absolute;
   top: 50%; left: 50%;
   transform: translate(-50%, -50%);
+  box-sizing: border-box;
+  min-width: min(280px, calc(100vw - 32px));
+  max-width: calc(100vw - 32px);
+  padding: 14px 24px;
+  border: 1px solid rgba(104, 81, 52, 0.3);
+  background: rgba(244, 238, 220, 0.78);
+  box-shadow: 0 3px 16px rgba(48, 40, 29, 0.16);
   pointer-events: none;
   text-align: center;
   z-index: 10;
 }
 .tdlk-cinematic-title {
-  font-size: clamp(2rem, 8vw, 5rem);
-  font-weight: 900;
-  text-shadow: 0 0 30px currentColor, 0 0 60px currentColor;
-  animation: tdlk-title-pulse 2s ease-in-out infinite;
+  font-family: Georgia, "Noto Serif", serif;
+  font-size: clamp(1.25rem, 4.5vw, 3rem);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 5px rgba(52, 39, 26, 0.2);
+  animation: tdlk-title-appear 0.5s ease-out both;
   line-height: 1.1;
-  white-space: nowrap;
+  white-space: normal;
 }
 .tdlk-cinematic-subtitle {
-  font-size: clamp(1rem, 3vw, 1.5rem);
-  margin-top: 0.5rem;
-  opacity: 0.8;
-  animation: tdlk-subtitle-fade 3s ease-in-out infinite;
+  color: #514638;
+  font-size: clamp(0.85rem, 2vw, 1rem);
+  margin-top: 0.6rem;
+  opacity: 0.9;
 }
 
 /* ==========================================
@@ -160,13 +170,9 @@ export function injectMasterStyles() {
 /* ==========================================
    ANIMATIONS
    ========================================== */
-@keyframes tdlk-title-pulse {
-  0%, 100% { transform: scale(1); text-shadow: 0 0 30px currentColor, 0 0 60px currentColor; }
-  50% { transform: scale(1.02); text-shadow: 0 0 50px currentColor, 0 0 100px currentColor; }
-}
-@keyframes tdlk-subtitle-fade {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 1; }
+@keyframes tdlk-title-appear {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 @keyframes tdlk-ring-pulse {
   0%, 100% { box-shadow: 0 0 0 0 currentColor; }
@@ -198,21 +204,17 @@ export function injectMasterStyles() {
 /* ==========================================
    CINEMATIC TYPE SPECIFIC
    ========================================== */
-/* Lôi Kiếp - xanh/xám chớp */
-.tdlk-cinematic-loi_kiep .tdlk-cinematic-title { color: #60a5fa; }
-.tdlk-cinematic-loi_kiep .tdlk-cinematic-canvas { filter: hue-rotate(200deg) contrast(1.2); }
+/* Lôi Kiếp - xanh mực */
+.tdlk-cinematic-loi_kiep .tdlk-cinematic-title { color: #52677b; }
 
-/* Hỏa Kiếp - đỏ/cam lửa */
-.tdlk-cinematic-hoa_kiep .tdlk-cinematic-title { color: #fb923c; }
-.tdlk-cinematic-hoa_kiep .tdlk-cinematic-canvas { filter: hue-rotate(0deg) saturate(1.5) contrast(1.1); }
+/* Hỏa Kiếp - sắc son đất */
+.tdlk-cinematic-hoa_kiep .tdlk-cinematic-title { color: #98552f; }
 
-/* Tâm Ma Kiếp - tím/đen méo */
-.tdlk-cinematic-tam_ma_kiep .tdlk-cinematic-title { color: #a78bfa; }
-.tdlk-cinematic-tam_ma_kiep .tdlk-cinematic-canvas { filter: hue-rotate(270deg) contrast(1.3) brightness(0.8); }
+/* Tâm Ma Kiếp - tím khói */
+.tdlk-cinematic-tam_ma_kiep .tdlk-cinematic-title { color: #6d5a78; }
 
-/* Thiên Kiếp Tối Thượng - trắng/vàng chói */
-.tdlk-cinematic-thien_kiep_toi_thuong .tdlk-cinematic-title { color: #fde047; text-shadow: 0 0 50px #fde047, 0 0 100px #fff; }
-.tdlk-cinematic-thien_kiep_toi_thuong .tdlk-cinematic-canvas { filter: brightness(1.5) contrast(1.4) saturate(0.5); }
+/* Thiên Kiếp Tối Thượng - vàng cổ */
+.tdlk-cinematic-thien_kiep_toi_thuong .tdlk-cinematic-title { color: #88703d; }
 
 /* ==========================================
    RESPONSIVE / PERFORMANCE
