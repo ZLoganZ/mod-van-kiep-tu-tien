@@ -35,7 +35,7 @@ export const QUALITY_PRESETS = {
 
 /** Mod metadata */
 export const MOD_ID = "thien_dia_linh_khi";
-export const MOD_VERSION = "1.2.0";
+export const MOD_VERSION = "1.2.1";
 
 /** Cinematic type labels */
 export const KIEP_LABELS = {

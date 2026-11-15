@@ -82,12 +82,8 @@ function compareVersions(a, b) {
   return 0;
 }
 
-/** Tự động download và apply update (nếu game support) */
+/** Cài trực tiếp nếu game hỗ trợ, nếu không thì tải gói ZIP để cài trong Mods */
 export async function autoUpdate(mod, updateInfo) {
-  if (!mod.installModFromBlob) {
-    if (updateInfo.releaseUrl) window.open(updateInfo.releaseUrl, "_blank", "noopener");
-    return false;
-  }
   if (!updateInfo.downloadUrl) {
     mod.ui.toast("Bản phát hành không có gói tải xuống.");
     return false;
@@ -99,16 +95,27 @@ export async function autoUpdate(mod, updateInfo) {
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const blob = await response.blob();
 
-    // Trigger game's mod installer if API exists
-    if (mod.installModFromBlob) {
+    if (typeof mod.installModFromBlob === "function") {
       await mod.installModFromBlob(blob, `${MOD_ID}_v${updateInfo.latestVersion}.zip`);
       mod.ui.toast(`Đã cập nhật lên v${updateInfo.latestVersion}, hãy tải lại game.`);
       return true;
     }
 
+    const objectUrl = URL.createObjectURL(blob);
+    const downloadLink = document.createElement("a");
+    downloadLink.href = objectUrl;
+    downloadLink.download = `${MOD_ID}_v${updateInfo.latestVersion}.zip`;
+    downloadLink.style.display = "none";
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    downloadLink.remove();
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 30000);
+    mod.ui.toast(`Đã tải gói cập nhật v${updateInfo.latestVersion}. Vào Cấu hình → Mods → Cài mod để cài.`);
+    return true;
+
   } catch (e) {
     mod.log("[Update] Auto-update failed:", e);
-    mod.ui.toast("Cập nhật thất bại. Hãy tải gói mod từ trang phát hành.");
+    mod.ui.toast("Không tải được gói cập nhật. Hãy thử lại sau.");
     return false;
   }
 }
@@ -135,10 +142,22 @@ export function createUpdateCheckUI(mod, tt) {
         });
         container.querySelector(".tdlk-update-action")?.remove();
         if (update) {
+          const buttonText = typeof mod.installModFromBlob === "function"
+            ? `⬇️ Cập nhật lên v${update.latestVersion}`
+            : `⬇️ Tải ZIP v${update.latestVersion}`;
           const updateBtn = kit.button({
-            text: `⬇️ Cập nhật lên v${update.latestVersion}`,
+            text: buttonText,
             kind: "nho",
-            onClick: () => autoUpdate(mod, update)
+            onClick: async () => {
+              updateBtn.disabled = true;
+              updateBtn.textContent = "⏳ Đang tải...";
+              try {
+                await autoUpdate(mod, update);
+              } finally {
+                updateBtn.disabled = false;
+                updateBtn.textContent = buttonText;
+              }
+            }
           });
           updateBtn.classList.add("tdlk-update-action");
           container.appendChild(updateBtn);

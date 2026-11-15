@@ -186,8 +186,8 @@ kit.richText("HTML string")
 ### Auto-update (lib/update.js)
 - Check mỗi 24h (configurable) via GitHub Releases API
 - Silent check → toast khi có bản mới
-- Panel có nút "Kiểm tra cập nhật" + "Cập nhật"
-- Tự download + install nếu game support `mod.installModFromBlob`
+- Panel có nút "Kiểm tra cập nhật"; nếu game không có API cài đặt mod, nút tải ZIP trực tiếp thay vì mở trang GitHub
+- Tự cài và yêu cầu tải lại game nếu có `mod.installModFromBlob`; nếu không, hướng dẫn cài ZIP trong **Cấu hình → Mods**
 
 ---
 
@@ -220,7 +220,7 @@ Trước khi release:
 | Mod ID | Name | Version | Description |
 |--------|------|---------|-------------|
 | `su_do` | Sư Đồ Truyền Thừa | 1.3.2 | Hệ thống Sư Môn, Đạo Tràng, Đồ Đệ, Nhân Mạch |
-| `thien_dia_linh_khi` | Thiên Địa Linh Khí | 1.2.0 | Luồng linh khí tự nhiên + cinematic chuyển động theo từng loại kiếp |
+| `thien_dia_linh_khi` | Thiên Địa Linh Khí | 1.2.1 | Luồng linh khí tự nhiên + cinematic chuyển động theo từng loại kiếp |
 
 ---
 
