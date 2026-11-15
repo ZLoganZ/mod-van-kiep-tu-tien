@@ -28,14 +28,14 @@ export const BIOME_CONFIG = {
 
 /** Quality presets */
 export const QUALITY_PRESETS = {
-  thap: { maxParticles: 30, useShader: false, fpsCap: 30, cinematicParticles: 50 },
-  trung_binh: { maxParticles: 100, useShader: true, fpsCap: 45, cinematicParticles: 150 },
-  cao: { maxParticles: 200, useShader: true, fpsCap: 60, cinematicParticles: 300 }
+  thap: { label: "Thấp", maxParticles: 30, fpsCap: 30, cinematicParticles: 40 },
+  trung_binh: { label: "Trung bình", maxParticles: 100, fpsCap: 45, cinematicParticles: 100 },
+  cao: { label: "Cao", maxParticles: 200, fpsCap: 60, cinematicParticles: 180 }
 };
 
 /** Mod metadata */
 export const MOD_ID = "thien_dia_linh_khi";
-export const MOD_VERSION = "1.0.0";
+export const MOD_VERSION = "1.1.0";
 
 /** Cinematic type labels */
 export const KIEP_LABELS = {
@@ -54,11 +54,11 @@ export const BIOME_LABELS = {
 
 /** Default mod options */
 export const DEFAULT_OPTIONS = {
-  chat_luong: "trung_binh",
+  chat_luong: "cao",
   bat_tat_linh_khi: true,
   bat_tat_thien_kiep: true,
   bat_tat_avatar_fx: true,
-  am_thanh: true,
+  am_thanh: false,
   giam_toc_do_nguyen: true
 };
 

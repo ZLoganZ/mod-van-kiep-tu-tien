@@ -2,9 +2,6 @@
 
 import { MOD_ID, MOD_VERSION } from "./constants.js";
 
-const UPDATE_CHECK_URL = "https://api.github.com/repos/${GITHUB_REPO}/releases/tags/${MOD_ID}/v${LATEST_VERSION}";
-const MANIFEST_URL = "https://raw.githubusercontent.com/${GITHUB_REPO}/main/update_manifest.json";
-
 /** Kiểm tra cập nhật từ GitHub Releases */
 export async function checkForUpdate(mod, options = {}) {
   const {
@@ -14,15 +11,13 @@ export async function checkForUpdate(mod, options = {}) {
     onUpdateAvailable = null
   } = options;
 
-  // Throttle checks
-  const lastCheck = localStorage.getItem(`tdlk_last_update_check_${MOD_ID}`);
-  const now = Date.now();
-  if (lastCheck && (now - parseInt(lastCheck)) < checkIntervalHours * 3600 * 1000) {
-    return null;
-  }
-
   try {
-    // Try to fetch latest release tag
+    const now = Date.now();
+    const storageKey = `tdlk_last_update_check_${MOD_ID}`;
+    const lastCheck = Number(localStorage.getItem(storageKey));
+    if (checkIntervalHours > 0 && Number.isFinite(lastCheck) &&
+      now - lastCheck < checkIntervalHours * 3600 * 1000) return null;
+
     const releasesUrl = `https://api.github.com/repos/${githubRepo}/releases`;
     const response = await fetch(releasesUrl, {
       headers: { Accept: "application/vnd.github.v3+json" }
@@ -32,9 +27,13 @@ export async function checkForUpdate(mod, options = {}) {
 
     const releases = await response.json();
     const modReleases = releases.filter(r =>
-      r.tag_name.startsWith(`${MOD_ID}/v`) && !r.draft && !r.prerelease
-    );
+      r.tag_name?.startsWith(`${MOD_ID}/v`) && !r.draft && !r.prerelease
+    ).sort((a, b) => compareVersions(
+      b.tag_name.slice(`${MOD_ID}/v`.length),
+      a.tag_name.slice(`${MOD_ID}/v`.length)
+    ));
 
+    localStorage.setItem(storageKey, now.toString());
     if (modReleases.length === 0) return null;
 
     const latest = modReleases[0];
@@ -51,23 +50,21 @@ export async function checkForUpdate(mod, options = {}) {
         publishedAt: latest.published_at
       };
 
-      localStorage.setItem(`tdlk_last_update_check_${MOD_ID}`, now.toString());
-
       if (!silent) {
         mod.log(`[Update] New version available: ${latestVersion} (current: ${currentVersion})`);
-        mod.ui.toast(`🌌 Mod ${MOD_ID} có bản mới v${latestVersion}!`, { duration: 10000 });
+        mod.ui.toast(`🌌 Mod ${MOD_ID} có bản mới v${latestVersion}!`);
       }
 
       if (onUpdateAvailable) onUpdateAvailable(updateInfo);
       return updateInfo;
     }
 
-    localStorage.setItem(`tdlk_last_update_check_${MOD_ID}`, now.toString());
     return null;
 
   } catch (e) {
     mod.log("[Update] Check failed:", e.message);
-    return null;
+    if (!silent) mod.ui.toast("Không thể kiểm tra cập nhật. Hãy thử lại sau.");
+    return false;
   }
 }
 
@@ -75,6 +72,7 @@ export async function checkForUpdate(mod, options = {}) {
 function compareVersions(a, b) {
   const pa = a.split(".").map(Number);
   const pb = b.split(".").map(Number);
+  if ([...pa, ...pb].some(n => !Number.isInteger(n) || n < 0)) return 0;
   for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
     const na = pa[i] || 0;
     const nb = pb[i] || 0;
@@ -86,26 +84,31 @@ function compareVersions(a, b) {
 
 /** Tự động download và apply update (nếu game support) */
 export async function autoUpdate(mod, updateInfo) {
-  if (!updateInfo.downloadUrl) return false;
+  if (!mod.installModFromBlob) {
+    if (updateInfo.releaseUrl) window.open(updateInfo.releaseUrl, "_blank", "noopener");
+    return false;
+  }
+  if (!updateInfo.downloadUrl) {
+    mod.ui.toast("Bản phát hành không có gói tải xuống.");
+    return false;
+  }
 
   try {
     mod.log("[Update] Downloading:", updateInfo.downloadUrl);
     const response = await fetch(updateInfo.downloadUrl);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const blob = await response.blob();
 
     // Trigger game's mod installer if API exists
     if (mod.installModFromBlob) {
       await mod.installModFromBlob(blob, `${MOD_ID}_v${updateInfo.latestVersion}.zip`);
-      mod.ui.toast(`Đã cập nhật lên v${updateInfo.latestVersion}, hãy reload game`);
+      mod.ui.toast(`Đã cập nhật lên v${updateInfo.latestVersion}, hãy tải lại game.`);
       return true;
     }
 
-    // Fallback: open download page
-    window.open(updateInfo.releaseUrl, "_blank");
-    return false;
-
   } catch (e) {
     mod.log("[Update] Auto-update failed:", e);
+    mod.ui.toast("Cập nhật thất bại. Hãy tải gói mod từ trang phát hành.");
     return false;
   }
 }
@@ -124,21 +127,27 @@ export function createUpdateCheckUI(mod, tt) {
     onClick: async () => {
       checkBtn.disabled = true;
       checkBtn.textContent = "⏳ Đang kiểm tra...";
-      // Force check bypassing throttle
-      const update = await checkForUpdate(mod, { silent: false, githubRepo: "ZLoganZ/mod-van-kiep-tu-tien", checkIntervalHours: 0 });
-      checkBtn.disabled = false;
-      checkBtn.textContent = "🔍 Kiểm tra cập nhật";
-
-      if (update) {
-        const updateBtn = kit.button({
-          text: `⬇️ Cập nhật lên v${update.latestVersion}`,
-          kind: "nho",
-          onClick: () => autoUpdate(mod, update)
+      try {
+        const update = await checkForUpdate(mod, {
+          silent: false,
+          githubRepo: "ZLoganZ/mod-van-kiep-tu-tien",
+          checkIntervalHours: 0
         });
-        container.appendChild(updateBtn);
-      } else {
-        // Show result even if no update
-        mod.ui?.toast?.("Đã kiểm tra: không có bản mới", { duration: 3000 });
+        container.querySelector(".tdlk-update-action")?.remove();
+        if (update) {
+          const updateBtn = kit.button({
+            text: `⬇️ Cập nhật lên v${update.latestVersion}`,
+            kind: "nho",
+            onClick: () => autoUpdate(mod, update)
+          });
+          updateBtn.classList.add("tdlk-update-action");
+          container.appendChild(updateBtn);
+        } else if (update === null) {
+          mod.ui.toast("Đã kiểm tra: mod đang ở phiên bản mới nhất.");
+        }
+      } finally {
+        checkBtn.disabled = false;
+        checkBtn.textContent = "🔍 Kiểm tra cập nhật";
       }
     }
   });

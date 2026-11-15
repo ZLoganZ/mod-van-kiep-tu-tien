@@ -58,22 +58,23 @@ class Particle {
     this.baseHue = config.hue;
     this.saturation = config.saturation;
     this.opacity = 0.3 + Math.random() * 0.4;
-    this.type = "ambient"; // ambient | cinematic | breakthrough
+    this.type = "ambient";
     this.trail = [];
-    this.maxTrail = 8;
+    this.maxTrail = 0;
   }
-  update(dt, flowField, config) {
+  update(dt, flowField, config, intensity = 1) {
     // Flow field velocity
     const angle = flowField.getAngle(this.x, this.y) + (Math.random() - 0.5) * 0.3;
-    const speed = config.speed * (0.5 + Math.random() * 0.5);
+    const speed = config.speed * intensity * (0.5 + Math.random() * 0.5);
     this.vx = Math.cos(angle) * speed;
     this.vy = Math.sin(angle) * speed;
     this.x += this.vx * dt * 60;
     this.y += this.vy * dt * 60;
 
-    // Trail
-    this.trail.push({ x: this.x, y: this.y, opacity: this.opacity });
-    if (this.trail.length > this.maxTrail) this.trail.shift();
+    if (this.maxTrail > 0) {
+      this.trail.push({ x: this.x, y: this.y, opacity: this.opacity });
+      if (this.trail.length > this.maxTrail) this.trail.shift();
+    }
 
     // Wrap around screen (ambient) or die (cinematic)
     if (this.type === "ambient") {
@@ -82,7 +83,7 @@ class Particle {
       if (this.y < -50) this.y = flowField.height + 50;
       if (this.y > flowField.height + 50) this.y = -50;
     }
-    this.life -= dt;
+    if (this.type !== "ambient") this.life -= dt;
   }
   draw(ctx, config) {
     if (this.type === "cinematic" || this.type === "breakthrough") {
@@ -161,18 +162,29 @@ export class ParticleSystem {
     this.running = false; this.animId = null;
     this.lastTime = 0;
     this.fps = 60; this.frameCount = 0; this.fpsTime = 0;
+    this.lastFlowUpdate = 0;
     this.currentBiome = "default";
-    this.quality = "cao";
+    this.quality = QUALITY_PRESETS[mod.options?.chat_luong] ? mod.options.chat_luong : "cao";
     this.cinematicParticles = [];
     this.cinematicRunning = false;
+    this.cinematicFrameId = null;
+    this.cinematicOverlay = null;
+    this.cinematicResolve = null;
+    this.cinematicFinishTimer = null;
+    this.intensity = 1;
+    this.ambientEnabled = mod.options?.bat_tat_linh_khi !== false;
+    this.autoQualityEnabled = mod.options?.giam_toc_do_nguyen !== false;
+    this.cinematicPromise = null;
+    this.lowFpsSince = 0;
+    this.goodFpsSince = 0;
+    this.lastQualityChange = 0;
+    this.reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
 
     // Bind methods
     this._animate = this._animate.bind(this);
     this._resize = this._resize.bind(this);
     this._onVisibilityChange = this._onVisibilityChange.bind(this);
-
-    // Listen quality changes
-    this._qualityUnsub = mod.onOptionChange?.("chat_luong", (v) => this.setQuality(v));
+    this.setQuality(this.quality);
   }
 
   /** Khởi tạo canvas */
@@ -191,12 +203,12 @@ export class ParticleSystem {
 
   /** Bắt đầu ambient loop */
   startAmbient() {
-    if (this.running) return;
+    if (this.running || !this.ambientEnabled || this.reducedMotion) return;
     this.init();
     this.running = true;
     this._spawnAmbientParticles();
     this.lastTime = performance.now();
-    this.animId = requestAnimationFrame(this._animate);
+    if (!this.animId) this.animId = requestAnimationFrame(this._animate);
     this.canvas.classList.remove("tdlk-hidden");
     this.mod.log("[TDLK] Ambient started");
   }
@@ -204,23 +216,52 @@ export class ParticleSystem {
   /** Dừng ambient */
   stopAmbient() {
     this.running = false;
-    if (this.animId) cancelAnimationFrame(this.animId);
-    this.animId = null;
-    this.canvas?.classList.add("tdlk-hidden");
-    this.mod.log("[TDLK] Ambient stopped");
+    this.particles = this.particles.filter(p => p.type !== "ambient");
+    if (!this.particles.length) {
+      if (this.animId) cancelAnimationFrame(this.animId);
+      this.animId = null;
+      this.canvas?.classList.add("tdlk-hidden");
+    }
   }
 
   /** Set quality preset */
   setQuality(preset) {
-    this.quality = preset;
-    const q = QUALITY_PRESETS[preset] || QUALITY_PRESETS.cao;
+    this.quality = QUALITY_PRESETS[preset] ? preset : "cao";
+    const q = QUALITY_PRESETS[this.quality];
     this.targetFPS = q.fpsCap;
     this.maxParticles = q.maxParticles;
     this.cinematicMaxParticles = q.cinematicParticles;
-    this.canvas?.classList.toggle("tdlk-quality-thap", preset === "thap");
-    // Respawn particles to match new count
-    if (this.running) this._spawnAmbientParticles();
-    this.mod.log(`[TDLK] Quality set to ${preset}`);
+    this.canvas?.classList.toggle("tdlk-quality-thap", this.quality === "thap");
+    if (this.running) {
+      this.particles = this.particles.filter(p => p.type !== "ambient");
+      this._spawnAmbientParticles();
+    }
+  }
+
+  setIntensity(mode = "normal") {
+    this.intensity = mode === "high" ? 1.5 : mode === "meditate" ? 0.65 : 1;
+  }
+
+  burstAt(x, y, { count = 24, hue = 48 } = {}) {
+    if (this.reducedMotion) return;
+    this.init();
+    const config = { ...BIOME_CONFIG.default, hue, saturation: 0.95 };
+    const total = Math.min(Math.max(0, Math.floor(count)), this.maxParticles || 100);
+    for (let i = 0; i < total; i++) {
+      const particle = new Particle(x, y, config);
+      particle.type = "breakthrough";
+      particle.life = 0.8 + Math.random() * 1.2;
+      particle.maxLife = particle.life;
+      particle.size = 2 + Math.random() * 4;
+      particle.opacity = 0.65 + Math.random() * 0.35;
+      particle.maxTrail = 8;
+      this.particles.push(particle);
+    }
+    this.canvas.classList.remove("tdlk-hidden");
+    if (!this.animId) {
+      this.lastTime = performance.now();
+      this.animId = requestAnimationFrame(this._animate);
+    }
   }
 
   /** Set biome (gọi khi player đổi nơi chốn) */
@@ -233,68 +274,90 @@ export class ParticleSystem {
 
   /** Trigger cinematic breakthrough */
   async playCinematic(type, data = {}) {
-    if (this.cinematicRunning) return;
+    if (this.cinematicRunning) return this.cinematicPromise;
+    if (this.reducedMotion) return;
     this.cinematicRunning = true;
-    this.mod.log(`[TDLK] Cinematic start: ${type}`);
 
     const cinematicCanvas = document.createElement("canvas");
     cinematicCanvas.className = "tdlk-cinematic-canvas";
     const overlay = document.createElement("div");
     overlay.className = `tdlk-cinematic-overlay tdlk-cinematic-${type}`;
     overlay.appendChild(cinematicCanvas);
+    const text = document.createElement("div");
+    text.className = "tdlk-cinematic-text";
+    const title = document.createElement("div");
+    title.className = "tdlk-cinematic-title";
+    title.textContent = this._cinematicName(type);
+    const subtitle = document.createElement("div");
+    subtitle.className = "tdlk-cinematic-subtitle";
+    subtitle.textContent = data.entityName || "Thiên địa cộng minh";
+    text.append(title, subtitle);
+    overlay.appendChild(text);
     document.body.appendChild(overlay);
 
     const cinematicCtx = cinematicCanvas.getContext("2d", { alpha: true });
-    const rect = cinematicCanvas.getBoundingClientRect();
-    cinematicCanvas.width = rect.width * devicePixelRatio;
-    cinematicCanvas.height = rect.height * devicePixelRatio;
-    cinematicCtx.scale(devicePixelRatio, devicePixelRatio);
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    cinematicCanvas.width = width * dpr;
+    cinematicCanvas.height = height * dpr;
+    cinematicCanvas.style.width = `${width}px`;
+    cinematicCanvas.style.height = `${height}px`;
+    cinematicCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    // Force reflow then activate
     overlay.offsetHeight;
     overlay.classList.add("tdlk-active");
+    this.cinematicOverlay = overlay;
 
-    // Spawn cinematic particles
-    this._spawnCinematicParticles(type, cinematicCanvas.width, cinematicCanvas.height);
-
-    // Animate cinematic
-    const duration = data.duration || 5000;
+    this._spawnCinematicParticles(type, width, height);
+    const duration = Math.max(1000, data.duration || 5000);
     const startTime = performance.now();
-    const animateCinematic = (now) => {
+    let lastFrameTime = startTime;
+    const completion = new Promise(resolve => { this.cinematicResolve = resolve; });
+    this.cinematicPromise = completion;
+    const finish = () => {
+      overlay.classList.remove("tdlk-active");
+      this.cinematicFinishTimer = setTimeout(() => {
+        overlay.remove();
+        if (this.cinematicOverlay === overlay) this.cinematicOverlay = null;
+        this.cinematicFrameId = null;
+        this.cinematicFinishTimer = null;
+        this.cinematicRunning = false;
+        this.cinematicParticles = [];
+        this.cinematicResolve?.();
+        this.cinematicResolve = null;
+        this.cinematicPromise = null;
+      }, 400);
+    };
+    const animateCinematic = now => {
+      if (!this.cinematicRunning || !cinematicCtx) return;
       const elapsed = now - startTime;
+      const dt = Math.min((now - lastFrameTime) / 1000, 0.05);
+      lastFrameTime = now;
       const progress = Math.min(elapsed / duration, 1);
 
-      // Clear
-      cinematicCtx.clearRect(0, 0, cinematicCanvas.width, cinematicCanvas.height);
-
-      // Draw particles
-      this.cinematicParticles.forEach(p => {
-        p.update(elapsed / 1000, { getAngle: () => 0 }, BIOME_CONFIG.thien_kiep);
-        p.draw(cinematicCtx, BIOME_CONFIG.thien_kiep);
-      });
-
-      // Clean dead
-      this.cinematicParticles = this.cinematicParticles.filter(p => p.life > 0);
-
-      // Type-specific effects
-      this._drawCinematicEffects(cinematicCtx, type, progress, cinematicCanvas.width, cinematicCanvas.height);
-
-      if (progress < 1 && this.cinematicRunning) {
-        requestAnimationFrame(animateCinematic);
-      } else {
-        // Fade out
-        overlay.classList.remove("tdlk-active");
-        setTimeout(() => {
-          overlay.remove();
-          this.cinematicRunning = false;
-          this.cinematicParticles = [];
-          this.mod.log(`[TDLK] Cinematic end: ${type}`);
-        }, 500);
+      cinematicCtx.clearRect(0, 0, width, height);
+      for (const particle of this.cinematicParticles) {
+        particle.update(dt, { getAngle: () => 0 }, BIOME_CONFIG.thien_kiep);
+        particle.draw(cinematicCtx, BIOME_CONFIG.thien_kiep);
       }
-    };
-    requestAnimationFrame(animateCinematic);
+      this.cinematicParticles = this.cinematicParticles.filter(p => p.life > 0);
+      this._drawCinematicEffects(cinematicCtx, type, progress, width, height);
 
-    return new Promise(r => setTimeout(r, duration + 500));
+      if (progress < 1) this.cinematicFrameId = requestAnimationFrame(animateCinematic);
+      else finish();
+    };
+    this.cinematicFrameId = requestAnimationFrame(animateCinematic);
+    return completion;
+  }
+
+  _cinematicName(type) {
+    return {
+      loi_kiep: "Lôi Kiếp",
+      hoa_kiep: "Hỏa Kiếp",
+      tam_ma_kiep: "Tâm Ma Kiếp",
+      thien_kiep_toi_thuong: "Thiên Kiếp Tối Thượng"
+    }[type] || "Thiên Kiếp";
   }
 
   /** Vẽ hiệu ứng đặc biệt theo loại kiếp */
@@ -365,43 +428,88 @@ export class ParticleSystem {
 
   /** Animation loop chính */
   _animate(now) {
-    if (!this.running) return;
-    const dt = Math.min((now - this.lastTime) / 1000, 0.1);
+    const hasTemporaryParticles = this.particles.some(p => p.type !== "ambient");
+    if (!this.running && !hasTemporaryParticles) {
+      this.animId = null;
+      this.canvas?.classList.add("tdlk-hidden");
+      return;
+    }
+    if (!this.running && this.canvas?.classList.contains("tdlk-hidden")) {
+      this.canvas.classList.remove("tdlk-hidden");
+    }
+    if (this.running && now - this.lastTime < 1000 / this.targetFPS - 1) {
+      this.animId = requestAnimationFrame(this._animate);
+      return;
+    }
+    const dt = Math.min((now - this.lastTime) / 1000, 0.05);
     this.lastTime = now;
 
     // FPS tracking
     this.frameCount++; this.fpsTime += dt;
     if (this.fpsTime >= 1) { this.fps = this.frameCount; this.frameCount = 0; this.fpsTime = 0; }
 
-    // Auto quality down
-    if (this.mod.options.giam_toc_do_nguyen && this.fps < 25 && this.quality !== "thap") {
-      this.setQuality(this.quality === "cao" ? "trung_binh" : "thap");
-    }
+    if (this.running) this._adjustQuality(now);
 
     // Update flow field
-    this.flowField?.update();
+    if (this.running && now - this.lastFlowUpdate >= 120) {
+      this.flowField?.update();
+      this.lastFlowUpdate = now;
+    }
 
     // Update particles
     const config = BIOME_CONFIG[this.currentBiome] || BIOME_CONFIG.default;
     for (const p of this.particles) {
-      p.update(dt, this.flowField, config);
+      p.update(dt, this.flowField, config, this.intensity);
     }
-    // Remove dead (cinematic particles mixed in)
-    this.particles = this.particles.filter(p => p.life > 0 || p.type === "ambient");
+    this.particles = this.particles.filter(p => p.type === "ambient" || p.life > 0);
 
-    // Maintain particle count
-    while (this.particles.filter(p => p.type === "ambient").length < this.maxParticles) {
+    while (this.running && this.particles.filter(p => p.type === "ambient").length < this.maxParticles) {
       this._spawnOneAmbient();
     }
 
-    // Draw
-    this._draw(config);
+    if (this.ctx) this._draw(config);
 
-    this.animId = requestAnimationFrame(this._animate);
+    if (this.running || this.particles.some(p => p.type !== "ambient")) {
+      this.animId = requestAnimationFrame(this._animate);
+    } else {
+      this.animId = null;
+      this.canvas?.classList.add("tdlk-hidden");
+    }
+  }
+
+  _adjustQuality(now) {
+    if (!this.autoQualityEnabled) return;
+    if (this.fps < 25) {
+      this.lowFpsSince ||= now;
+      this.goodFpsSince = 0;
+      if (now - this.lowFpsSince >= 4000 && now - this.lastQualityChange >= 8000) {
+        const next = this.quality === "cao" ? "trung_binh" : "thap";
+        if (next !== this.quality) {
+          this.setQuality(next);
+          this.lastQualityChange = now;
+        }
+        this.lowFpsSince = now;
+      }
+    } else if (this.fps > 45) {
+      this.lowFpsSince = 0;
+      this.goodFpsSince ||= now;
+      if (now - this.goodFpsSince >= 20000 && now - this.lastQualityChange >= 20000) {
+        const next = this.quality === "thap" ? "trung_binh" : "cao";
+        if (next !== this.quality) {
+          this.setQuality(next);
+          this.lastQualityChange = now;
+        }
+        this.goodFpsSince = now;
+      }
+    } else {
+      this.lowFpsSince = 0;
+      this.goodFpsSince = 0;
+    }
   }
 
   _draw(config) {
-    const { width, height } = this.canvas;
+    const width = window.innerWidth;
+    const height = window.innerHeight;
     this.ctx.clearRect(0, 0, width, height);
 
     // Sort by life for layering
@@ -416,27 +524,29 @@ export class ParticleSystem {
   }
 
   _drawWeather(config) {
+    const width = window.innerWidth;
+    const height = window.innerHeight;
     if (config.weather === "rain" && Math.random() < 0.1) {
       this.ctx.strokeStyle = "rgba(100,150,255,0.3)";
       this.ctx.lineWidth = 1;
       for (let i = 0; i < 5; i++) {
-        const x = Math.random() * this.canvas.width;
-        const y = Math.random() * this.canvas.height;
+        const x = Math.random() * width;
+        const y = Math.random() * height;
         this.ctx.beginPath();
         this.ctx.moveTo(x, y);
         this.ctx.lineTo(x + 2, y + 15);
         this.ctx.stroke();
       }
     } else if (config.weather === "mist") {
-      const g = this.ctx.createLinearGradient(0, 0, 0, this.canvas.height);
+      const g = this.ctx.createLinearGradient(0, 0, 0, height);
       g.addColorStop(0, "rgba(200,220,255,0.02)");
       g.addColorStop(1, "rgba(180,200,255,0.05)");
       this.ctx.fillStyle = g;
-      this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+      this.ctx.fillRect(0, 0, width, height);
     } else if (config.weather === "ember") {
       for (let i = 0; i < 3; i++) {
-        const x = Math.random() * this.canvas.width;
-        const y = this.canvas.height - Math.random() * 100;
+        const x = Math.random() * width;
+        const y = height - Math.random() * 100;
         const r = 2 + Math.random() * 3;
         this.ctx.fillStyle = `hsla(${20 + Math.random() * 20}, 100%, 60%, ${0.3 + Math.random() * 0.3})`;
         this.ctx.beginPath();
@@ -445,8 +555,8 @@ export class ParticleSystem {
       }
     } else if (config.weather === "golden") {
       for (let i = 0; i < 2; i++) {
-        const x = Math.random() * this.canvas.width;
-        const y = Math.random() * this.canvas.height;
+        const x = Math.random() * width;
+        const y = Math.random() * height;
         const r = 1 + Math.random() * 2;
         this.ctx.fillStyle = `hsla(${50 + Math.random() * 10}, 80%, 70%, ${0.2 + Math.random() * 0.2})`;
         this.ctx.beginPath();
@@ -455,8 +565,8 @@ export class ParticleSystem {
       }
     } else if (config.weather === "sparkle") {
       for (let i = 0; i < 4; i++) {
-        const x = Math.random() * this.canvas.width;
-        const y = Math.random() * this.canvas.height;
+        const x = Math.random() * width;
+        const y = Math.random() * height;
         const r = 1 + Math.random() * 1.5;
         this.ctx.fillStyle = `hsla(${280 + Math.random() * 40}, 80%, 80%, ${0.4 + Math.random() * 0.3})`;
         this.ctx.beginPath();
@@ -469,7 +579,7 @@ export class ParticleSystem {
   }
 
   _spawnAmbientParticles() {
-    const count = this.maxParticles;
+    const count = this.maxParticles - this.particles.filter(p => p.type === "ambient").length;
     for (let i = 0; i < count; i++) this._spawnOneAmbient();
   }
 
@@ -497,7 +607,7 @@ export class ParticleSystem {
       p.maxLife = p.life;
       p.size = 3 + Math.random() * 5;
       p.opacity = 0.5 + Math.random() * 0.5;
-      p.maxTrail = 15;
+      p.maxTrail = 10;
       this.cinematicParticles.push(p);
     }
   }
@@ -505,18 +615,18 @@ export class ParticleSystem {
   _updateBiome() {
     const config = BIOME_CONFIG[this.currentBiome] || BIOME_CONFIG.default;
     if (this.canvas) {
-      this.canvas.style.opacity = config.weather === "none" ? "0.5" : "0.7";
+      this.canvas.style.opacity = config.weather === "none" ? "0.24" : "0.34";
     }
   }
 
   _resize() {
     if (!this.canvas) return;
-    const dpr = window.devicePixelRatio || 1;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
     this.canvas.width = window.innerWidth * dpr;
     this.canvas.height = window.innerHeight * dpr;
     this.canvas.style.width = window.innerWidth + "px";
     this.canvas.style.height = window.innerHeight + "px";
-    this.ctx.scale(dpr, dpr);
+    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     if (this.flowField) {
       this.flowField.resize(window.innerWidth, window.innerHeight);
     } else {
@@ -527,7 +637,7 @@ export class ParticleSystem {
   _onVisibilityChange() {
     if (document.hidden) {
       this.stopAmbient();
-    } else if (this.mod.options.bat_tat_linh_khi) {
+    } else if (this.ambientEnabled) {
       this.startAmbient();
     }
   }
@@ -535,11 +645,29 @@ export class ParticleSystem {
   /** Cleanup */
   destroy() {
     this.stopAmbient();
+    if (this.animId) cancelAnimationFrame(this.animId);
+    this.animId = null;
+    this.particles = [];
+    this.cancelCinematic();
     window.removeEventListener("resize", this._resize);
     document.removeEventListener("visibilitychange", this._onVisibilityChange);
     this.canvas?.remove();
     this.canvas = null;
-    this._qualityUnsub?.();
+    this.ctx = null;
+  }
+
+  cancelCinematic() {
+    if (this.cinematicFrameId) cancelAnimationFrame(this.cinematicFrameId);
+    if (this.cinematicFinishTimer) clearTimeout(this.cinematicFinishTimer);
+    this.cinematicOverlay?.remove();
+    this.cinematicOverlay = null;
+    this.cinematicFrameId = null;
+    this.cinematicFinishTimer = null;
+    this.cinematicRunning = false;
+    this.cinematicParticles = [];
+    this.cinematicResolve?.();
+    this.cinematicResolve = null;
+    this.cinematicPromise = null;
   }
 
   /** Public API cho avatar visual */

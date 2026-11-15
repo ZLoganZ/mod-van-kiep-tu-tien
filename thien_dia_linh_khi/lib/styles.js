@@ -17,7 +17,7 @@ export function injectMasterStyles() {
   top: 0; left: 0; width: 100vw; height: 100vh;
   pointer-events: none;
   z-index: 1; /* dưới UI game, trên background */
-  opacity: 0.6;
+  opacity: 0.24;
   transition: opacity 0.5s ease;
 }
 .tdlk-ambient-canvas.tdlk-hidden { opacity: 0; display: none; }
@@ -62,6 +62,7 @@ export function injectMasterStyles() {
   text-shadow: 0 0 30px currentColor, 0 0 60px currentColor;
   animation: tdlk-title-pulse 2s ease-in-out infinite;
   line-height: 1.1;
+  white-space: nowrap;
 }
 .tdlk-cinematic-subtitle {
   font-size: clamp(1rem, 3vw, 1.5rem);
@@ -160,8 +161,8 @@ export function injectMasterStyles() {
    ANIMATIONS
    ========================================== */
 @keyframes tdlk-title-pulse {
-  0%, 100% { transform: translate(-50%, -50%) scale(1); text-shadow: 0 0 30px currentColor, 0 0 60px currentColor; }
-  50% { transform: translate(-50%, -50%) scale(1.02); text-shadow: 0 0 50px currentColor, 0 0 100px currentColor; }
+  0%, 100% { transform: scale(1); text-shadow: 0 0 30px currentColor, 0 0 60px currentColor; }
+  50% { transform: scale(1.02); text-shadow: 0 0 50px currentColor, 0 0 100px currentColor; }
 }
 @keyframes tdlk-subtitle-fade {
   0%, 100% { opacity: 0.6; }
@@ -228,9 +229,7 @@ export function injectMasterStyles() {
 }
 
 /* Low quality mode */
-.tdlk-quality-thap .tdlk-ambient-canvas { opacity: 0.3 !important; }
-.tdlk-quality-thap .tdlk-cinematic-overlay { display: none !important; }
-.tdlk-quality-thap .tdlk-avatar-ring { display: none !important; }
+.tdlk-ambient-canvas.tdlk-quality-thap { opacity: 0.3 !important; }
 `;
   document.head.appendChild(style);
 }

@@ -1,6 +1,6 @@
 id: thien_dia_linh_khi
 name: Thiên Địa Linh Khí
-version: 1.0.9
+version: 1.1.0
 api_version: 1
 author: Modder
 description: |
@@ -13,13 +13,13 @@ description: |
 options:
   - key: chat_luong
     label: Chất lượng hiệu ứng
-    hint: � hưởng hưởng số lượng particle, shader, FPS cap
+    hint: Ảnh hưởng số lượng hạt và giới hạn FPS
     type: choice
     default: cao
     choices:
       - { value: thap, label: "Thấp (tiết kiệm, ~30 particles)" }
       - { value: trung_binh, label: "Trung bình (~100 particles)" }
-      - { value: cao, label: "Cao (~200 particles, shader đầy đủ)" }
+      - { value: cao, label: "Cao (~200 particles)" }
 
   - key: bat_tat_linh_khi
     label: Bật Linh Khí Diện nền
@@ -47,5 +47,3 @@ options:
     hint: Tự động giảm quality khi FPS < 30
     type: bool
     default: true
-
-script: main.js

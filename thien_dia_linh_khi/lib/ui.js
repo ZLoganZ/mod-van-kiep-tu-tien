@@ -1,6 +1,7 @@
 // lib/ui.js - UI Components (Panel, Dock, Slots, Avatar enhancements)
 
-import { CANH_GIOI_VISUAL, QUALITY_PRESETS } from "./constants.js";
+import { CANH_GIOI_VISUAL, MOD_VERSION, QUALITY_PRESETS } from "./constants.js";
+import { inferBiomeFromPlace } from "./hooks.js";
 
 /** Tạo avatar glow ring element */
 export function taoAvatarRing(entity, particleSystem) {
@@ -9,6 +10,7 @@ export function taoAvatarRing(entity, particleSystem) {
   ring.className = "tdlk-avatar-ring";
   ring.style.cssText = `
     border: 2px solid ${visual.mau};
+    color: ${visual.mau};
     box-shadow: 0 0 10px ${visual.glow}, inset 0 0 10px ${visual.glow};
   `;
   return ring;
@@ -75,6 +77,7 @@ export function capNhatAvatar(el, entity, particleSystem) {
   if (ring) {
     const visual = particleSystem.getVisualForRealm(Number(entity?.canhGioi ?? 0));
     ring.style.borderColor = visual.mau;
+    ring.style.color = visual.mau;
     ring.style.boxShadow = `0 0 10px ${visual.glow}, inset 0 0 10px ${visual.glow}`;
 
     // Breakthrough ready state
@@ -89,23 +92,24 @@ export function capNhatAvatar(el, entity, particleSystem) {
     }
   }
 
-  if (badge) {
-    const newBadge = taoAvatarBadge(entity, particleSystem);
-    if (newBadge) {
+  const newBadge = taoAvatarBadge(entity, particleSystem);
+  if (newBadge && badge) {
       badge.textContent = newBadge.textContent;
       badge.style.background = newBadge.style.background;
       badge.className = newBadge.className;
-    } else {
-      badge.remove();
-      el._tdlkBadge = null;
-    }
+  } else if (newBadge) {
+    el.appendChild(newBadge);
+    el._tdlkBadge = newBadge;
+  } else if (badge) {
+    badge.remove();
+    el._tdlkBadge = null;
   }
 }
 
 /** ==========================================
  *  MAIN UI REGISTRATION
  *  ========================================== */
-export function dangKyUI(tt, mod, particleSystem, cinematic) {
+export function dangKyUI(tt, mod, particleSystem, cinematic, options) {
   const kit = tt.ui.kit;
 
   // ------------------------------------------
@@ -123,11 +127,10 @@ export function dangKyUI(tt, mod, particleSystem, cinematic) {
       const update = () => {
         try {
           const s = tt.state();
-          const nv = s?.run?.nhanVat;
-          const opts = mod.options;
+          const opts = options;
 
           const ambientStatus = particleSystem?.running ? "🟢 Đang chạy" : "🔴 Đã tắt";
-          const quality = QUALITY_PRESETS?.[opts?.chat_luong]?.label || opts?.chat_luong || "trung_binh";
+          const quality = QUALITY_PRESETS?.[opts.get("chat_luong")]?.label || "Trung bình";
           const fps = particleSystem?.fps || 0;
           const biome = particleSystem?.currentBiome || "default";
           const particles = particleSystem?.particles || [];
@@ -154,9 +157,9 @@ export function dangKyUI(tt, mod, particleSystem, cinematic) {
             <div class="tdlk-dock-bar-fill" style="width: ${Math.min(fps/60,1)*100}%; background: ${fps>45?'#10b981':fps>30?'#f59e0b':'#ef4444'};"></div>
           </div>
           <div class="tdlk-dock-status">
-            <span class="tdlk-status-dot ${opts.bat_tat_linh_khi ? 'tdlk-active' : ''}" style="background: #10b981;" title="Linh Khí Diện"></span>
-            <span class="tdlk-status-dot ${opts.bat_tat_thien_kiep ? 'tdlk-active' : ''}" style="background: #f59e0b;" title="Thiên Kiếp"></span>
-            <span class="tdlk-status-dot ${opts.bat_tat_avatar_fx ? 'tdlk-active' : ''}" style="background: #8b5cf6;" title="Avatar FX"></span>
+            <span class="tdlk-status-dot ${opts.get("bat_tat_linh_khi") ? 'tdlk-active' : ''}" style="background: #10b981;" title="Linh Khí Diện"></span>
+            <span class="tdlk-status-dot ${opts.get("bat_tat_thien_kiep") ? 'tdlk-active' : ''}" style="background: #f59e0b;" title="Thiên Kiếp"></span>
+            <span class="tdlk-status-dot ${opts.get("bat_tat_avatar_fx") ? 'tdlk-active' : ''}" style="background: #8b5cf6;" title="Avatar FX"></span>
           </div>
         `;
 
@@ -164,18 +167,14 @@ export function dangKyUI(tt, mod, particleSystem, cinematic) {
         const btnRow = document.createElement("div");
         btnRow.style.cssText = "display:flex;gap:4px;margin-top:6px;flex-wrap:wrap;";
         const btnToggle = kit.button({
-          text: opts.bat_tat_linh_khi ? "⏸️ Tắt Ambient" : "▶️ Bật Ambient",
+          text: opts.get("bat_tat_linh_khi") ? "⏸️ Tắt Ambient" : "▶️ Bật Ambient",
           kind: "nho",
-          onClick: () => {
-            mod.setOption("bat_tat_linh_khi", !opts.bat_tat_linh_khi);
-            if (!opts.bat_tat_linh_khi) particleSystem.startAmbient();
-            else particleSystem.stopAmbient();
-          }
+          onClick: () => opts.set("bat_tat_linh_khi", !opts.get("bat_tat_linh_khi"))
         });
         const btnTest = kit.button({
           text: "🎬 Test Kiếp",
           kind: "nho",
-          onClick: () => cinematic.triggerTestCinematic("loi_kiep")
+          onClick: () => cinematic.triggerTestCinematic("loi_kiep").catch(error => mod.log("[UI] Cinematic test failed:", error))
         });
         const btnPanel = kit.button({
           text: "⚙️ Cài đặt",
@@ -191,7 +190,12 @@ export function dangKyUI(tt, mod, particleSystem, cinematic) {
     };
 
       update();
-      return tt.subscribe(update);
+      const unsubscribeState = tt.subscribe(update);
+      const unsubscribeOptions = options.subscribe(update);
+      return () => {
+        unsubscribeState();
+        unsubscribeOptions();
+      };
     }
   });
 
@@ -203,25 +207,9 @@ export function dangKyUI(tt, mod, particleSystem, cinematic) {
     title: "⚙️ Thiên Địa Linh Khí",
     icon: "sparkles",
     mount(el) {
-      // mod from dangKyUI closure is the REAL mod instance with methods
-      // Panel system may pass a plain object, so use closure reference
       const realMod = mod;
-      if (!realMod?.setOption) {
-        console.error("[TDLK] Panel mount: realMod missing setOption", realMod);
-        el.innerHTML = '<div style="padding:16px;color:#ef4444;">Lỗi: mod object không hợp lệ</div>';
-        return;
-      }
       el.innerHTML = "";
-      const opts = realMod.options;
-
-      // Helper to safely call setOption on real mod instance
-      const setOpt = (key, value) => {
-        try {
-          realMod.setOption(key, value);
-        } catch (e) {
-          realMod.log?.("[UI] setOption error:", key, e);
-        }
-      };
+      const opts = options;
 
       // Section: Ambient
       const secAmbient = document.createElement("div");
@@ -230,22 +218,28 @@ export function dangKyUI(tt, mod, particleSystem, cinematic) {
 
       const qualitySelect = kit.select({
         options: Object.entries(QUALITY_PRESETS).map(([k, v]) => ({ value: k, label: v.label })),
-        value: opts.chat_luong,
-        onChange: (v) => setOpt("chat_luong", v)
+        value: opts.get("chat_luong"),
+        onChange: v => opts.set("chat_luong", v)
       });
-      secAmbient.appendChild(kit.row({ label: "Chất lượng", children: [qualitySelect] }));
+      const qualityRow = document.createElement("div");
+      qualityRow.className = "tdlk-setting-row";
+      const qualityLabel = document.createElement("span");
+      qualityLabel.className = "tdlk-setting-label";
+      qualityLabel.textContent = "Chất lượng";
+      qualityRow.append(qualityLabel, qualitySelect);
+      secAmbient.appendChild(qualityRow);
 
       const toggleAmbient = kit.toggle({
         label: "Bật/Tắt",
-        checked: opts.bat_tat_linh_khi,
-        onChange: (v) => setOpt("bat_tat_linh_khi", v)
+        checked: opts.get("bat_tat_linh_khi"),
+        onChange: v => opts.set("bat_tat_linh_khi", v)
       });
       secAmbient.appendChild(toggleAmbient);
 
       const toggleAutoQuality = kit.toggle({
         label: "Tự giảm quality khi lag",
-        checked: opts.giam_toc_do_nguyen,
-        onChange: (v) => setOpt("giam_toc_do_nguyen", v)
+        checked: opts.get("giam_toc_do_nguyen"),
+        onChange: v => opts.set("giam_toc_do_nguyen", v)
       });
       secAmbient.appendChild(toggleAutoQuality);
 
@@ -258,26 +252,32 @@ export function dangKyUI(tt, mod, particleSystem, cinematic) {
 
       const toggleCinematic = kit.toggle({
         label: "Bật/Tắt",
-        checked: opts.bat_tat_thien_kiep,
-        onChange: (v) => setOpt("bat_tat_thien_kiep", v)
+        checked: opts.get("bat_tat_thien_kiep"),
+        onChange: v => opts.set("bat_tat_thien_kiep", v)
       });
       secCinematic.appendChild(toggleCinematic);
 
       const toggleSound = kit.toggle({
         label: "Âm thanh (cần tương tác trước)",
-        checked: opts.am_thanh,
-        onChange: (v) => setOpt("am_thanh", v)
+        checked: opts.get("am_thanh"),
+        onChange: v => opts.set("am_thanh", v)
       });
       secCinematic.appendChild(toggleSound);
 
       // Test buttons
       const testRow = document.createElement("div");
       testRow.style.cssText = "display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;";
-      ["loi_kiep", "hoa_kiep", "tam_ma_kiep", "thien_kiep_toi_thuong"].forEach(type => {
+      const testNames = {
+        loi_kiep: "Lôi Kiếp",
+        hoa_kiep: "Hỏa Kiếp",
+        tam_ma_kiep: "Tâm Ma Kiếp",
+        thien_kiep_toi_thuong: "Thiên Kiếp Tối Thượng"
+      };
+      Object.entries(testNames).forEach(([type, name]) => {
         const btn = kit.button({
-          text: `Test ${type.replace("_", " ").toUpperCase()}`,
+          text: `Thử ${name}`,
           kind: "nho",
-          onClick: () => cinematic.triggerTestCinematic(type)
+          onClick: () => cinematic.triggerTestCinematic(type).catch(error => mod.log("[UI] Cinematic test failed:", error))
         });
         testRow.appendChild(btn);
       });
@@ -291,8 +291,8 @@ export function dangKyUI(tt, mod, particleSystem, cinematic) {
 
       const toggleAvatar = kit.toggle({
         label: "Bật/Tắt Glow Ring & Badge",
-        checked: opts.bat_tat_avatar_fx,
-        onChange: (v) => setOpt("bat_tat_avatar_fx", v)
+        checked: opts.get("bat_tat_avatar_fx"),
+        onChange: v => opts.set("bat_tat_avatar_fx", v)
       });
       secAvatar.appendChild(toggleAvatar);
 
@@ -320,7 +320,7 @@ export function dangKyUI(tt, mod, particleSystem, cinematic) {
       el.appendChild(secAvatar);
 
       // Info
-      const info = kit.richText("Mod <b>Thiên Địa Linh Khí</b> v1.0.0 — Kết hợp Linh Khí Diện nền + Thiên Kiếp Cinematic + Avatar Visual. Dùng dock để bật/tắt nhanh, panel để cấu hình chi tiết.");
+      const info = kit.richText(`Mod <b>Thiên Địa Linh Khí</b> v${MOD_VERSION} — Linh Khí Diện nền, Thiên Kiếp Cinematic và Avatar Visual. Cài đặt trong panel chỉ áp dụng đến khi tải lại game.`);
       el.appendChild(info);
 
       // Section: Auto Update (lazy load)
@@ -329,9 +329,9 @@ export function dangKyUI(tt, mod, particleSystem, cinematic) {
       secUpdate.innerHTML = `<div class="tdlk-panel-title">🔄 Tự động cập nhật</div>`;
 
       import("./update.js").then(({ createUpdateCheckUI }) => {
-        const updateUI = createUpdateCheckUI(mod, tt);
-        if (updateUI) secUpdate.appendChild(updateUI);
-      });
+        const updateUI = createUpdateCheckUI(realMod, tt);
+        if (updateUI && secUpdate.isConnected) secUpdate.appendChild(updateUI);
+      }).catch(error => realMod.log("[UI] Update panel unavailable:", error));
 
       el.appendChild(secUpdate);
     }
@@ -351,7 +351,7 @@ export function dangKyUI(tt, mod, particleSystem, cinematic) {
 
       const update = () => {
         try {
-          if (!mod.options?.bat_tat_avatar_fx) {
+          if (!options.get("bat_tat_avatar_fx")) {
             box.innerHTML = `<div class="hud-phu" style="text-align:center;padding:20px;">Avatar FX đã tắt. Bật trong dock hoặc panel.</div>`;
             return;
           }
@@ -390,7 +390,12 @@ export function dangKyUI(tt, mod, particleSystem, cinematic) {
       };
 
       update();
-      return tt.subscribe(update);
+      const unsubscribeState = tt.subscribe(update);
+      const unsubscribeOptions = options.subscribe(update);
+      return () => {
+        unsubscribeState();
+        unsubscribeOptions();
+      };
     }
   });
 
@@ -409,22 +414,14 @@ export function dangKyUI(tt, mod, particleSystem, cinematic) {
       const update = () => {
         try {
           const s = tt.state();
-          const nv = s?.run?.nhanVat;
-          const place = s?.run?.noiChon;
+          const viTri = s?.run?.viTri;
+          const place = tt.content?.noiChon?.get?.(viTri) || viTri;
           if (!place) {
             box.textContent = "Chưa có nơi chốn";
             return;
           }
 
-          // Infer biome from place type/faction
-          let biome = "default";
-          if (place.loai?.includes("nui")) biome = "nui";
-          else if (place.loai?.includes("bien") || place.loai?.includes("ha")) biome = "bien";
-          else if (place.loai?.includes("rung")) biome = "rung";
-          else if (place.phe === "ta") biome = "ta_phai";
-          else if (place.phe === "chinh") biome = "chinh_phai";
-          else if (place.loai?.includes("dong_phu") || place.loai?.includes("bi_canh")) biome = "bich_canh";
-
+          const biome = inferBiomeFromPlace(place);
           particleSystem?.setBiome?.(biome);
 
           const biomeNames = {
@@ -434,7 +431,7 @@ export function dangKyUI(tt, mod, particleSystem, cinematic) {
           };
 
           box.innerHTML = `
-            <span style="color:var(--chu-do);">${place.ten || "Vô danh"}</span>
+            <span style="color:var(--chu-do);">${typeof place === "string" ? place : place.ten || "Vô danh"}</span>
             <span class="hud-phu" style="margin-left:8px;">🌿 ${biomeNames[biome] || biome}</span>
           `;
         } catch (e) {
@@ -445,20 +442,6 @@ export function dangKyUI(tt, mod, particleSystem, cinematic) {
 
       update();
       return tt.subscribe(update);
-    }
-  });
-
-  // ------------------------------------------
-  // 5. SLOT - Map Layer (Optional: minimap particles)
-  // ------------------------------------------
-  mod.ui.addSlot("mapLayer", {
-    id: "tdlk_map_particles",
-    mount(layer, tt) {
-      // PixiJS container - could add subtle particle layer on world map
-      const g = new tt.pixi.Graphics();
-      layer.addChild(g);
-      tt.map.requestRender();
-      return () => { g.destroy(); layer.removeChild(g); };
     }
   });
 }
